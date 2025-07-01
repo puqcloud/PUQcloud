@@ -1,0 +1,1555 @@
+.flag {
+  height: 16px;
+  width: 16px;
+  background-size: 16px 16px; }
+  .flag.medium {
+    height: 24px;
+    width: 24px;
+    background-size: 24px 24px; }
+  .flag.large {
+    height: 32px;
+    width: 32px;
+    background-size: 32px 32px; }
+
+.AD {
+  background: url(/svgs/AD.svg) no-repeat; }
+
+.AE {
+  background: url(/svgs/AE.svg) no-repeat; }
+
+.AF {
+  background: url(/svgs/AF.svg) no-repeat; }
+
+.AG {
+  background: url(/svgs/AG.svg) no-repeat; }
+
+.AI {
+  background: url(/svgs/AI.svg) no-repeat; }
+
+.AL {
+  background: url(/svgs/AL.svg) no-repeat; }
+
+.AM {
+  background: url(/svgs/AM.svg) no-repeat; }
+
+.AO {
+  background: url(/svgs/AO.svg) no-repeat; }
+
+.AR {
+  background: url(/svgs/AR.svg) no-repeat; }
+
+.AS {
+  background: url(/svgs/AS.svg) no-repeat; }
+
+.AT {
+  background: url(/svgs/AT.svg) no-repeat; }
+
+.AU {
+  background: url(/svgs/AU.svg) no-repeat; }
+
+.AW {
+  background: url(/svgs/AW.svg) no-repeat; }
+
+.AX {
+  background: url(/svgs/AX.svg) no-repeat; }
+
+.AZ {
+  background: url(/svgs/AZ.svg) no-repeat; }
+
+.BA {
+  background: url(/svgs/BA.svg) no-repeat; }
+
+.BB {
+  background: url(/svgs/BB.svg) no-repeat; }
+
+.BD {
+  background: url(/svgs/BD.svg) no-repeat; }
+
+.BE {
+  background: url(/svgs/BE.svg) no-repeat; }
+
+.BF {
+  background: url(/svgs/BF.svg) no-repeat; }
+
+.BG {
+  background: url(/svgs/BG.svg) no-repeat; }
+
+.BH {
+  background: url(/svgs/BH.svg) no-repeat; }
+
+.BI {
+  background: url(/svgs/BI.svg) no-repeat; }
+
+.BJ {
+  background: url(/svgs/BJ.svg) no-repeat; }
+
+.BL {
+  background: url(/svgs/BL.svg) no-repeat; }
+
+.BM {
+  background: url(/svgs/BM.svg) no-repeat; }
+
+.BN {
+  background: url(/svgs/BN.svg) no-repeat; }
+
+.BO {
+  background: url(/svgs/BO.svg) no-repeat; }
+
+.BR {
+  background: url(/svgs/BR.svg) no-repeat; }
+
+.BS {
+  background: url(/svgs/BS.svg) no-repeat; }
+
+.BT {
+  background: url(/svgs/BT.svg) no-repeat; }
+
+.BV {
+  background: url(/svgs/BV.svg) no-repeat; }
+
+.BW {
+  background: url(/svgs/BW.svg) no-repeat; }
+
+.BY {
+  background: url(/svgs/BY.svg) no-repeat; }
+
+.BZ {
+  background: url(/svgs/BZ.svg) no-repeat; }
+
+.CA {
+  background: url(/svgs/CA.svg) no-repeat; }
+
+.CC {
+  background: url(/svgs/CC.svg) no-repeat; }
+
+.CD {
+  background: url(/svgs/CD.svg) no-repeat; }
+
+.CF {
+  background: url(/svgs/CF.svg) no-repeat; }
+
+.CG {
+  background: url(/svgs/CG.svg) no-repeat; }
+
+.CH {
+  background: url(/svgs/CH.svg) no-repeat; }
+
+.CI {
+  background: url(/svgs/CI.svg) no-repeat; }
+
+.CK {
+  background: url(/svgs/CK.svg) no-repeat; }
+
+.CL {
+  background: url(/svgs/CL.svg) no-repeat; }
+
+.CM {
+  background: url(/svgs/CM.svg) no-repeat; }
+
+.CN {
+  background: url(/svgs/CN.svg) no-repeat; }
+
+.CO {
+  background: url(/svgs/CO.svg) no-repeat; }
+
+.CR {
+  background: url(/svgs/CR.svg) no-repeat; }
+
+.CU {
+  background: url(/svgs/CU.svg) no-repeat; }
+
+.CV {
+  background: url(/svgs/CV.svg) no-repeat; }
+
+.CW {
+  background: url(/svgs/CW.svg) no-repeat; }
+
+.CX {
+  background: url(/svgs/CX.svg) no-repeat; }
+
+.CY {
+  background: url(/svgs/CY.svg) no-repeat; }
+
+.CZ {
+  background: url(/svgs/CZ.svg) no-repeat; }
+
+.DE {
+  background: url(/svgs/DE.svg) no-repeat; }
+
+.DJ {
+  background: url(/svgs/DJ.svg) no-repeat; }
+
+.DK {
+  background: url(/svgs/DK.svg) no-repeat; }
+
+.DM {
+  background: url(/svgs/DM.svg) no-repeat; }
+
+.DO {
+  background: url(/svgs/DO.svg) no-repeat; }
+
+.DZ {
+  background: url(/svgs/DZ.svg) no-repeat; }
+
+.EC {
+  background: url(/svgs/EC.svg) no-repeat; }
+
+.EE {
+  background: url(/svgs/EE.svg) no-repeat; }
+
+.EG {
+  background: url(/svgs/EG.svg) no-repeat; }
+
+.ER {
+  background: url(/svgs/ER.svg) no-repeat; }
+
+.ES {
+  background: url(/svgs/ES.svg) no-repeat; }
+
+.ET {
+  background: url(/svgs/ET.svg) no-repeat; }
+
+.EU {
+  background: url(/svgs/EU.svg) no-repeat; }
+
+.FI {
+  background: url(/svgs/FI.svg) no-repeat; }
+
+.FJ {
+  background: url(/svgs/FJ.svg) no-repeat; }
+
+.FK {
+  background: url(/svgs/FK.svg) no-repeat; }
+
+.FM {
+  background: url(/svgs/FM.svg) no-repeat; }
+
+.FO {
+  background: url(/svgs/FO.svg) no-repeat; }
+
+.FR {
+  background: url(/svgs/FR.svg) no-repeat; }
+
+.GA {
+  background: url(/svgs/GA.svg) no-repeat; }
+
+.GB-ENG {
+  background: url(/svgs/GB-ENG.svg) no-repeat; }
+
+.GB-NIR {
+  background: url(/svgs/GB-NIR.svg) no-repeat; }
+
+.GB-SCT {
+  background: url(/svgs/GB-SCT.svg) no-repeat; }
+
+.GB-WLS {
+  background: url(/svgs/GB-WLS.svg) no-repeat; }
+
+.GB-ZET {
+  background: url(/svgs/GB-ZET.svg) no-repeat; }
+
+.GB {
+  background: url(/svgs/GB.svg) no-repeat; }
+
+.GD {
+  background: url(/svgs/GD.svg) no-repeat; }
+
+.GE {
+  background: url(/svgs/GE.svg) no-repeat; }
+
+.GF {
+  background: url(/svgs/GF.svg) no-repeat; }
+
+.GG {
+  background: url(/svgs/GG.svg) no-repeat; }
+
+.GH {
+  background: url(/svgs/GH.svg) no-repeat; }
+
+.GI {
+  background: url(/svgs/GI.svg) no-repeat; }
+
+.GL {
+  background: url(/svgs/GL.svg) no-repeat; }
+
+.GM {
+  background: url(/svgs/GM.svg) no-repeat; }
+
+.GN {
+  background: url(/svgs/GN.svg) no-repeat; }
+
+.GP {
+  background: url(/svgs/GP.svg) no-repeat; }
+
+.GQ {
+  background: url(/svgs/GQ.svg) no-repeat; }
+
+.GR {
+  background: url(/svgs/GR.svg) no-repeat; }
+
+.GS {
+  background: url(/svgs/GS.svg) no-repeat; }
+
+.GT {
+  background: url(/svgs/GT.svg) no-repeat; }
+
+.GU {
+  background: url(/svgs/GU.svg) no-repeat; }
+
+.GW {
+  background: url(/svgs/GW.svg) no-repeat; }
+
+.GY {
+  background: url(/svgs/GY.svg) no-repeat; }
+
+.HK {
+  background: url(/svgs/HK.svg) no-repeat; }
+
+.HM {
+  background: url(/svgs/HM.svg) no-repeat; }
+
+.HN {
+  background: url(/svgs/HN.svg) no-repeat; }
+
+.HR {
+  background: url(/svgs/HR.svg) no-repeat; }
+
+.HT {
+  background: url(/svgs/HT.svg) no-repeat; }
+
+.HU {
+  background: url(/svgs/HU.svg) no-repeat; }
+
+.ID {
+  background: url(/svgs/ID.svg) no-repeat; }
+
+.IE {
+  background: url(/svgs/IE.svg) no-repeat; }
+
+.IL {
+  background: url(/svgs/IL.svg) no-repeat; }
+
+.IM {
+  background: url(/svgs/IM.svg) no-repeat; }
+
+.IN {
+  background: url(/svgs/IN.svg) no-repeat; }
+
+.IO {
+  background: url(/svgs/IO.svg) no-repeat; }
+
+.IQ {
+  background: url(/svgs/IQ.svg) no-repeat; }
+
+.IR {
+  background: url(/svgs/IR.svg) no-repeat; }
+
+.IS {
+  background: url(/svgs/IS.svg) no-repeat; }
+
+.IT {
+  background: url(/svgs/IT.svg) no-repeat; }
+
+.JE {
+  background: url(/svgs/JE.svg) no-repeat; }
+
+.JM {
+  background: url(/svgs/JM.svg) no-repeat; }
+
+.JO {
+  background: url(/svgs/JO.svg) no-repeat; }
+
+.JP {
+  background: url(/svgs/JP.svg) no-repeat; }
+
+.KE {
+  background: url(/svgs/KE.svg) no-repeat; }
+
+.KG {
+  background: url(/svgs/KG.svg) no-repeat; }
+
+.KH {
+  background: url(/svgs/KH.svg) no-repeat; }
+
+.KI {
+  background: url(/svgs/KI.svg) no-repeat; }
+
+.KM {
+  background: url(/svgs/KM.svg) no-repeat; }
+
+.KN {
+  background: url(/svgs/KN.svg) no-repeat; }
+
+.KP {
+  background: url(/svgs/KP.svg) no-repeat; }
+
+.KR {
+  background: url(/svgs/KR.svg) no-repeat; }
+
+.KW {
+  background: url(/svgs/KW.svg) no-repeat; }
+
+.KY {
+  background: url(/svgs/KY.svg) no-repeat; }
+
+.KZ {
+  background: url(/svgs/KZ.svg) no-repeat; }
+
+.LA {
+  background: url(/svgs/LA.svg) no-repeat; }
+
+.LB {
+  background: url(/svgs/LB.svg) no-repeat; }
+
+.LC {
+  background: url(/svgs/LC.svg) no-repeat; }
+
+.LGBT {
+  background: url(/svgs/LGBT.svg) no-repeat; }
+
+.LI {
+  background: url(/svgs/LI.svg) no-repeat; }
+
+.LK {
+  background: url(/svgs/LK.svg) no-repeat; }
+
+.LR {
+  background: url(/svgs/LR.svg) no-repeat; }
+
+.LS {
+  background: url(/svgs/LS.svg) no-repeat; }
+
+.LT {
+  background: url(/svgs/LT.svg) no-repeat; }
+
+.LU {
+  background: url(/svgs/LU.svg) no-repeat; }
+
+.LV {
+  background: url(/svgs/LV.svg) no-repeat; }
+
+.LY {
+  background: url(/svgs/LY.svg) no-repeat; }
+
+.MA {
+  background: url(/svgs/MA.svg) no-repeat; }
+
+.MC {
+  background: url(/svgs/MC.svg) no-repeat; }
+
+.MD {
+  background: url(/svgs/MD.svg) no-repeat; }
+
+.ME {
+  background: url(/svgs/ME.svg) no-repeat; }
+
+.MF {
+  background: url(/svgs/MF.svg) no-repeat; }
+
+.MG {
+  background: url(/svgs/MG.svg) no-repeat; }
+
+.MH {
+  background: url(/svgs/MH.svg) no-repeat; }
+
+.MK {
+  background: url(/svgs/MK.svg) no-repeat; }
+
+.ML {
+  background: url(/svgs/ML.svg) no-repeat; }
+
+.MM {
+  background: url(/svgs/MM.svg) no-repeat; }
+
+.MN {
+  background: url(/svgs/MN.svg) no-repeat; }
+
+.MO {
+  background: url(/svgs/MO.svg) no-repeat; }
+
+.MP {
+  background: url(/svgs/MP.svg) no-repeat; }
+
+.MQ {
+  background: url(/svgs/MQ.svg) no-repeat; }
+
+.MR {
+  background: url(/svgs/MR.svg) no-repeat; }
+
+.MS {
+  background: url(/svgs/MS.svg) no-repeat; }
+
+.MT {
+  background: url(/svgs/MT.svg) no-repeat; }
+
+.MU {
+  background: url(/svgs/MU.svg) no-repeat; }
+
+.MV {
+  background: url(/svgs/MV.svg) no-repeat; }
+
+.MW {
+  background: url(/svgs/MW.svg) no-repeat; }
+
+.MX {
+  background: url(/svgs/MX.svg) no-repeat; }
+
+.MY {
+  background: url(/svgs/MY.svg) no-repeat; }
+
+.MZ {
+  background: url(/svgs/MZ.svg) no-repeat; }
+
+.NA {
+  background: url(/svgs/NA.svg) no-repeat; }
+
+.NC {
+  background: url(/svgs/NC.svg) no-repeat; }
+
+.NE {
+  background: url(/svgs/NE.svg) no-repeat; }
+
+.NF {
+  background: url(/svgs/NF.svg) no-repeat; }
+
+.NG {
+  background: url(/svgs/NG.svg) no-repeat; }
+
+.NI {
+  background: url(/svgs/NI.svg) no-repeat; }
+
+.NL {
+  background: url(/svgs/NL.svg) no-repeat; }
+
+.NO {
+  background: url(/svgs/NO.svg) no-repeat; }
+
+.NP {
+  background: url(/svgs/NP.svg) no-repeat; }
+
+.NR {
+  background: url(/svgs/NR.svg) no-repeat; }
+
+.NU {
+  background: url(/svgs/NU.svg) no-repeat; }
+
+.NZ {
+  background: url(/svgs/NZ.svg) no-repeat; }
+
+.OM {
+  background: url(/svgs/OM.svg) no-repeat; }
+
+.PA {
+  background: url(/svgs/PA.svg) no-repeat; }
+
+.PE {
+  background: url(/svgs/PE.svg) no-repeat; }
+
+.PF {
+  background: url(/svgs/PF.svg) no-repeat; }
+
+.PG {
+  background: url(/svgs/PG.svg) no-repeat; }
+
+.PH {
+  background: url(/svgs/PH.svg) no-repeat; }
+
+.PK {
+  background: url(/svgs/PK.svg) no-repeat; }
+
+.PL {
+  background: url(/svgs/PL.svg) no-repeat; }
+
+.PM {
+  background: url(/svgs/PM.svg) no-repeat; }
+
+.PN {
+  background: url(/svgs/PN.svg) no-repeat; }
+
+.PR {
+  background: url(/svgs/PR.svg) no-repeat; }
+
+.PS {
+  background: url(/svgs/PS.svg) no-repeat; }
+
+.PT {
+  background: url(/svgs/PT.svg) no-repeat; }
+
+.PW {
+  background: url(/svgs/PW.svg) no-repeat; }
+
+.PY {
+  background: url(/svgs/PY.svg) no-repeat; }
+
+.QA {
+  background: url(/svgs/QA.svg) no-repeat; }
+
+.RE {
+  background: url(/svgs/RE.svg) no-repeat; }
+
+.RO {
+  background: url(/svgs/RO.svg) no-repeat; }
+
+.RS {
+  background: url(/svgs/RS.svg) no-repeat; }
+
+.RU {
+  background: url(/svgs/RU.svg) no-repeat; }
+
+.RW {
+  background: url(/svgs/RW.svg) no-repeat; }
+
+.SA {
+  background: url(/svgs/SA.svg) no-repeat; }
+
+.SB {
+  background: url(/svgs/SB.svg) no-repeat; }
+
+.SC {
+  background: url(/svgs/SC.svg) no-repeat; }
+
+.SD {
+  background: url(/svgs/SD.svg) no-repeat; }
+
+.SE {
+  background: url(/svgs/SE.svg) no-repeat; }
+
+.SG {
+  background: url(/svgs/SG.svg) no-repeat; }
+
+.SH {
+  background: url(/svgs/SH.svg) no-repeat; }
+
+.SI {
+  background: url(/svgs/SI.svg) no-repeat; }
+
+.SJ {
+  background: url(/svgs/SJ.svg) no-repeat; }
+
+.SK {
+  background: url(/svgs/SK.svg) no-repeat; }
+
+.SL {
+  background: url(/svgs/SL.svg) no-repeat; }
+
+.SM {
+  background: url(/svgs/SM.svg) no-repeat; }
+
+.SN {
+  background: url(/svgs/SN.svg) no-repeat; }
+
+.SO {
+  background: url(/svgs/SO.svg) no-repeat; }
+
+.SR {
+  background: url(/svgs/SR.svg) no-repeat; }
+
+.SS {
+  background: url(/svgs/SS.svg) no-repeat; }
+
+.ST {
+  background: url(/svgs/ST.svg) no-repeat; }
+
+.SV {
+  background: url(/svgs/SV.svg) no-repeat; }
+
+.SX {
+  background: url(/svgs/SX.svg) no-repeat; }
+
+.SY {
+  background: url(/svgs/SY.svg) no-repeat; }
+
+.SZ {
+  background: url(/svgs/SZ.svg) no-repeat; }
+
+.TC {
+  background: url(/svgs/TC.svg) no-repeat; }
+
+.TD {
+  background: url(/svgs/TD.svg) no-repeat; }
+
+.TF {
+  background: url(/svgs/TF.svg) no-repeat; }
+
+.TG {
+  background: url(/svgs/TG.svg) no-repeat; }
+
+.TH {
+  background: url(/svgs/TH.svg) no-repeat; }
+
+.TJ {
+  background: url(/svgs/TJ.svg) no-repeat; }
+
+.TK {
+  background: url(/svgs/TK.svg) no-repeat; }
+
+.TL {
+  background: url(/svgs/TL.svg) no-repeat; }
+
+.TM {
+  background: url(/svgs/TM.svg) no-repeat; }
+
+.TN {
+  background: url(/svgs/TN.svg) no-repeat; }
+
+.TO {
+  background: url(/svgs/TO.svg) no-repeat; }
+
+.TR {
+  background: url(/svgs/TR.svg) no-repeat; }
+
+.TT {
+  background: url(/svgs/TT.svg) no-repeat; }
+
+.TV {
+  background: url(/svgs/TV.svg) no-repeat; }
+
+.TW {
+  background: url(/svgs/TW.svg) no-repeat; }
+
+.TZ {
+  background: url(/svgs/TZ.svg) no-repeat; }
+
+.UA {
+  background: url(/svgs/UA.svg) no-repeat; }
+
+.UG {
+  background: url(/svgs/UG.svg) no-repeat; }
+
+.UM {
+  background: url(/svgs/UM.svg) no-repeat; }
+
+.US-CA {
+  background: url(/svgs/US-CA.svg) no-repeat; }
+
+.US {
+  background: url(/svgs/US.svg) no-repeat; }
+
+.UY {
+  background: url(/svgs/UY.svg) no-repeat; }
+
+.UZ {
+  background: url(/svgs/UZ.svg) no-repeat; }
+
+.VA {
+  background: url(/svgs/VA.svg) no-repeat; }
+
+.VC {
+  background: url(/svgs/VC.svg) no-repeat; }
+
+.VE {
+  background: url(/svgs/VE.svg) no-repeat; }
+
+.VG {
+  background: url(/svgs/VG.svg) no-repeat; }
+
+.VI {
+  background: url(/svgs/VI.svg) no-repeat; }
+
+.VN {
+  background: url(/svgs/VN.svg) no-repeat; }
+
+.VU {
+  background: url(/svgs/VU.svg) no-repeat; }
+
+.WF {
+  background: url(/svgs/WF.svg) no-repeat; }
+
+.WS {
+  background: url(/svgs/WS.svg) no-repeat; }
+
+.XK {
+  background: url(/svgs/XK.svg) no-repeat; }
+
+.YE {
+  background: url(/svgs/YE.svg) no-repeat; }
+
+.YT {
+  background: url(/svgs/YT.svg) no-repeat; }
+
+.ZA {
+  background: url(/svgs/ZA.svg) no-repeat; }
+
+.ZM {
+  background: url(/svgs/ZM.svg) no-repeat; }
+
+.ZW {
+  background: url(/svgs/ZW.svg) no-repeat; }
+
+.flag {
+  height: 16px;
+  width: 16px;
+  background-size: 16px 16px; }
+  .flag.medium {
+    height: 24px;
+    width: 24px;
+    background-size: 24px 24px; }
+  .flag.large {
+    height: 32px;
+    width: 32px;
+    background-size: 32px 32px; }
+
+.AD {
+  background: url(/svgs/AD.svg) no-repeat; }
+
+.AE {
+  background: url(/svgs/AE.svg) no-repeat; }
+
+.AF {
+  background: url(/svgs/AF.svg) no-repeat; }
+
+.AG {
+  background: url(/svgs/AG.svg) no-repeat; }
+
+.AI {
+  background: url(/svgs/AI.svg) no-repeat; }
+
+.AL {
+  background: url(/svgs/AL.svg) no-repeat; }
+
+.AM {
+  background: url(/svgs/AM.svg) no-repeat; }
+
+.AO {
+  background: url(/svgs/AO.svg) no-repeat; }
+
+.AR {
+  background: url(/svgs/AR.svg) no-repeat; }
+
+.AS {
+  background: url(/svgs/AS.svg) no-repeat; }
+
+.AT {
+  background: url(/svgs/AT.svg) no-repeat; }
+
+.AU {
+  background: url(/svgs/AU.svg) no-repeat; }
+
+.AW {
+  background: url(/svgs/AW.svg) no-repeat; }
+
+.AX {
+  background: url(/svgs/AX.svg) no-repeat; }
+
+.AZ {
+  background: url(/svgs/AZ.svg) no-repeat; }
+
+.BA {
+  background: url(/svgs/BA.svg) no-repeat; }
+
+.BB {
+  background: url(/svgs/BB.svg) no-repeat; }
+
+.BD {
+  background: url(/svgs/BD.svg) no-repeat; }
+
+.BE {
+  background: url(/svgs/BE.svg) no-repeat; }
+
+.BF {
+  background: url(/svgs/BF.svg) no-repeat; }
+
+.BG {
+  background: url(/svgs/BG.svg) no-repeat; }
+
+.BH {
+  background: url(/svgs/BH.svg) no-repeat; }
+
+.BI {
+  background: url(/svgs/BI.svg) no-repeat; }
+
+.BJ {
+  background: url(/svgs/BJ.svg) no-repeat; }
+
+.BL {
+  background: url(/svgs/BL.svg) no-repeat; }
+
+.BM {
+  background: url(/svgs/BM.svg) no-repeat; }
+
+.BN {
+  background: url(/svgs/BN.svg) no-repeat; }
+
+.BO {
+  background: url(/svgs/BO.svg) no-repeat; }
+
+.BR {
+  background: url(/svgs/BR.svg) no-repeat; }
+
+.BS {
+  background: url(/svgs/BS.svg) no-repeat; }
+
+.BT {
+  background: url(/svgs/BT.svg) no-repeat; }
+
+.BV {
+  background: url(/svgs/BV.svg) no-repeat; }
+
+.BW {
+  background: url(/svgs/BW.svg) no-repeat; }
+
+.BY {
+  background: url(/svgs/BY.svg) no-repeat; }
+
+.BZ {
+  background: url(/svgs/BZ.svg) no-repeat; }
+
+.CA {
+  background: url(/svgs/CA.svg) no-repeat; }
+
+.CC {
+  background: url(/svgs/CC.svg) no-repeat; }
+
+.CD {
+  background: url(/svgs/CD.svg) no-repeat; }
+
+.CF {
+  background: url(/svgs/CF.svg) no-repeat; }
+
+.CG {
+  background: url(/svgs/CG.svg) no-repeat; }
+
+.CH {
+  background: url(/svgs/CH.svg) no-repeat; }
+
+.CI {
+  background: url(/svgs/CI.svg) no-repeat; }
+
+.CK {
+  background: url(/svgs/CK.svg) no-repeat; }
+
+.CL {
+  background: url(/svgs/CL.svg) no-repeat; }
+
+.CM {
+  background: url(/svgs/CM.svg) no-repeat; }
+
+.CN {
+  background: url(/svgs/CN.svg) no-repeat; }
+
+.CO {
+  background: url(/svgs/CO.svg) no-repeat; }
+
+.CR {
+  background: url(/svgs/CR.svg) no-repeat; }
+
+.CU {
+  background: url(/svgs/CU.svg) no-repeat; }
+
+.CV {
+  background: url(/svgs/CV.svg) no-repeat; }
+
+.CW {
+  background: url(/svgs/CW.svg) no-repeat; }
+
+.CX {
+  background: url(/svgs/CX.svg) no-repeat; }
+
+.CY {
+  background: url(/svgs/CY.svg) no-repeat; }
+
+.CZ {
+  background: url(/svgs/CZ.svg) no-repeat; }
+
+.DE {
+  background: url(/svgs/DE.svg) no-repeat; }
+
+.DJ {
+  background: url(/svgs/DJ.svg) no-repeat; }
+
+.DK {
+  background: url(/svgs/DK.svg) no-repeat; }
+
+.DM {
+  background: url(/svgs/DM.svg) no-repeat; }
+
+.DO {
+  background: url(/svgs/DO.svg) no-repeat; }
+
+.DZ {
+  background: url(/svgs/DZ.svg) no-repeat; }
+
+.EC {
+  background: url(/svgs/EC.svg) no-repeat; }
+
+.EE {
+  background: url(/svgs/EE.svg) no-repeat; }
+
+.EG {
+  background: url(/svgs/EG.svg) no-repeat; }
+
+.ER {
+  background: url(/svgs/ER.svg) no-repeat; }
+
+.ES {
+  background: url(/svgs/ES.svg) no-repeat; }
+
+.ET {
+  background: url(/svgs/ET.svg) no-repeat; }
+
+.EU {
+  background: url(/svgs/EU.svg) no-repeat; }
+
+.FI {
+  background: url(/svgs/FI.svg) no-repeat; }
+
+.FJ {
+  background: url(/svgs/FJ.svg) no-repeat; }
+
+.FK {
+  background: url(/svgs/FK.svg) no-repeat; }
+
+.FM {
+  background: url(/svgs/FM.svg) no-repeat; }
+
+.FO {
+  background: url(/svgs/FO.svg) no-repeat; }
+
+.FR {
+  background: url(/svgs/FR.svg) no-repeat; }
+
+.GA {
+  background: url(/svgs/GA.svg) no-repeat; }
+
+.GB-ENG {
+  background: url(/svgs/GB-ENG.svg) no-repeat; }
+
+.GB-NIR {
+  background: url(/svgs/GB-NIR.svg) no-repeat; }
+
+.GB-SCT {
+  background: url(/svgs/GB-SCT.svg) no-repeat; }
+
+.GB-WLS {
+  background: url(/svgs/GB-WLS.svg) no-repeat; }
+
+.GB-ZET {
+  background: url(/svgs/GB-ZET.svg) no-repeat; }
+
+.GB {
+  background: url(/svgs/GB.svg) no-repeat; }
+
+.GD {
+  background: url(/svgs/GD.svg) no-repeat; }
+
+.GE {
+  background: url(/svgs/GE.svg) no-repeat; }
+
+.GF {
+  background: url(/svgs/GF.svg) no-repeat; }
+
+.GG {
+  background: url(/svgs/GG.svg) no-repeat; }
+
+.GH {
+  background: url(/svgs/GH.svg) no-repeat; }
+
+.GI {
+  background: url(/svgs/GI.svg) no-repeat; }
+
+.GL {
+  background: url(/svgs/GL.svg) no-repeat; }
+
+.GM {
+  background: url(/svgs/GM.svg) no-repeat; }
+
+.GN {
+  background: url(/svgs/GN.svg) no-repeat; }
+
+.GP {
+  background: url(/svgs/GP.svg) no-repeat; }
+
+.GQ {
+  background: url(/svgs/GQ.svg) no-repeat; }
+
+.GR {
+  background: url(/svgs/GR.svg) no-repeat; }
+
+.GS {
+  background: url(/svgs/GS.svg) no-repeat; }
+
+.GT {
+  background: url(/svgs/GT.svg) no-repeat; }
+
+.GU {
+  background: url(/svgs/GU.svg) no-repeat; }
+
+.GW {
+  background: url(/svgs/GW.svg) no-repeat; }
+
+.GY {
+  background: url(/svgs/GY.svg) no-repeat; }
+
+.HK {
+  background: url(/svgs/HK.svg) no-repeat; }
+
+.HM {
+  background: url(/svgs/HM.svg) no-repeat; }
+
+.HN {
+  background: url(/svgs/HN.svg) no-repeat; }
+
+.HR {
+  background: url(/svgs/HR.svg) no-repeat; }
+
+.HT {
+  background: url(/svgs/HT.svg) no-repeat; }
+
+.HU {
+  background: url(/svgs/HU.svg) no-repeat; }
+
+.ID {
+  background: url(/svgs/ID.svg) no-repeat; }
+
+.IE {
+  background: url(/svgs/IE.svg) no-repeat; }
+
+.IL {
+  background: url(/svgs/IL.svg) no-repeat; }
+
+.IM {
+  background: url(/svgs/IM.svg) no-repeat; }
+
+.IN {
+  background: url(/svgs/IN.svg) no-repeat; }
+
+.IO {
+  background: url(/svgs/IO.svg) no-repeat; }
+
+.IQ {
+  background: url(/svgs/IQ.svg) no-repeat; }
+
+.IR {
+  background: url(/svgs/IR.svg) no-repeat; }
+
+.IS {
+  background: url(/svgs/IS.svg) no-repeat; }
+
+.IT {
+  background: url(/svgs/IT.svg) no-repeat; }
+
+.JE {
+  background: url(/svgs/JE.svg) no-repeat; }
+
+.JM {
+  background: url(/svgs/JM.svg) no-repeat; }
+
+.JO {
+  background: url(/svgs/JO.svg) no-repeat; }
+
+.JP {
+  background: url(/svgs/JP.svg) no-repeat; }
+
+.KE {
+  background: url(/svgs/KE.svg) no-repeat; }
+
+.KG {
+  background: url(/svgs/KG.svg) no-repeat; }
+
+.KH {
+  background: url(/svgs/KH.svg) no-repeat; }
+
+.KI {
+  background: url(/svgs/KI.svg) no-repeat; }
+
+.KM {
+  background: url(/svgs/KM.svg) no-repeat; }
+
+.KN {
+  background: url(/svgs/KN.svg) no-repeat; }
+
+.KP {
+  background: url(/svgs/KP.svg) no-repeat; }
+
+.KR {
+  background: url(/svgs/KR.svg) no-repeat; }
+
+.KW {
+  background: url(/svgs/KW.svg) no-repeat; }
+
+.KY {
+  background: url(/svgs/KY.svg) no-repeat; }
+
+.KZ {
+  background: url(/svgs/KZ.svg) no-repeat; }
+
+.LA {
+  background: url(/svgs/LA.svg) no-repeat; }
+
+.LB {
+  background: url(/svgs/LB.svg) no-repeat; }
+
+.LC {
+  background: url(/svgs/LC.svg) no-repeat; }
+
+.LGBT {
+  background: url(/svgs/LGBT.svg) no-repeat; }
+
+.LI {
+  background: url(/svgs/LI.svg) no-repeat; }
+
+.LK {
+  background: url(/svgs/LK.svg) no-repeat; }
+
+.LR {
+  background: url(/svgs/LR.svg) no-repeat; }
+
+.LS {
+  background: url(/svgs/LS.svg) no-repeat; }
+
+.LT {
+  background: url(/svgs/LT.svg) no-repeat; }
+
+.LU {
+  background: url(/svgs/LU.svg) no-repeat; }
+
+.LV {
+  background: url(/svgs/LV.svg) no-repeat; }
+
+.LY {
+  background: url(/svgs/LY.svg) no-repeat; }
+
+.MA {
+  background: url(/svgs/MA.svg) no-repeat; }
+
+.MC {
+  background: url(/svgs/MC.svg) no-repeat; }
+
+.MD {
+  background: url(/svgs/MD.svg) no-repeat; }
+
+.ME {
+  background: url(/svgs/ME.svg) no-repeat; }
+
+.MF {
+  background: url(/svgs/MF.svg) no-repeat; }
+
+.MG {
+  background: url(/svgs/MG.svg) no-repeat; }
+
+.MH {
+  background: url(/svgs/MH.svg) no-repeat; }
+
+.MK {
+  background: url(/svgs/MK.svg) no-repeat; }
+
+.ML {
+  background: url(/svgs/ML.svg) no-repeat; }
+
+.MM {
+  background: url(/svgs/MM.svg) no-repeat; }
+
+.MN {
+  background: url(/svgs/MN.svg) no-repeat; }
+
+.MO {
+  background: url(/svgs/MO.svg) no-repeat; }
+
+.MP {
+  background: url(/svgs/MP.svg) no-repeat; }
+
+.MQ {
+  background: url(/svgs/MQ.svg) no-repeat; }
+
+.MR {
+  background: url(/svgs/MR.svg) no-repeat; }
+
+.MS {
+  background: url(/svgs/MS.svg) no-repeat; }
+
+.MT {
+  background: url(/svgs/MT.svg) no-repeat; }
+
+.MU {
+  background: url(/svgs/MU.svg) no-repeat; }
+
+.MV {
+  background: url(/svgs/MV.svg) no-repeat; }
+
+.MW {
+  background: url(/svgs/MW.svg) no-repeat; }
+
+.MX {
+  background: url(/svgs/MX.svg) no-repeat; }
+
+.MY {
+  background: url(/svgs/MY.svg) no-repeat; }
+
+.MZ {
+  background: url(/svgs/MZ.svg) no-repeat; }
+
+.NA {
+  background: url(/svgs/NA.svg) no-repeat; }
+
+.NC {
+  background: url(/svgs/NC.svg) no-repeat; }
+
+.NE {
+  background: url(/svgs/NE.svg) no-repeat; }
+
+.NF {
+  background: url(/svgs/NF.svg) no-repeat; }
+
+.NG {
+  background: url(/svgs/NG.svg) no-repeat; }
+
+.NI {
+  background: url(/svgs/NI.svg) no-repeat; }
+
+.NL {
+  background: url(/svgs/NL.svg) no-repeat; }
+
+.NO {
+  background: url(/svgs/NO.svg) no-repeat; }
+
+.NP {
+  background: url(/svgs/NP.svg) no-repeat; }
+
+.NR {
+  background: url(/svgs/NR.svg) no-repeat; }
+
+.NU {
+  background: url(/svgs/NU.svg) no-repeat; }
+
+.NZ {
+  background: url(/svgs/NZ.svg) no-repeat; }
+
+.OM {
+  background: url(/svgs/OM.svg) no-repeat; }
+
+.PA {
+  background: url(/svgs/PA.svg) no-repeat; }
+
+.PE {
+  background: url(/svgs/PE.svg) no-repeat; }
+
+.PF {
+  background: url(/svgs/PF.svg) no-repeat; }
+
+.PG {
+  background: url(/svgs/PG.svg) no-repeat; }
+
+.PH {
+  background: url(/svgs/PH.svg) no-repeat; }
+
+.PK {
+  background: url(/svgs/PK.svg) no-repeat; }
+
+.PL {
+  background: url(/svgs/PL.svg) no-repeat; }
+
+.PM {
+  background: url(/svgs/PM.svg) no-repeat; }
+
+.PN {
+  background: url(/svgs/PN.svg) no-repeat; }
+
+.PR {
+  background: url(/svgs/PR.svg) no-repeat; }
+
+.PS {
+  background: url(/svgs/PS.svg) no-repeat; }
+
+.PT {
+  background: url(/svgs/PT.svg) no-repeat; }
+
+.PW {
+  background: url(/svgs/PW.svg) no-repeat; }
+
+.PY {
+  background: url(/svgs/PY.svg) no-repeat; }
+
+.QA {
+  background: url(/svgs/QA.svg) no-repeat; }
+
+.RE {
+  background: url(/svgs/RE.svg) no-repeat; }
+
+.RO {
+  background: url(/svgs/RO.svg) no-repeat; }
+
+.RS {
+  background: url(/svgs/RS.svg) no-repeat; }
+
+.RU {
+  background: url(/svgs/RU.svg) no-repeat; }
+
+.RW {
+  background: url(/svgs/RW.svg) no-repeat; }
+
+.SA {
+  background: url(/svgs/SA.svg) no-repeat; }
+
+.SB {
+  background: url(/svgs/SB.svg) no-repeat; }
+
+.SC {
+  background: url(/svgs/SC.svg) no-repeat; }
+
+.SD {
+  background: url(/svgs/SD.svg) no-repeat; }
+
+.SE {
+  background: url(/svgs/SE.svg) no-repeat; }
+
+.SG {
+  background: url(/svgs/SG.svg) no-repeat; }
+
+.SH {
+  background: url(/svgs/SH.svg) no-repeat; }
+
+.SI {
+  background: url(/svgs/SI.svg) no-repeat; }
+
+.SJ {
+  background: url(/svgs/SJ.svg) no-repeat; }
+
+.SK {
+  background: url(/svgs/SK.svg) no-repeat; }
+
+.SL {
+  background: url(/svgs/SL.svg) no-repeat; }
+
+.SM {
+  background: url(/svgs/SM.svg) no-repeat; }
+
+.SN {
+  background: url(/svgs/SN.svg) no-repeat; }
+
+.SO {
+  background: url(/svgs/SO.svg) no-repeat; }
+
+.SR {
+  background: url(/svgs/SR.svg) no-repeat; }
+
+.SS {
+  background: url(/svgs/SS.svg) no-repeat; }
+
+.ST {
+  background: url(/svgs/ST.svg) no-repeat; }
+
+.SV {
+  background: url(/svgs/SV.svg) no-repeat; }
+
+.SX {
+  background: url(/svgs/SX.svg) no-repeat; }
+
+.SY {
+  background: url(/svgs/SY.svg) no-repeat; }
+
+.SZ {
+  background: url(/svgs/SZ.svg) no-repeat; }
+
+.TC {
+  background: url(/svgs/TC.svg) no-repeat; }
+
+.TD {
+  background: url(/svgs/TD.svg) no-repeat; }
+
+.TF {
+  background: url(/svgs/TF.svg) no-repeat; }
+
+.TG {
+  background: url(/svgs/TG.svg) no-repeat; }
+
+.TH {
+  background: url(/svgs/TH.svg) no-repeat; }
+
+.TJ {
+  background: url(/svgs/TJ.svg) no-repeat; }
+
+.TK {
+  background: url(/svgs/TK.svg) no-repeat; }
+
+.TL {
+  background: url(/svgs/TL.svg) no-repeat; }
+
+.TM {
+  background: url(/svgs/TM.svg) no-repeat; }
+
+.TN {
+  background: url(/svgs/TN.svg) no-repeat; }
+
+.TO {
+  background: url(/svgs/TO.svg) no-repeat; }
+
+.TR {
+  background: url(/svgs/TR.svg) no-repeat; }
+
+.TT {
+  background: url(/svgs/TT.svg) no-repeat; }
+
+.TV {
+  background: url(/svgs/TV.svg) no-repeat; }
+
+.TW {
+  background: url(/svgs/TW.svg) no-repeat; }
+
+.TZ {
+  background: url(/svgs/TZ.svg) no-repeat; }
+
+.UA {
+  background: url(/svgs/UA.svg) no-repeat; }
+
+.UG {
+  background: url(/svgs/UG.svg) no-repeat; }
+
+.UM {
+  background: url(/svgs/UM.svg) no-repeat; }
+
+.US-CA {
+  background: url(/svgs/US-CA.svg) no-repeat; }
+
+.US {
+  background: url(/svgs/US.svg) no-repeat; }
+
+.UY {
+  background: url(/svgs/UY.svg) no-repeat; }
+
+.UZ {
+  background: url(/svgs/UZ.svg) no-repeat; }
+
+.VA {
+  background: url(/svgs/VA.svg) no-repeat; }
+
+.VC {
+  background: url(/svgs/VC.svg) no-repeat; }
+
+.VE {
+  background: url(/svgs/VE.svg) no-repeat; }
+
+.VG {
+  background: url(/svgs/VG.svg) no-repeat; }
+
+.VI {
+  background: url(/svgs/VI.svg) no-repeat; }
+
+.VN {
+  background: url(/svgs/VN.svg) no-repeat; }
+
+.VU {
+  background: url(/svgs/VU.svg) no-repeat; }
+
+.WF {
+  background: url(/svgs/WF.svg) no-repeat; }
+
+.WS {
+  background: url(/svgs/WS.svg) no-repeat; }
+
+.XK {
+  background: url(/svgs/XK.svg) no-repeat; }
+
+.YE {
+  background: url(/svgs/YE.svg) no-repeat; }
+
+.YT {
+  background: url(/svgs/YT.svg) no-repeat; }
+
+.ZA {
+  background: url(/svgs/ZA.svg) no-repeat; }
+
+.ZM {
+  background: url(/svgs/ZM.svg) no-repeat; }
+
+.ZW {
+  background: url(/svgs/ZW.svg) no-repeat; }

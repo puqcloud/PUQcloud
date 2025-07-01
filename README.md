@@ -17,7 +17,7 @@
 - 🌍 **Internationalization** — Tax rules, currencies, languages per client country.
 - 🏗️ **Cluster Support** — Node orchestration with master/agent communication.
 - 🔄 **Queue-Based Task Handling** — Fast and reliable job processing in background.
-- 🔓 **Free & Open Source** — MIT licensed, community-driven project.
+- 🔓 **Free & Open Source**
 
 ---
 
@@ -50,12 +50,27 @@ We welcome all types of contributions — code, documentation, translations, bug
 - Redis (for queues)
 - Node.js (for frontend assets, optional)
 - Composer
+- npm
 
 ---
 
 ## 🚀 Installation (Development)
 
 ```bash
+git clone https://github.com/puqcloud/PUQcloud.git
+cd PUQcloud
+composer install
+cp .env.example .env
+php artisan key:generate
+chmod -R 775 storage bootstrap/cache
+npm install
+npm run prod
+```
+Edit the .env file and fill in the required variables (database, app URL, etc).
+
+Then run this command to create an admin user:
+```bash
+php artisan puqcloud:seed --email admin@example.com --password QWEqwe123 --name Myname
 ```
 
 ## License
@@ -65,3 +80,5 @@ PUQcloud is open-source software licensed under the [GNU General Public License 
 ## Authors
 
 **Ruslan Polovyi** — founder and lead developer at **PUQ sp. z o.o.**
+
+**Dmytro Kravchenko** — Developer / DevOps engineer

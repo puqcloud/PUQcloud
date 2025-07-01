@@ -1,0 +1,62 @@
+{
+  "_from": "loaders.css@^0.1.2",
+  "_id": "loaders.css@0.1.2",
+  "_inBundle": false,
+  "_integrity": "sha1-Op+0NybHMzSjgUKvnQYpAZtlh0M=",
+  "_location": "/loaders.css",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "range",
+    "registry": true,
+    "raw": "loaders.css@^0.1.2",
+    "name": "loaders.css",
+    "escapedName": "loaders.css",
+    "rawSpec": "^0.1.2",
+    "saveSpec": null,
+    "fetchSpec": "^0.1.2"
+  },
+  "_requiredBy": [
+    "/"
+  ],
+  "_resolved": "https://registry.npmjs.org/loaders.css/-/loaders.css-0.1.2.tgz",
+  "_shasum": "3a9fb43726c73334a38142af9d0629019b658743",
+  "_spec": "loaders.css@^0.1.2",
+  "_where": "C:\\workspace\\Dashboardpack\\architectui-html-pro",
+  "author": {
+    "name": "Connor Atherton"
+  },
+  "bugs": {
+    "url": "https://github.com/ConnorAtherton/loaders.css/issues"
+  },
+  "bundleDependencies": false,
+  "deprecated": false,
+  "description": "Loading animations in pure css",
+  "devDependencies": {
+    "coffee-script": "^1.9.1",
+    "gulp": "^3.8.10",
+    "gulp-autoprefixer": "^2.0.0",
+    "gulp-cssmin": "^0.1.6",
+    "gulp-jade": "^0.10.0",
+    "gulp-plumber": "1.0.1",
+    "gulp-rename": "^1.2.0",
+    "gulp-sass": "^2.1.1",
+    "gulp-util": "^3.0.3",
+    "scss-lint": "0.0.0"
+  },
+  "homepage": "https://github.com/ConnorAtherton/loaders.css",
+  "keywords": [
+    "css",
+    "loaders",
+    "animation",
+    "animate"
+  ],
+  "license": "MIT",
+  "main": "loaders.css",
+  "name": "loaders.css",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/ConnorAtherton/loaders.css.git"
+  },
+  "style": "loaders.css",
+  "version": "0.1.2"
+}

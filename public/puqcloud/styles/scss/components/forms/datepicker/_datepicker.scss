@@ -1,0 +1,214 @@
+.datepicker {
+  &-container {
+    background-color: $white;
+    direction: ltr;
+    left: 0;
+    position: fixed;
+    -webkit-tap-highlight-color: transparent;
+    top: 0;
+    line-height: 34px;
+    touch-action: none;
+    -webkit-touch-callout: none;
+    user-select: none;
+    width: 276px;
+    z-index: -1;
+
+    &::before,
+    &::after {
+      border: 10px solid transparent;
+      content: " ";
+      display: block;
+      height: 0;
+      position: absolute;
+      width: 0;
+    }
+  }
+
+  &-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: $zindex-dropdown;
+    padding: 4px;
+    margin: $dropdown-spacer 0 0;
+    font-size: $font-size-base;
+    color: $body-color;
+    text-align: left;
+    list-style: none;
+    background-color: $dropdown-bg;
+    background-clip: padding-box;
+    border: $dropdown-border-width solid $dropdown-border-color;
+    @include border-radius($dropdown-border-radius);
+    box-shadow: $box-shadow-default;
+  }
+
+  &-inline {
+    position: static;
+    margin: 0 auto;
+    border: $dropdown-border-width solid $dropdown-border-color;
+    @include border-radius($dropdown-border-radius);
+    padding: 4px;
+  }
+
+  &-top-left,
+  &-top-right {
+    border-top-color: $dropdown-border-color;
+
+    &::before,
+    &::after {
+      border-top: 0;
+      left: 10px;
+      top: -11px;
+    }
+
+    &::before {
+      border-bottom-color: $dropdown-border-color;
+    }
+
+    &::after {
+      border-bottom-color: $white;
+      top: -10px;
+    }
+  }
+
+  &-bottom-left,
+  &-bottom-right {
+    border-bottom-color: $primary;
+
+    &::before,
+    &::after {
+      border-bottom: 0;
+      bottom: -11px;
+      left: 10px;
+    }
+
+    &::before {
+      border-top-color: $primary;
+    }
+
+    &::after {
+      border-top-color: $white;
+      bottom: -10px;
+    }
+  }
+
+  &-top-right,
+  &-bottom-right {
+    &::before,
+    &::after {
+      left: auto;
+      right: 10px;
+    }
+  }
+
+  &-panel {
+    > ul {
+      margin: 0;
+      padding: 0;
+
+      &::before,
+      &::after {
+        content: " ";
+        display: table;
+      }
+
+      &::after {
+        clear: both;
+      }
+
+      > li {
+        background-color: $white;
+        cursor: pointer;
+        float: left;
+        height: 34px;
+        list-style: none;
+        margin: 2px;
+        padding: 0;
+        text-align: center;
+        width: 34px;
+        @include border-radius($border-radius);
+        transition: all .2s;
+
+        &:hover {
+          background-color: $primary;
+          color: $white;
+        }
+
+        &.muted {
+          color: $gray-400;
+        }
+
+        &.muted:hover {
+          background: $gray-100;
+          color: $gray-500;
+        }
+
+        &.highlighted {
+          background-color: $warning;
+          color: color-yiq($warning);
+
+          &:hover {
+            background-color: $warning;
+            color: color-yiq($warning);
+          }
+        }
+
+        &.picked,
+        &.picked:hover {
+          background: $success;
+          color: $white;
+        }
+
+        &.disabled,
+        &.disabled:hover {
+          background-color: $gray-100;
+          color: $gray-400;
+          cursor: default;
+
+          &.highlighted {
+            background-color: $gray-200;
+            color: $gray-500;
+          }
+        }
+
+        &[data-view="years prev"],
+        &[data-view="year prev"],
+        &[data-view="month prev"],
+        &[data-view="years next"],
+        &[data-view="year next"],
+        &[data-view="month next"],
+        &[data-view="next"] {
+          font-size: 18px;
+        }
+
+        &[data-view="years current"],
+        &[data-view="year current"],
+        &[data-view="month current"] {
+          width: 186px;
+        }
+      }
+
+      &[data-view="years"],
+      &[data-view="months"] {
+        > li {
+          height: 52.5px;
+          line-height: 52.5px;
+          width: 62.5px;
+        }
+      }
+
+      &[data-view="week"] {
+        > li,
+        > li:hover {
+          background-color: $white;
+          cursor: default;
+          color: $gray-600;
+        }
+      }
+    }
+  }
+
+  &-hide {
+    display: none;
+  }
+}

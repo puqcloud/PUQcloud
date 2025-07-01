@@ -1,0 +1,7 @@
+{
+    "name": "New Order Notification",
+    "category": "staffOperational",
+    "custom": false,
+    "subject": "New Order Notification",
+    "text_mini": "New Order. Service:{{ $service->uuid }}, {{ $service->product->key }}/{{ $service->admin_label }}"
+}

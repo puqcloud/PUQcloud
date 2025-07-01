@@ -1,0 +1,1242 @@
+{
+    "AF": {
+        "name": "Afghanistan",
+        "calling_code": 93,
+        "native_name": "افغانستان"
+    },
+    "AX": {
+        "name": "Aland Islands",
+        "calling_code": 358,
+        "native_name": "Åland"
+    },
+    "AL": {
+        "name": "Albania",
+        "calling_code": 355,
+        "native_name": "Shqipëria"
+    },
+    "DZ": {
+        "name": "Algeria",
+        "calling_code": 213,
+        "native_name": "الجزائر"
+    },
+    "AS": {
+        "name": "American Samoa",
+        "calling_code": 684,
+        "native_name": "Amerika Sāmoa"
+    },
+    "AD": {
+        "name": "Andorra",
+        "calling_code": 376,
+        "native_name": "Andorra"
+    },
+    "AO": {
+        "name": "Angola",
+        "calling_code": 244,
+        "native_name": "Angola"
+    },
+    "AI": {
+        "name": "Anguilla",
+        "calling_code": 1,
+        "native_name": "Anguilla"
+    },
+    "AQ": {
+        "name": "Antarctica",
+        "calling_code": 672,
+        "native_name": "Antarctica"
+    },
+    "AG": {
+        "name": "Antigua And Barbuda",
+        "calling_code": 1,
+        "native_name": "Antigua and Barbuda"
+    },
+    "AR": {
+        "name": "Argentina",
+        "calling_code": 54,
+        "native_name": "Argentina"
+    },
+    "AM": {
+        "name": "Armenia",
+        "calling_code": 374,
+        "native_name": "Հայաստան"
+    },
+    "AW": {
+        "name": "Aruba",
+        "calling_code": 297,
+        "native_name": "Aruba"
+    },
+    "AU": {
+        "name": "Australia",
+        "calling_code": 61,
+        "native_name": "Australia"
+    },
+    "AT": {
+        "name": "Austria",
+        "calling_code": 43,
+        "native_name": "Österreich"
+    },
+    "AZ": {
+        "name": "Azerbaijan",
+        "calling_code": 994,
+        "native_name": "Azərbaycan"
+    },
+    "BS": {
+        "name": "Bahamas",
+        "calling_code": 1,
+        "native_name": "The Bahamas"
+    },
+    "BH": {
+        "name": "Bahrain",
+        "calling_code": 973,
+        "native_name": "البحرين"
+    },
+    "BD": {
+        "name": "Bangladesh",
+        "calling_code": 880,
+        "native_name": "বাংলাদেশ"
+    },
+    "BB": {
+        "name": "Barbados",
+        "calling_code": 1,
+        "native_name": "Barbados"
+    },
+    "BY": {
+        "name": "Belarus",
+        "calling_code": 375,
+        "native_name": "Беларусь"
+    },
+    "BE": {
+        "name": "Belgium",
+        "calling_code": 32,
+        "native_name": "België / Belgique / Belgien"
+    },
+    "BZ": {
+        "name": "Belize",
+        "calling_code": 501,
+        "native_name": "Belize"
+    },
+    "BJ": {
+        "name": "Benin",
+        "calling_code": 229,
+        "native_name": "Bénin"
+    },
+    "BM": {
+        "name": "Bermuda",
+        "calling_code": 1,
+        "native_name": "Bermuda"
+    },
+    "BT": {
+        "name": "Bhutan",
+        "calling_code": 975,
+        "native_name": "འབྲུག་ཡུལ"
+    },
+    "BO": {
+        "name": "Bolivia",
+        "calling_code": 591,
+        "native_name": "Bolivia"
+    },
+    "BA": {
+        "name": "Bosnia And Herzegovina",
+        "calling_code": 387,
+        "native_name": "Bosna i Hercegovina / Босна и Херцеговина"
+    },
+    "BW": {
+        "name": "Botswana",
+        "calling_code": 267,
+        "native_name": "Botswana"
+    },
+    "BR": {
+        "name": "Brazil",
+        "calling_code": 55,
+        "native_name": "Brasil"
+    },
+    "IO": {
+        "name": "British Indian Ocean Territory",
+        "calling_code": 246,
+        "native_name": "British Indian Ocean Territory"
+    },
+    "BN": {
+        "name": "Brunei Darussalam",
+        "calling_code": 673,
+        "native_name": "بروني دار السلام"
+    },
+    "BG": {
+        "name": "Bulgaria",
+        "calling_code": 359,
+        "native_name": "България"
+    },
+    "BF": {
+        "name": "Burkina Faso",
+        "calling_code": 226,
+        "native_name": "Burkina Faso"
+    },
+    "BI": {
+        "name": "Burundi",
+        "calling_code": 257,
+        "native_name": "Burundi"
+    },
+    "KH": {
+        "name": "Cambodia",
+        "calling_code": 855,
+        "native_name": "កម្ពុជា"
+    },
+    "CM": {
+        "name": "Cameroon",
+        "calling_code": 237,
+        "native_name": "Cameroun"
+    },
+    "CA": {
+        "name": "Canada",
+        "calling_code": 1,
+        "native_name": "Canada"
+    },
+    "IC": {
+        "name": "Canary Islands",
+        "calling_code": 34,
+        "native_name": "Islas Canarias"
+    },
+    "CV": {
+        "name": "Cape Verde",
+        "calling_code": 238,
+        "native_name": "Cabo Verde"
+    },
+    "KY": {
+        "name": "Cayman Islands",
+        "calling_code": 1,
+        "native_name": "Cayman Islands"
+    },
+    "CF": {
+        "name": "Central African Republic",
+        "calling_code": 236,
+        "native_name": "République centrafricaine"
+    },
+    "TD": {
+        "name": "Chad",
+        "calling_code": 235,
+        "native_name": "Tchad"
+    },
+    "CL": {
+        "name": "Chile",
+        "calling_code": 56,
+        "native_name": "Chile"
+    },
+    "CN": {
+        "name": "China",
+        "calling_code": 86,
+        "native_name": "中国"
+    },
+    "CX": {
+        "name": "Christmas Island",
+        "calling_code": 618,
+        "native_name": "Christmas Island"
+    },
+    "CC": {
+        "name": "Cocos (Keeling) Islands",
+        "calling_code": 61,
+        "native_name": "Cocos (Keeling) Islands"
+    },
+    "CO": {
+        "name": "Colombia",
+        "calling_code": 57,
+        "native_name": "Colombia"
+    },
+    "KM": {
+        "name": "Comoros",
+        "calling_code": 269,
+        "native_name": "Komori"
+    },
+    "CG": {
+        "name": "Congo",
+        "calling_code": 242,
+        "native_name": "Congo"
+    },
+    "CD": {
+        "name": "Congo, Democratic Republic",
+        "calling_code": 243,
+        "native_name": "République Démocratique du Congo"
+    },
+    "CK": {
+        "name": "Cook Islands",
+        "calling_code": 682,
+        "native_name": "Kūki 'Āirani"
+    },
+    "CR": {
+        "name": "Costa Rica",
+        "calling_code": 506,
+        "native_name": "Costa Rica"
+    },
+    "CI": {
+        "name": "Cote D'Ivoire",
+        "calling_code": 225,
+        "native_name": "Côte d'Ivoire"
+    },
+    "HR": {
+        "name": "Croatia",
+        "calling_code": 385,
+        "native_name": "Hrvatska"
+    },
+    "CU": {
+        "name": "Cuba",
+        "calling_code": 53,
+        "native_name": "Cuba"
+    },
+    "CW": {
+        "name": "Curacao",
+        "calling_code": 599,
+        "native_name": "Curaçao"
+    },
+    "CY": {
+        "name": "Cyprus",
+        "calling_code": 357,
+        "native_name": "Κύπρος (Kýpros)"
+    },
+    "CZ": {
+        "name": "Czech Republic",
+        "calling_code": 420,
+        "native_name": "Česká republika"
+    },
+    "DK": {
+        "name": "Denmark",
+        "calling_code": 45,
+        "native_name": "Danmark"
+    },
+    "DJ": {
+        "name": "Djibouti",
+        "calling_code": 253,
+        "native_name": "Djibouti"
+    },
+    "DM": {
+        "name": "Dominica",
+        "calling_code": 1,
+        "native_name": "Dominica"
+    },
+    "DO": {
+        "name": "Dominican Republic",
+        "calling_code": 1,
+        "native_name": "República Dominicana"
+    },
+    "EC": {
+        "name": "Ecuador",
+        "calling_code": 593,
+        "native_name": "Ecuador"
+    },
+    "EG": {
+        "name": "Egypt",
+        "calling_code": 20,
+        "native_name": "مصر (Misr)"
+    },
+    "SV": {
+        "name": "El Salvador",
+        "calling_code": 503,
+        "native_name": "El Salvador"
+    },
+    "GQ": {
+        "name": "Equatorial Guinea",
+        "calling_code": 240,
+        "native_name": "Guinea Ecuatorial"
+    },
+    "ER": {
+        "name": "Eritrea",
+        "calling_code": 291,
+        "native_name": "ኤርትራ (Ertra)"
+    },
+    "EE": {
+        "name": "Estonia",
+        "calling_code": 372,
+        "native_name": "Eesti"
+    },
+    "ET": {
+        "name": "Ethiopia",
+        "calling_code": 251,
+        "native_name": "ኢትዮጵያ (Ītyōṗṗyā)"
+    },
+    "FK": {
+        "name": "Falkland Islands (Malvinas)",
+        "calling_code": 500,
+        "native_name": "Falkland Islands"
+    },
+    "FO": {
+        "name": "Faroe Islands",
+        "calling_code": 298,
+        "native_name": "Føroyar"
+    },
+    "FJ": {
+        "name": "Fiji",
+        "calling_code": 679,
+        "native_name": "Fiji"
+    },
+    "FI": {
+        "name": "Finland",
+        "calling_code": 358,
+        "native_name": "Suomi"
+    },
+    "FR": {
+        "name": "France",
+        "calling_code": 33,
+        "native_name": "France"
+    },
+    "GF": {
+        "name": "French Guiana",
+        "calling_code": 594,
+        "native_name": "Guyane française"
+    },
+    "PF": {
+        "name": "French Polynesia",
+        "calling_code": 689,
+        "native_name": "Polynésie française"
+    },
+    "TF": {
+        "name": "French Southern Territories",
+        "calling_code": 0,
+        "native_name": "Terres australes françaises"
+    },
+    "GA": {
+        "name": "Gabon",
+        "calling_code": 241,
+        "native_name": "Gabon"
+    },
+    "GM": {
+        "name": "Gambia",
+        "calling_code": 220,
+        "native_name": "The Gambia"
+    },
+    "GE": {
+        "name": "Georgia",
+        "calling_code": 995,
+        "native_name": "საქართველო (Sakartvelo)"
+    },
+    "DE": {
+        "name": "Germany",
+        "calling_code": 49,
+        "native_name": "Deutschland"
+    },
+    "GH": {
+        "name": "Ghana",
+        "calling_code": 233,
+        "native_name": "Ghana"
+    },
+    "GI": {
+        "name": "Gibraltar",
+        "calling_code": 350,
+        "native_name": "Gibraltar"
+    },
+    "GR": {
+        "name": "Greece",
+        "calling_code": 30,
+        "native_name": "Ελλάδα (Elláda)"
+    },
+    "GL": {
+        "name": "Greenland",
+        "calling_code": 299,
+        "native_name": "Kalaallit Nunaat"
+    },
+    "GD": {
+        "name": "Grenada",
+        "calling_code": 1,
+        "native_name": "Grenada"
+    },
+    "GP": {
+        "name": "Guadeloupe",
+        "calling_code": 590,
+        "native_name": "Guadeloupe"
+    },
+    "GU": {
+        "name": "Guam",
+        "calling_code": 1,
+        "native_name": "Guåhån"
+    },
+    "GT": {
+        "name": "Guatemala",
+        "calling_code": 502,
+        "native_name": "Guatemala"
+    },
+    "GG": {
+        "name": "Guernsey",
+        "calling_code": 44,
+        "native_name": "Guernsey"
+    },
+    "GN": {
+        "name": "Guinea",
+        "calling_code": 224,
+        "native_name": "Guinée"
+    },
+    "GW": {
+        "name": "Guinea-Bissau",
+        "calling_code": 245,
+        "native_name": "Guiné-Bissau"
+    },
+    "GY": {
+        "name": "Guyana",
+        "calling_code": 592,
+        "native_name": "Guyana"
+    },
+    "HT": {
+        "name": "Haiti",
+        "calling_code": 509,
+        "native_name": "Haïti"
+    },
+    "HM": {
+        "name": "Heard Island & McDonald Islands",
+        "calling_code": 0,
+        "native_name": "Heard Island and McDonald Islands"
+    },
+    "VA": {
+        "name": "Holy See (Vatican City State)",
+        "calling_code": 39,
+        "native_name": "Sancta Sedes (Città del Vaticano)"
+    },
+    "HN": {
+        "name": "Honduras",
+        "calling_code": 504,
+        "native_name": "Honduras"
+    },
+    "HK": {
+        "name": "Hong Kong",
+        "calling_code": 852,
+        "native_name": "香港 (Heung Gong)"
+    },
+    "HU": {
+        "name": "Hungary",
+        "calling_code": 36,
+        "native_name": "Magyarország"
+    },
+    "IS": {
+        "name": "Iceland",
+        "calling_code": 354,
+        "native_name": "Ísland"
+    },
+    "IN": {
+        "name": "India",
+        "calling_code": 91,
+        "native_name": "भारत (Bhārat)"
+    },
+    "ID": {
+        "name": "Indonesia",
+        "calling_code": 62,
+        "native_name": "Indonesia"
+    },
+    "IR": {
+        "name": "Iran, Islamic Republic Of",
+        "calling_code": 98,
+        "native_name": "ایران (Īrān)"
+    },
+    "IQ": {
+        "name": "Iraq",
+        "calling_code": 964,
+        "native_name": "العراق (Al-‘Irāq)"
+    },
+    "IE": {
+        "name": "Ireland",
+        "calling_code": 353,
+        "native_name": "Éire"
+    },
+    "IM": {
+        "name": "Isle Of Man",
+        "calling_code": 44,
+        "native_name": "Mannin"
+    },
+    "IL": {
+        "name": "Israel",
+        "calling_code": 972,
+        "native_name": "יִשְׂרָאֵל (Yisra'el)"
+    },
+    "IT": {
+        "name": "Italy",
+        "calling_code": 39,
+        "native_name": "Italia"
+    },
+    "JM": {
+        "name": "Jamaica",
+        "calling_code": 1,
+        "native_name": "Jamaica"
+    },
+    "JP": {
+        "name": "Japan",
+        "calling_code": 81,
+        "native_name": "日本 (Nihon)"
+    },
+    "JE": {
+        "name": "Jersey",
+        "calling_code": 44,
+        "native_name": "Jèrri"
+    },
+    "JO": {
+        "name": "Jordan",
+        "calling_code": 962,
+        "native_name": "الأردن (Al-‘Urdunn)"
+    },
+    "KZ": {
+        "name": "Kazakhstan",
+        "calling_code": 7,
+        "native_name": "Қазақстан (Qazaqstan)"
+    },
+    "KE": {
+        "name": "Kenya",
+        "calling_code": 254,
+        "native_name": "Kenya"
+    },
+    "KI": {
+        "name": "Kiribati",
+        "calling_code": 686,
+        "native_name": "Kiribati"
+    },
+    "KR": {
+        "name": "Korea",
+        "calling_code": 82,
+        "native_name": "대한민국 (Daehan Minguk)"
+    },
+    "XK": {
+        "name": "Kosovo",
+        "calling_code": 383,
+        "native_name": "Kosovë / Kosovo"
+    },
+    "KW": {
+        "name": "Kuwait",
+        "calling_code": 965,
+        "native_name": "الكويت (Al-Kuwayt)"
+    },
+    "KG": {
+        "name": "Kyrgyzstan",
+        "calling_code": 996,
+        "native_name": "Кыргызстан (Kyrgyzstan)"
+    },
+    "LA": {
+        "name": "Lao People's Democratic Republic",
+        "calling_code": 856,
+        "native_name": "ປະເທດລາວ (Lao)"
+    },
+    "LV": {
+        "name": "Latvia",
+        "calling_code": 371,
+        "native_name": "Latvija"
+    },
+    "LB": {
+        "name": "Lebanon",
+        "calling_code": 961,
+        "native_name": "لبنان (Lubnān)"
+    },
+    "LS": {
+        "name": "Lesotho",
+        "calling_code": 266,
+        "native_name": "Lesotho"
+    },
+    "LR": {
+        "name": "Liberia",
+        "calling_code": 231,
+        "native_name": "Liberia"
+    },
+    "LY": {
+        "name": "Libyan Arab Jamahiriya",
+        "calling_code": 218,
+        "native_name": "ليبيا (Lībiyā)"
+    },
+    "LI": {
+        "name": "Liechtenstein",
+        "calling_code": 423,
+        "native_name": "Liechtenstein"
+    },
+    "LT": {
+        "name": "Lithuania",
+        "calling_code": 370,
+        "native_name": "Lietuva"
+    },
+    "LU": {
+        "name": "Luxembourg",
+        "calling_code": 352,
+        "native_name": "Lëtzebuerg / Luxembourg / Luxemburg"
+    },
+    "MO": {
+        "name": "Macao",
+        "calling_code": 853,
+        "native_name": "澳門 (Macao)"
+    },
+    "MK": {
+        "name": "Macedonia",
+        "calling_code": 389,
+        "native_name": "Македонија (Makedonija)"
+    },
+    "MG": {
+        "name": "Madagascar",
+        "calling_code": 261,
+        "native_name": "Madagasikara"
+    },
+    "MW": {
+        "name": "Malawi",
+        "calling_code": 265,
+        "native_name": "Malawi"
+    },
+    "MY": {
+        "name": "Malaysia",
+        "calling_code": 60,
+        "native_name": "Malaysia"
+    },
+    "MV": {
+        "name": "Maldives",
+        "calling_code": 960,
+        "native_name": "ދިވެހިރާއްޖޭގެ (Dhivehi Raajje)"
+    },
+    "ML": {
+        "name": "Mali",
+        "calling_code": 223,
+        "native_name": "Mali"
+    },
+    "MT": {
+        "name": "Malta",
+        "calling_code": 356,
+        "native_name": "Malta"
+    },
+    "MH": {
+        "name": "Marshall Islands",
+        "calling_code": 692,
+        "native_name": "Aolepān Aorōkin M̧ajeļ"
+    },
+    "MQ": {
+        "name": "Martinique",
+        "calling_code": 596,
+        "native_name": "Martinique"
+    },
+    "MR": {
+        "name": "Mauritania",
+        "calling_code": 222,
+        "native_name": "موريتانيا (Mūrītānyā)"
+    },
+    "MU": {
+        "name": "Mauritius",
+        "calling_code": 230,
+        "native_name": "Maurice"
+    },
+    "YT": {
+        "name": "Mayotte",
+        "calling_code": 269,
+        "native_name": "Mayotte"
+    },
+    "MX": {
+        "name": "Mexico",
+        "calling_code": 52,
+        "native_name": "México"
+    },
+    "FM": {
+        "name": "Micronesia, Federated States Of",
+        "calling_code": 691,
+        "native_name": "Micronesia"
+    },
+    "MD": {
+        "name": "Moldova",
+        "calling_code": 373,
+        "native_name": "Moldova"
+    },
+    "MC": {
+        "name": "Monaco",
+        "calling_code": 377,
+        "native_name": "Monaco"
+    },
+    "MN": {
+        "name": "Mongolia",
+        "calling_code": 976,
+        "native_name": "Монгол Улс (Mongol Uls)"
+    },
+    "ME": {
+        "name": "Montenegro",
+        "calling_code": 382,
+        "native_name": "Црна Гора (Crna Gora)"
+    },
+    "MS": {
+        "name": "Montserrat",
+        "calling_code": 1,
+        "native_name": "Montserrat"
+    },
+    "MA": {
+        "name": "Morocco",
+        "calling_code": 212,
+        "native_name": "المغرب (Al-Maghrib)"
+    },
+    "MZ": {
+        "name": "Mozambique",
+        "calling_code": 258,
+        "native_name": "Moçambique"
+    },
+    "MM": {
+        "name": "Myanmar",
+        "calling_code": 95,
+        "native_name": "မြန်မာ (Myanma)"
+    },
+    "NA": {
+        "name": "Namibia",
+        "calling_code": 264,
+        "native_name": "Namibië"
+    },
+    "NR": {
+        "name": "Nauru",
+        "calling_code": 674,
+        "native_name": "Nauru"
+    },
+    "NP": {
+        "name": "Nepal",
+        "calling_code": 977,
+        "native_name": "नेपाल (Nepal)"
+    },
+    "NL": {
+        "name": "Netherlands",
+        "calling_code": 31,
+        "native_name": "Nederland"
+    },
+    "AN": {
+        "name": "Netherlands Antilles",
+        "calling_code": 599,
+        "native_name": "Nederlandse Antillen"
+    },
+    "NC": {
+        "name": "New Caledonia",
+        "calling_code": 687,
+        "native_name": "Nouvelle-Calédonie"
+    },
+    "NZ": {
+        "name": "New Zealand",
+        "calling_code": 64,
+        "native_name": "Aotearoa"
+    },
+    "NI": {
+        "name": "Nicaragua",
+        "calling_code": 505,
+        "native_name": "Nicaragua"
+    },
+    "NE": {
+        "name": "Niger",
+        "calling_code": 227,
+        "native_name": "Niger"
+    },
+    "NG": {
+        "name": "Nigeria",
+        "calling_code": 234,
+        "native_name": "Nigeria"
+    },
+    "NU": {
+        "name": "Niue",
+        "calling_code": 683,
+        "native_name": "Niue"
+    },
+    "NF": {
+        "name": "Norfolk Island",
+        "calling_code": 6723,
+        "native_name": "Norfolk Island"
+    },
+    "MP": {
+        "name": "Northern Mariana Islands",
+        "calling_code": 1,
+        "native_name": "Northern Mariana Islands"
+    },
+    "NO": {
+        "name": "Norway",
+        "calling_code": 47,
+        "native_name": "Norge"
+    },
+    "OM": {
+        "name": "Oman",
+        "calling_code": 968,
+        "native_name": "عمان (Oman)"
+    },
+    "PK": {
+        "name": "Pakistan",
+        "calling_code": 92,
+        "native_name": "پاکستان (Pākistān)"
+    },
+    "PW": {
+        "name": "Palau",
+        "calling_code": 680,
+        "native_name": "Palau"
+    },
+    "PS": {
+        "name": "Palestine, State of",
+        "calling_code": 970,
+        "native_name": "فلسطين (Filasṭīn)"
+    },
+    "PA": {
+        "name": "Panama",
+        "calling_code": 507,
+        "native_name": "Panamá"
+    },
+    "PG": {
+        "name": "Papua New Guinea",
+        "calling_code": 675,
+        "native_name": "Papua New Guinea"
+    },
+    "PY": {
+        "name": "Paraguay",
+        "calling_code": 595,
+        "native_name": "Paraguay"
+    },
+    "PE": {
+        "name": "Peru",
+        "calling_code": 51,
+        "native_name": "Perú"
+    },
+    "PH": {
+        "name": "Philippines",
+        "calling_code": 63,
+        "native_name": "Pilipinas"
+    },
+    "PN": {
+        "name": "Pitcairn",
+        "calling_code": 64,
+        "native_name": "Pitcairn"
+    },
+    "PL": {
+        "name": "Poland",
+        "calling_code": 48,
+        "native_name": "Polska"
+    },
+    "PT": {
+        "name": "Portugal",
+        "calling_code": 351,
+        "native_name": "Portugal"
+    },
+    "PR": {
+        "name": "Puerto Rico",
+        "calling_code": 1,
+        "native_name": "Puerto Rico"
+    },
+    "QA": {
+        "name": "Qatar",
+        "calling_code": 974,
+        "native_name": "قطر (Qaṭar)"
+    },
+    "RE": {
+        "name": "Reunion",
+        "calling_code": 262,
+        "native_name": "Réunion"
+    },
+    "RO": {
+        "name": "Romania",
+        "calling_code": 40,
+        "native_name": "România"
+    },
+    "RU": {
+        "name": "Russian Federation",
+        "calling_code": 7,
+        "native_name": "Россия (Rossiya)"
+    },
+    "RW": {
+        "name": "Rwanda",
+        "calling_code": 250,
+        "native_name": "Rwanda"
+    },
+    "BL": {
+        "name": "Saint Barthelemy",
+        "calling_code": 590,
+        "native_name": "Saint-Barthélemy"
+    },
+    "SH": {
+        "name": "Saint Helena",
+        "calling_code": 290,
+        "native_name": "Saint Helena"
+    },
+    "KN": {
+        "name": "Saint Kitts And Nevis",
+        "calling_code": 1,
+        "native_name": "Saint Kitts and Nevis"
+    },
+    "LC": {
+        "name": "Saint Lucia",
+        "calling_code": 1,
+        "native_name": "Saint Lucia"
+    },
+    "MF": {
+        "name": "Saint Martin",
+        "calling_code": 590,
+        "native_name": "Saint-Martin"
+    },
+    "PM": {
+        "name": "Saint Pierre And Miquelon",
+        "calling_code": 508,
+        "native_name": "Saint-Pierre-et-Miquelon"
+    },
+    "VC": {
+        "name": "Saint Vincent And Grenadines",
+        "calling_code": 1,
+        "native_name": "Saint Vincent and the Grenadines"
+    },
+    "WS": {
+        "name": "Samoa",
+        "calling_code": 685,
+        "native_name": "Samoa"
+    },
+    "SM": {
+        "name": "San Marino",
+        "calling_code": 378,
+        "native_name": "San Marino"
+    },
+    "ST": {
+        "name": "Sao Tome And Principe",
+        "calling_code": 239,
+        "native_name": "São Tomé e Príncipe"
+    },
+    "SA": {
+        "name": "Saudi Arabia",
+        "calling_code": 966,
+        "native_name": "المملكة العربية السعودية (Al-Mamlakah Al-‘Arabīyah As-Su‘ūdīyah)"
+    },
+    "SN": {
+        "name": "Senegal",
+        "calling_code": 221,
+        "native_name": "Sénégal"
+    },
+    "RS": {
+        "name": "Serbia",
+        "calling_code": 381,
+        "native_name": "Србија (Srbija)"
+    },
+    "SC": {
+        "name": "Seychelles",
+        "calling_code": 248,
+        "native_name": "Seychelles"
+    },
+    "SL": {
+        "name": "Sierra Leone",
+        "calling_code": 232,
+        "native_name": "Sierra Leone"
+    },
+    "SG": {
+        "name": "Singapore",
+        "calling_code": 65,
+        "native_name": "Singapore"
+    },
+    "SK": {
+        "name": "Slovakia",
+        "calling_code": 421,
+        "native_name": "Slovensko"
+    },
+    "SI": {
+        "name": "Slovenia",
+        "calling_code": 386,
+        "native_name": "Slovenija"
+    },
+    "SB": {
+        "name": "Solomon Islands",
+        "calling_code": 677,
+        "native_name": "Solomon Islands"
+    },
+    "SO": {
+        "name": "Somalia",
+        "calling_code": 252,
+        "native_name": "Soomaaliya"
+    },
+    "ZA": {
+        "name": "South Africa",
+        "calling_code": 27,
+        "native_name": "South Africa"
+    },
+    "GS": {
+        "name": "South Georgia And Sandwich Isl.",
+        "calling_code": 500,
+        "native_name": "South Georgia and the South Sandwich Islands"
+    },
+    "ES": {
+        "name": "Spain",
+        "calling_code": 34,
+        "native_name": "España"
+    },
+    "LK": {
+        "name": "Sri Lanka",
+        "calling_code": 94,
+        "native_name": "ශ්‍රී ලංකා (Sri Lankā)"
+    },
+    "SD": {
+        "name": "Sudan",
+        "calling_code": 249,
+        "native_name": "السودان (As-Sūdān)"
+    },
+    "SS": {
+        "name": "South Sudan",
+        "calling_code": 211,
+        "native_name": "جنوب السودان (Janūb as-Sūdān)"
+    },
+    "SR": {
+        "name": "Suriname",
+        "calling_code": 597,
+        "native_name": "Suriname"
+    },
+    "SJ": {
+        "name": "Svalbard And Jan Mayen",
+        "calling_code": 47,
+        "native_name": "Svalbard og Jan Mayen"
+    },
+    "SZ": {
+        "name": "Swaziland",
+        "calling_code": 268,
+        "native_name": "Eswatini"
+    },
+    "SE": {
+        "name": "Sweden",
+        "calling_code": 46,
+        "native_name": "Sverige"
+    },
+    "CH": {
+        "name": "Switzerland",
+        "calling_code": 41,
+        "native_name": "Schweiz / Suisse / Svizzera / Svizra"
+    },
+    "SY": {
+        "name": "Syrian Arab Republic",
+        "calling_code": 963,
+        "native_name": "سوريا (Sūriyā)"
+    },
+    "TW": {
+        "name": "Taiwan",
+        "calling_code": 886,
+        "native_name": "台灣 (Táiwān)"
+    },
+    "TJ": {
+        "name": "Tajikistan",
+        "calling_code": 992,
+        "native_name": "Таджикистан (Tadzhikistan)"
+    },
+    "TZ": {
+        "name": "Tanzania",
+        "calling_code": 255,
+        "native_name": "Tanzania"
+    },
+    "TH": {
+        "name": "Thailand",
+        "calling_code": 66,
+        "native_name": "ประเทศไทย (Prathet Thai)"
+    },
+    "TL": {
+        "name": "Timor-Leste",
+        "calling_code": 670,
+        "native_name": "Timór-Leste"
+    },
+    "TG": {
+        "name": "Togo",
+        "calling_code": 228,
+        "native_name": "Togo"
+    },
+    "TK": {
+        "name": "Tokelau",
+        "calling_code": 690,
+        "native_name": "Tokelau"
+    },
+    "TO": {
+        "name": "Tonga",
+        "calling_code": 676,
+        "native_name": "Tonga"
+    },
+    "TT": {
+        "name": "Trinidad And Tobago",
+        "calling_code": 1,
+        "native_name": "Trinidad and Tobago"
+    },
+    "TN": {
+        "name": "Tunisia",
+        "calling_code": 216,
+        "native_name": "تونس (Tūnis)"
+    },
+    "TR": {
+        "name": "Turkey",
+        "calling_code": 90,
+        "native_name": "Türkiye"
+    },
+    "TM": {
+        "name": "Turkmenistan",
+        "calling_code": 993,
+        "native_name": "Türkmenistan"
+    },
+    "TC": {
+        "name": "Turks And Caicos Islands",
+        "calling_code": 1,
+        "native_name": "Turks and Caicos Islands"
+    },
+    "TV": {
+        "name": "Tuvalu",
+        "calling_code": 688,
+        "native_name": "Tuvalu"
+    },
+    "UG": {
+        "name": "Uganda",
+        "calling_code": 256,
+        "native_name": "Uganda"
+    },
+    "UA": {
+        "name": "Ukraine",
+        "calling_code": 380,
+        "native_name": "Україна (Ukrayina)"
+    },
+    "AE": {
+        "name": "United Arab Emirates",
+        "calling_code": 971,
+        "native_name": "الإمارات العربية المتحدة (Al-Emārāt al-‘Arabīyah al-Muttaḥidah)"
+    },
+    "GB": {
+        "name": "United Kingdom",
+        "calling_code": 44,
+        "native_name": "United Kingdom"
+    },
+    "US": {
+        "name": "United States",
+        "calling_code": 1,
+        "native_name": "United States"
+    },
+    "UM": {
+        "name": "United States Outlying Islands",
+        "calling_code": 1,
+        "native_name": "United States Outlying Islands"
+    },
+    "UY": {
+        "name": "Uruguay",
+        "calling_code": 598,
+        "native_name": "Uruguay"
+    },
+    "UZ": {
+        "name": "Uzbekistan",
+        "calling_code": 998,
+        "native_name": "Ўзбекистон (Oʻzbekiston)"
+    },
+    "VU": {
+        "name": "Vanuatu",
+        "calling_code": 678,
+        "native_name": "Vanuatu"
+    },
+    "VE": {
+        "name": "Venezuela",
+        "calling_code": 58,
+        "native_name": "Venezuela"
+    },
+    "VN": {
+        "name": "Viet Nam",
+        "calling_code": 84,
+        "native_name": "Việt Nam"
+    },
+    "VG": {
+        "name": "Virgin Islands, British",
+        "calling_code": 1,
+        "native_name": "Virgin Islands, British"
+    },
+    "VI": {
+        "name": "Virgin Islands, U.S.",
+        "calling_code": 1,
+        "native_name": "Virgin Islands, U.S."
+    },
+    "WF": {
+        "name": "Wallis And Futuna",
+        "calling_code": 681,
+        "native_name": "Wallis et Futuna"
+    },
+    "EH": {
+        "name": "Western Sahara",
+        "calling_code": 212,
+        "native_name": "الصحراء الغربية (As-Saḥrā’ al-Gharbīyah)"
+    },
+    "YE": {
+        "name": "Yemen",
+        "calling_code": 967,
+        "native_name": "اليمن (Al-Yaman)"
+    },
+    "ZM": {
+        "name": "Zambia",
+        "calling_code": 260,
+        "native_name": "Zambia"
+    },
+    "ZW": {
+        "name": "Zimbabwe",
+        "calling_code": 263,
+        "native_name": "Zimbabwe"
+    }
+}

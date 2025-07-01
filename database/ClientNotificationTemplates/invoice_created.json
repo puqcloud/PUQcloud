@@ -1,0 +1,7 @@
+{
+    "name": "Client Invoice Created",
+    "category": "clientOperational",
+    "custom": false,
+    "subject": "Invoice Created",
+    "text_mini": "Invoice Created. Invoice:{{ $invoice->uuid }}, {{ $invoice->number }}"
+}
