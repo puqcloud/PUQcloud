@@ -6,6 +6,14 @@
 
 @section('head')
     @parent
+    <style>
+        #phone_number {
+            width: 100% !important;
+        }
+        .iti {
+            width: 100%;
+        }
+    </style>
 @endsection
 
 @section('buttons')

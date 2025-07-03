@@ -6,6 +6,14 @@
 
 @section('head')
     @parent
+    <style>
+        #phone_number {
+            width: 100% !important;
+        }
+        .iti {
+            width: 100%;
+        }
+    </style>
 @endsection
 
 @section('buttons')
@@ -382,7 +390,6 @@
                 const iti = window.intlTelInput($input[0], {
                     separateDialCode: true,
                     initialCountry: navigator.language.split('-')[1] || 'us',
-                    utilsScript: "{{asset_admin('vendors/intl-tel-input/build/js/utils.js') }}",
                 });
 
                 $input.on('countrychange', function () {
@@ -523,7 +530,6 @@
                 const iti = window.intlTelInput($input[0], {
                     separateDialCode: true,
                     initialCountry: navigator.language.split('-')[1] || 'us',
-                    utilsScript: "{{asset_admin('vendors/intl-tel-input/build/js/utils.js') }}",
                 });
 
                 $input.on('countrychange', function () {

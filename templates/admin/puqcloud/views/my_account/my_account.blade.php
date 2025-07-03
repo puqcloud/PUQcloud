@@ -6,6 +6,14 @@
 
 @section('head')
     @parent
+    <style>
+        #phone_number {
+            width: 100% !important;
+        }
+        .iti {
+            width: 100%;
+        }
+    </style>
 @endsection
 
 @section('content')
@@ -86,13 +94,11 @@
                         <div class="mb-3">
                             <label class="form-label" for="phone_number">{{__('main.Phone Number')}}</label>
                             <div>
-                                <input type="text" class="form-control" id="phone_number" name="phone_number"
-                                       style="width: 100%;">
+                                <input type="text" class="form-control" id="phone_number" name="phone_number" style="width: 100%;">
                                 <input id="country_code" type="hidden" name="country_code">
                             </div>
                         </div>
                     </div>
-
 
                     <div class="col-12 col-sm-6 col-md-6 col-lg mb-1">
                         <div class="mb-3">
@@ -130,7 +136,6 @@
             const iti = window.intlTelInput($input[0], {
                 separateDialCode: true,
                 initialCountry: navigator.language.split('-')[1] || 'us',
-                utilsScript: "{{asset_admin('vendors/intl-tel-input/build/js/utils.js') }}",
             });
 
             $input.on('countrychange', function () {

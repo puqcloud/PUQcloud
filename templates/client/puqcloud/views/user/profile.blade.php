@@ -7,6 +7,9 @@
 @section('head')
     @parent
     <style>
+        #phone_number {
+            width: 100% !important;
+        }
         .iti {
             width: 100%;
         }
@@ -123,7 +126,6 @@
                 separateDialCode: true,
                 width: '100%',
                 initialCountry: navigator.language.split('-')[1] || 'us',
-                utilsScript: "{{asset_admin('vendors/intl-tel-input/build/js/utils.js') }}",
             });
 
             $input.on('countrychange', function () {

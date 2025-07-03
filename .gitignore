@@ -6,6 +6,10 @@
 /public/storage
 /storage/*.key
 /vendor
+/public/css
+/public/js
+/public/fonts
+/public/images
 .env
 .env.backup
 .env.production
