@@ -1,7 +1,0 @@
-{
-    "name": "Admin Failed Login Attempt",
-    "category": "staffOperational",
-    "custom": false,
-    "subject": "Admin Failed Login Attempt",
-    "text_mini": "Admin Failed Login, Email:{{ $email }}, IP:{{ $ip }}"
-}

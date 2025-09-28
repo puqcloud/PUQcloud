@@ -1,7 +1,0 @@
-{
-    "name": "Service Create Successful",
-    "category": "staffOperational",
-    "custom": false,
-    "subject": "Service Create Successful",
-    "text_mini": "Service Create Successful. Service:{{ $service->uuid }}, {{ $service->product->key }}/{{ $service->admin_label }}"
-}

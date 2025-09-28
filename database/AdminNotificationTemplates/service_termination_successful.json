@@ -1,7 +1,0 @@
-{
-    "name": "Service Termination Successful",
-    "category": "staffOperational",
-    "custom": false,
-    "subject": "Service Termination Successful",
-    "text_mini": "Service Termination Successful. Service:{{ $service->uuid }}, {{ $service->product->key }}/{{ $service->admin_label }}"
-}

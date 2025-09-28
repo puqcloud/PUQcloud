@@ -1,7 +1,0 @@
-{
-    "name": "Client One-time passcode",
-    "category": "clientAdministrative",
-    "custom": false,
-    "subject": "One-time passcode",
-    "text_mini": "PUQcloud passcode: {{ $code }}"
-}

@@ -1,3 +1,0 @@
-// Sticky Elements
-
-$(document).ready(() => {});
