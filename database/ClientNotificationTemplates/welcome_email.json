@@ -1,0 +1,7 @@
+{
+    "name": "Client Welcome Email",
+    "category": "clientAdministrative",
+    "custom": false,
+    "subject": "Welcome to Panel",
+    "text_mini": "Welcome, {{ $user->firstname }}! Log in to Dashboard: {{ route('client.web.panel.login') }}"
+}

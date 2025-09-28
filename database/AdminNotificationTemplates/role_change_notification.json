@@ -1,0 +1,7 @@
+{
+    "name": "Role Change Notification",
+    "category": "staffAdministrative",
+    "custom": false,
+    "subject": "Role Change Notification",
+    "text_mini": "Your permissions have been changed. Login to Dashboard: {{ route('admin.web.dashboard') }}"
+}

@@ -1,0 +1,122 @@
+//
+// Multiselect
+//
+
+//
+$state-bg-select: $primary !default;
+$state-border-select: $state-bg-select !default;
+$state-color-select: $white !default;
+
+$state-bg-hover: $dropdown-link-hover-bg !default;
+$state-border-hover: $dropdown-link-hover-bg !default;
+$state-color-hover: $dropdown-link-hover-color !default;
+
+$state-bg-focus: $dropdown-link-active-bg !default;
+$state-border-focus: $dropdown-link-active-bg !default;
+$state-color-focus: $dropdown-link-hover-bg !default;
+
+$multiselect-gutter-pt: 0.115 !default;
+$multiselect-tag-padding-left: 0.35em !default;
+$multiselect-tag-padding-right: 0.35em !default;
+$multiselect-tag-color: $dropdown-link-color !default;
+$multiselect-tag-border: darken($dropdown-link-hover-bg, 15%) !default;
+$multiselect-tag-bg: $dropdown-link-hover-bg !default;
+$multiselect-tag-height-pt: 1 - ($multiselect-gutter-pt * 2) !default;
+$multiselect-tag-gutter: calc(#{$input-height / 5} - #{$input-border-width}) !default;
+$multiselect-tag-height: ($input-height / 1.5) !default;
+$multiselect-tag-border-radius: $border-radius-sm !default;
+
+$multiselect-tag-bg-hover: $state-bg-hover !default;
+$multiselect-tag-border-hover: $state-border-hover !default;
+$multiselect-tag-color-hover: $state-color-hover !default;
+
+.select2-container {
+  box-sizing: border-box;
+
+  display: inline-block;
+  margin: 0;
+  position: relative;
+  vertical-align: middle;
+
+  @import "single";
+  @import "multiple";
+}
+
+@import "dropdown";
+
+.select2-close-mask {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: block;
+  position: fixed;
+  left: 0;
+  top: 0;
+  min-height: 100%;
+  min-width: 100%;
+  height: auto;
+  width: auto;
+  opacity: 0;
+  z-index: 99;
+
+  // styles required for IE to work
+
+  background-color: #fff;
+  filter: alpha(opacity=0);
+}
+
+.select2-hidden-accessible {
+  border: 0 !important;
+  clip: rect(0 0 0 0) !important;
+  -webkit-clip-path: inset(50%) !important;
+  clip-path: inset(50%) !important;
+  height: 1px !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+  position: absolute !important;
+  width: 1px !important;
+  white-space: nowrap !important;
+}
+
+//@import "theme/default/layout";
+//@import "theme/classic/layout";
+@import "theme/bs-theme";
+
+// Modifiers
+
+.select2-container--open .select2-dropdown {
+  font-size: $font-size-base;
+  color: $body-color;
+  text-align: left;
+  list-style: none;
+  background-color: $dropdown-bg;
+  background-clip: padding-box;
+  border: $dropdown-border-width solid $dropdown-border-color;
+  @include border-bottom-radius($dropdown-border-radius);
+  box-shadow: $box-shadow-default;
+}
+
+.select2-container--bootstrap4 .select2-selection--multiple .select2-selection__choice {
+  display: inline-table;
+  color: $multiselect-tag-color;
+  padding: 5px $multiselect-tag-padding-right 5px $multiselect-tag-padding-left;
+  margin-left: $multiselect-tag-gutter;
+  margin-top: 0;
+  border-radius: $multiselect-tag-border-radius;
+  background-color: $multiselect-tag-bg;
+  border: 1px solid $multiselect-tag-border;
+  cursor: default;
+  vertical-align: top;
+  text-align: center;
+  overflow: hidden;
+  max-width: 100%;
+}
+
+.select2-container--bootstrap4 .select2-selection--multiple .select2-selection__rendered {
+  padding-top: 0.3rem;
+  padding-left: 0;
+}
+
+.select2-container--bootstrap4 .select2-selection--multiple .select2-search__field {
+  padding-top: 0.28rem !important;
+}

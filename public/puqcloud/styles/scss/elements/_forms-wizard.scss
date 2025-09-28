@@ -1,0 +1,220 @@
+// Wizard Multi Step
+
+.forms-wizard {
+  margin: 0;
+  padding: 0;
+  list-style-type: none;
+  width: 100%;
+  display: table;
+  table-layout: fixed;
+  @include border-radius($border-radius);
+  border: 0;
+
+  li {
+    display: table-cell;
+    vertical-align: middle;
+    text-align: center;
+    cursor: pointer;
+    font-size: $font-size-lg / 1.1;
+    padding: ($layout-spacer-x / 1.5) 0;
+    color: $gray-500;
+    position: relative;
+
+    .nav-link {
+      display: block;
+      padding: 0;
+      color: $gray-500;
+
+      &:focus,
+      &:active,
+      &:hover {
+        border-color: transparent;
+        color: $gray-700 !important;
+      }
+    }
+
+    &::after,
+    &::before {
+      position: absolute;
+      height: 4px;
+      top: 50%;
+      margin-top: -($layout-spacer-x / 1.5);
+      width: 50%;
+      content: '';
+      background: $gray-300;
+      z-index: 5;
+      transition: all .2s;
+    }
+
+    &::after {
+      left: 50%;
+    }
+
+    &::before {
+      left: 0;
+    }
+
+    &:first-child {
+      &::before {
+        @include border-start-radius(20px);
+      }
+    }
+
+    &:last-child {
+      &::after {
+        @include border-end-radius(20px);
+      }
+    }
+
+    em {
+      font-style: normal;
+      font-size: $h4-font-size;
+      background: $gray-400;
+      color: $white;
+      text-align: center;
+      padding: 0;
+      width: 40px;
+      height: 40px;
+      line-height: 40px;
+      @include border-radius(50px);
+      display: block;
+      margin: 0 auto 0.5rem;
+      position: relative;
+      z-index: 7;
+      transition: all .2s;
+    }
+
+    &.active {
+
+      .nav-link {
+        color: $gray-700;
+      }
+
+      em {
+        background: $primary;
+        color: $white;
+      }
+
+      &::after,
+      &::before {
+        background: $primary;
+      }
+    }
+
+    &.done {
+      em {
+        font-family: 'Linearicons-Free';
+        @extend .lnr-checkmark-circle !optional;
+        background: $success;
+        overflow: hidden;
+        &::before {
+          width: 42px;
+          height: 42px;
+          font-size: 1.2rem;
+          line-height: 40px;
+          text-align: center;
+          display: block;
+        }
+      }
+
+      &::after,
+      &::before {
+        background: $success;
+      }
+
+      &:hover {
+        color: $gray-700 !important;
+      }
+    }
+
+    &:hover {
+      color: $gray-600;
+    }
+  }
+}
+
+// Form Wizard Alternate
+
+.forms-wizard-alt {
+  .forms-wizard {
+    li {
+      font-size: $font-size-base;
+
+      em {
+        width: 14px;
+        height: 14px;
+        line-height: 14px;
+        text-indent: -999rem;
+        border: $white solid 2px;
+      }
+    }
+  }
+}
+
+.forms-wizard-vertical {
+  .forms-wizard {
+    display: block;
+    width: 30%;
+    float: left;
+    padding: 0 $layout-spacer-x $layout-spacer-x 0;
+
+    li {
+      display: block;
+      margin: 0;
+      padding: 0;
+
+      &::before,
+      &::after {
+        display: none;
+      }
+
+      a {
+        text-align: left;
+        display: flex;
+        align-items: center;
+        align-content: flex-start;
+        padding: ($layout-spacer-x / 2);
+        margin-bottom: ($layout-spacer-x / 3);
+        @include border-radius($border-radius-lg);
+        transition: all .2s;
+
+        em {
+          margin: 0 ($layout-spacer-x / 2) 0 0;
+        }
+
+        &:active,
+        &:focus,
+        &:hover {
+          background: $gray-200;
+          color: $gray-700 !important;
+        }
+      }
+
+      &.active {
+        a {
+          background: $primary;
+          color: $white;
+
+          &:active,
+          &:focus,
+          &:hover {
+            color: $white !important;
+          }
+
+          em {
+            background: rgba(255, 255, 255, .2);
+          }
+        }
+      }
+    }
+  }
+
+  .form-wizard-content {
+    width: 70%;
+    overflow: auto;
+    min-height: auto !important;
+  }
+}
+.form-wizard-content {
+  min-height: auto !important;
+}

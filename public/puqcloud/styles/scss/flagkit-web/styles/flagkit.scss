@@ -1,0 +1,12 @@
+@import './flags.scss';
+
+.flag {
+	@include flag-background('16');
+	&.medium { 	@include flag-background('24') }
+	&.large { 	@include flag-background('32') }
+}
+
+
+@each $country-code in $FLAGKIT_COUNTRY_CODES {
+	.#{$country-code} { 	background: url(#{$FLAGKIT_FOLDER_PATH}#{$country-code}.svg) no-repeat; }
+}

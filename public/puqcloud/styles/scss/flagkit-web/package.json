@@ -1,0 +1,58 @@
+{
+  "_from": "flagkit-web@0.0.3",
+  "_id": "flagkit-web@0.0.3",
+  "_inBundle": false,
+  "_integrity": "sha512-4Vec1j+Op/z/ICdphePatzg97IVkPoG9ne+NE+0zRk9kfY9iA3XUtCVXYAQMD/cCbxKck55/smLvPO+cpKFvkQ==",
+  "_location": "/flagkit-web",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "version",
+    "registry": true,
+    "raw": "flagkit-web@0.0.3",
+    "name": "flagkit-web",
+    "escapedName": "flagkit-web",
+    "rawSpec": "0.0.3",
+    "saveSpec": null,
+    "fetchSpec": "0.0.3"
+  },
+  "_requiredBy": [
+    "/"
+  ],
+  "_resolved": "https://registry.npmjs.org/flagkit-web/-/flagkit-web-0.0.3.tgz",
+  "_shasum": "f3b6b5b7927c2aac2e37d5e3b18e43b489477b9a",
+  "_spec": "flagkit-web@0.0.3",
+  "_where": "C:\\workspace\\Dashboardpack\\architectui-html-pro",
+  "author": {
+    "name": "Danny Fenstermaker"
+  },
+  "bugs": {
+    "url": "https://github.com/dfenstermaker/flagkit-web/issues"
+  },
+  "bundleDependencies": false,
+  "deprecated": false,
+  "description": "styles and images to easily allow the awesome flagkit svgs to be used on the web",
+  "devDependencies": {
+    "node-sass": "4.7.2"
+  },
+  "homepage": "https://github.com/dfenstermaker/flagkit-web#readme",
+  "keywords": [
+    "flag",
+    "flags",
+    "svg",
+    "sass",
+    "web",
+    "images",
+    "world"
+  ],
+  "license": "MIT",
+  "main": "index.js",
+  "name": "flagkit-web",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dfenstermaker/flagkit-web.git"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "version": "0.0.3"
+}

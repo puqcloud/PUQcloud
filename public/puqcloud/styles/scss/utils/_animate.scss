@@ -1,0 +1,102 @@
+////////////////////////////////////////////////////////////
+// Import everything to generate your animate sass module //
+////////////////////////////////////////////////////////////
+
+$use-all: true;
+
+// @import "../../../vendors/",
+@import "../../../vendors/animate-sass/helpers/mixins",
+"../../../vendors/animate-sass/helpers/settings",
+"../../../vendors/animate-sass/helpers/base";
+
+// ATTENTION
+@import "../../../vendors/animate-sass/animations/attention-seekers/bounce",
+"../../../vendors/animate-sass/animations/attention-seekers/flash",
+"../../../vendors/animate-sass/animations/attention-seekers/pulse",
+"../../../vendors/animate-sass/animations/attention-seekers/shake",
+"../../../vendors/animate-sass/animations/attention-seekers/swing",
+"../../../vendors/animate-sass/animations/attention-seekers/wiggle",
+"../../../vendors/animate-sass/animations/attention-seekers/wobble",
+"../../../vendors/animate-sass/animations/attention-seekers/tada";
+
+// BOUNCE
+@import "../../../vendors/animate-sass/animations/bounce-enter/bounceIn",
+"../../../vendors/animate-sass/animations/bounce-enter/bounceInDown",
+"../../../vendors/animate-sass/animations/bounce-enter/bounceInLeft",
+"../../../vendors/animate-sass/animations/bounce-enter/bounceInRight",
+"../../../vendors/animate-sass/animations/bounce-enter/bounceInUp",
+"../../../vendors/animate-sass/animations/bounce-exit/bounceOut",
+"../../../vendors/animate-sass/animations/bounce-exit/bounceOutDown",
+"../../../vendors/animate-sass/animations/bounce-exit/bounceOutLeft",
+"../../../vendors/animate-sass/animations/bounce-exit/bounceOutRight",
+"../../../vendors/animate-sass/animations/bounce-exit/bounceOutUp";
+
+// FADE
+@import "../../../vendors/animate-sass/animations/fade-enter/fadeIn",
+"../../../vendors/animate-sass/animations/fade-enter/fadeInDown",
+"../../../vendors/animate-sass/animations/fade-enter/fadeInDownBig",
+"../../../vendors/animate-sass/animations/fade-enter/fadeInLeft",
+"../../../vendors/animate-sass/animations/fade-enter/fadeInLeftBig",
+"../../../vendors/animate-sass/animations/fade-enter/fadeInRight",
+"../../../vendors/animate-sass/animations/fade-enter/fadeInRightBig",
+"../../../vendors/animate-sass/animations/fade-enter/fadeInUp",
+"../../../vendors/animate-sass/animations/fade-enter/fadeInUpBig",
+"../../../vendors/animate-sass/animations/fade-exit/fadeOut",
+"../../../vendors/animate-sass/animations/fade-exit/fadeOutDown",
+"../../../vendors/animate-sass/animations/fade-exit/fadeOutDownBig",
+"../../../vendors/animate-sass/animations/fade-exit/fadeOutLeft",
+"../../../vendors/animate-sass/animations/fade-exit/fadeOutLeftBig",
+"../../../vendors/animate-sass/animations/fade-exit/fadeOutRight",
+"../../../vendors/animate-sass/animations/fade-exit/fadeOutRightBig",
+"../../../vendors/animate-sass/animations/fade-exit/fadeOutUp",
+"../../../vendors/animate-sass/animations/fade-exit/fadeOutUpBig";
+
+// FLIP
+@import "../../../vendors/animate-sass/animations/flippers/flip",
+"../../../vendors/animate-sass/animations/flippers/flipInX",
+"../../../vendors/animate-sass/animations/flippers/flipInY",
+"../../../vendors/animate-sass/animations/flippers/flipOutX",
+"../../../vendors/animate-sass/animations/flippers/flipOutY";
+
+// LIGHTSPEED
+@import "../../../vendors/animate-sass/animations/lightspeed/lightSpeedIn",
+"../../../vendors/animate-sass/animations/lightspeed/lightSpeedOut";
+
+// ROTATE
+@import "../../../vendors/animate-sass/animations/rotate-enter/rotateIn",
+"../../../vendors/animate-sass/animations/rotate-enter/rotateInDownLeft",
+"../../../vendors/animate-sass/animations/rotate-enter/rotateInDownRight",
+"../../../vendors/animate-sass/animations/rotate-enter/rotateInUpLeft",
+"../../../vendors/animate-sass/animations/rotate-enter/rotateInUpRight",
+"../../../vendors/animate-sass/animations/rotate-exit/rotateOut",
+"../../../vendors/animate-sass/animations/rotate-exit/rotateOutDownLeft",
+"../../../vendors/animate-sass/animations/rotate-exit/rotateOutDownRight",
+"../../../vendors/animate-sass/animations/rotate-exit/rotateOutUpLeft",
+"../../../vendors/animate-sass/animations/rotate-exit/rotateOutUpRight";
+
+// SLIDE
+@import "../../../vendors/animate-sass/animations/slide-enter/slideInDown",
+"../../../vendors/animate-sass/animations/slide-enter/slideInLeft",
+"../../../vendors/animate-sass/animations/slide-enter/slideInRight",
+"../../../vendors/animate-sass/animations/slide-enter/slideInUp",
+"../../../vendors/animate-sass/animations/slide-exit/slideOutDown",
+"../../../vendors/animate-sass/animations/slide-exit/slideOutLeft",
+"../../../vendors/animate-sass/animations/slide-exit/slideOutRight",
+"../../../vendors/animate-sass/animations/slide-exit/slideOutUp";
+
+// SPECIAL
+@import "../../../vendors/animate-sass/animations/special/hinge",
+"../../../vendors/animate-sass/animations/special/rollIn",
+"../../../vendors/animate-sass/animations/special/rollOut";
+
+// ZOOM
+@import "../../../vendors/animate-sass/animations/zoom-enter/zoomIn",
+"../../../vendors/animate-sass/animations/zoom-enter/zoomInDown",
+"../../../vendors/animate-sass/animations/zoom-enter/zoomInLeft",
+"../../../vendors/animate-sass/animations/zoom-enter/zoomInRight",
+"../../../vendors/animate-sass/animations/zoom-enter/zoomInUp",
+"../../../vendors/animate-sass/animations/zoom-exit/zoomOut",
+"../../../vendors/animate-sass/animations/zoom-exit/zoomOutDown",
+"../../../vendors/animate-sass/animations/zoom-exit/zoomOutLeft",
+"../../../vendors/animate-sass/animations/zoom-exit/zoomOutRight",
+"../../../vendors/animate-sass/animations/zoom-exit/zoomOutUp";

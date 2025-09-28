@@ -1,63 +1,96 @@
-# vncwebproxy
+# PUQ Cloud Panel
 
-`vncwebproxy` is a Go app to proxy traffic between clients and your Proxmox server in **PUQcloud**.
+**PUQ Cloud Panel** is an open-source, modular cloud automation and billing system designed to empower individuals and companies to start their IT service business quickly and independently. Built on [Laravel](https://laravel.com), it provides advanced billing, provisioning, service management, and cloud orchestration features — all in a single system.
 
-## Requirements
-- Go installed.
-- noVNC v1.3.0 in `/var/www/html` ([download](https://github.com/novnc/noVNC/releases/tag/v1.3.0)).
+🌐 [Official Website](https://puqcloud.com) | 📚 [Documentation](https://doc.puq.info/books/puqcloud-panel)
 
-## Compile
+---
+
+## 🧩 Key Features
+
+- ✅ **Modular Architecture** — Easily extendable with custom modules.
+- 🚀 **Service Automation** — Automatically deploy and manage cloud services.
+- 💳 **Advanced Billing System** — Invoices, proformas, add funds, taxation by region.
+- 🛍️ **Product Catalog & eCommerce** — Sell services and physical items.
+- 🛠️ **Helpdesk & Support** — Manage paid or free technical support (Remote Hands).
+- 🧾 **Multi-company Support** — Manage multiple home companies under one panel.
+- 🌍 **Internationalization** — Tax rules, currencies, languages per client country.
+- 🏗️ **Cluster Support** — Node orchestration with master/agent communication.
+- 🔄 **Queue-Based Task Handling** — Fast and reliable job processing in background.
+- 🔓 **Free & Open Source**
+
+---
+
+## 🎯 Mission
+
+Our mission is to **democratize cloud business infrastructure** by giving everyone the tools to run their own IT business — for free.
+
+
+> 🫶 Learn more about our [goals and philosophy](https://puqcloud.com/puqcloud-panel.php)
+
+---
+
+## 👥 Community & Contribution
+
+PUQ Cloud Panel is built and maintained by a global community of volunteers.
+
+- 💡 Want to contribute code? Fork the repo and submit a PR.
+- 🤝 Want to help in other ways? Join as a [Volunteer](https://puqcloud.com/puqcloud-volunteers.php)
+- 💰 Want to support us? Become a [Sponsor](https://puqcloud.com/puqcloud-sponsors.php)
+
+We welcome all types of contributions — code, documentation, translations, bug reports, and ideas.
+
+---
+
+## ⚙️ Requirements
+
+- PHP 8.2 or higher
+- Laravel 12+
+- MySQL 8.x or MariaDB
+- Redis (for queues)
+- Node.js (for frontend assets, optional)
+- Composer
+- npm
+
+---
+
+## 🛠️ Fully Automated Installation of PUQcloud Panel
+
+For fully automated installation of the PUQcloud panel, we have prepared special scripts.
+
+You can find the scripts and detailed usage instructions in this repository:  
+👉 [https://github.com/puqcloud/PUQcloud-Scripts](https://github.com/puqcloud/PUQcloud-Scripts)
+
+
+## 🚀 Installation (Development)
+
 ```bash
-go build -o vncwebproxy
+git clone https://github.com/puqcloud/PUQcloud.git
+cd PUQcloud
+composer install
+cp .env.example .env
+php artisan key:generate
+chmod -R 775 storage bootstrap/cache
+npm install
+npm run prod
 ```
+Edit the .env file and fill in the required variables (database, app URL, etc).
 
-## Run
+Then run this command to create an admin user:
 ```bash
-./vncwebproxy -puqcloud_ip=<PUQCLOUD_IP> -api_key=<API_KEY> [-port=8080] [-debug] [-v]
-```
-- `-puqcloud_ip` (required) — PUQcloud IP  
-- `-api_key` (required) — API key  
-- `-port` (optional, default 8080)  
-- `-debug` (optional)  
-- `-v` — show version  
-
-Example:
-```bash
-./vncwebproxy -puqcloud_ip=77.87.125.211 -api_key=QWEqwe123 -port=8080 -debug
+php artisan puqcloud:seed --email admin@example.com --password QWEqwe123 --name Myname
 ```
 
-## Nginx SSL config
-```nginx
-server {
-    listen 80;
-    server_name novnc-dev.puqcloud.com;
-    return 301 https://$host$request_uri;
-}
-server {
-    listen 443 ssl;
-    server_name novnc-dev.puqcloud.com;
 
-    root /var/www/html;
-    index vnc.html;
 
-    ssl_certificate /etc/letsencrypt/live/novnc-dev.puqcloud.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/novnc-dev.puqcloud.com/privkey.pem;
-    include /etc/letsencrypt/options-ssl-nginx.conf;
-    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
 
-    location /vncproxy {
-        proxy_pass http://127.0.0.1:8080/vncproxy;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection $connection_upgrade;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_read_timeout 3600s;
-        proxy_send_timeout 3600s;
-    }
 
-    location / { try_files $uri $uri/ =404; }
-}
-```
+## License
+
+PUQcloud is open-source software licensed under the [GNU General Public License v3.0](https://www.gnu.org/licenses/gpl-3.0.html).
+
+## Authors
+
+**Ruslan Polovyi** — founder and lead developer at **PUQ sp. z o.o.**
+
+**Dmytro Kravchenko** — Developer / DevOps engineer
