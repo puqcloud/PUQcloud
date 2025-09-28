@@ -749,6 +749,8 @@ class Service extends Model
             }
 
             $this->suspended_reason = 'Insufficient funds';
+            $this->create_error = null;
+
             $this->status = 'suspended';
             $this->suspended_date = now();
             $this->save();
@@ -809,6 +811,8 @@ class Service extends Model
             $this->status = 'active';
             $this->suspended_date = null;
             $this->suspended_reason = null;
+            $this->create_error = null;
+
             $this->billing_timestamp = now();
             $this->save();
 
@@ -869,6 +873,7 @@ class Service extends Model
 
         $this->status = 'terminated';
         $this->terminated_date = now();
+        $this->create_error = null;
         $this->save();
 
         logActivity(
@@ -929,6 +934,7 @@ class Service extends Model
         }
         $this->status = 'cancelled';
         $this->cancelled_date = now();
+        $this->create_error = null;
         $this->save();
 
         logActivity(

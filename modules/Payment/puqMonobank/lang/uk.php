@@ -1,0 +1,250 @@
+<?php
+
+/*
+ * PUQcloud - Free Cloud Billing System
+ * Main billing system core logic
+ *
+ * Copyright (C) 2025 PUQ sp. z o.o.
+ * Licensed under GNU GPLv3
+ * https://www.gnu.org/licenses/gpl-3.0.html
+ *
+ * Author: Dmytro Kravchenko <dmytro@kravchenko.im>
+ * Website: https://puqcloud.com
+ * E-mail: support@puqcloud.com
+ *
+ * Do not remove this header.
+ */
+
+return [
+    // General
+    'Pay with Monobank' => 'Оплата через Monobank',
+    'Secure payment powered by Monobank' => 'Безпечна оплата від Monobank',
+    'Monobank Configuration' => 'Налаштування Monobank',
+    
+    // Configuration Page
+    'API Configuration' => 'Налаштування API',
+    'Production Token' => 'Токен для продакшену',
+    'Enter your production API token from Monobank merchant panel' => 'Введіть ваш токен API з панелі мерчанта Monobank',
+    'Get your token from' => 'Отримайте токен на',
+    'Enable Sandbox Mode' => 'Увімкнути тестовий режим',
+    'Use for testing. Get test token from' => 'Використовується для тестування. Отримайте тестовий токен на',
+    'Sandbox Token' => 'Тестовий токен',
+    'Enter your test API token' => 'Введіть ваш тестовий токен API',
+    
+    'Payment Settings' => 'Налаштування платежів',
+    'Payment Timeout (seconds)' => 'Тайм-аут платежу (секунди)',
+    'Time limit for payment completion (5 minutes to 24 hours)' => 'Ліміт часу для завершення платежу (від 5 хвилин до 24 годин)',
+    'Payment Type' => 'Тип платежу',
+    'Debit (Immediate payment)' => 'Дебет (миттєва оплата)',
+    'Hold (Authorize and capture later)' => 'Холд (авторизація з подальшим списанням)',
+    'Hold payments require manual finalization within 9 days' => 'Холд-платежі потребують ручного підтвердження протягом 9 днів',
+    'Enable iFrame Mode' => 'Увімкнути режим iFrame',
+    'Display payment form in iframe instead of redirect' => 'Відображати форму оплати в iframe замість перенаправлення',
+    'Auto Redirect to Payment' => 'Автоматичне перенаправлення на оплату',
+    'Automatically redirect customers to payment page' => 'Автоматично перенаправляти клієнтів на сторінку оплати',
+    
+    'Advanced Settings' => 'Додаткові налаштування',
+    'CMS Name' => 'Назва CMS',
+    'Used for analytics in Monobank dashboard' => 'Використовується для аналітики в панелі Monobank',
+    'CMS Version' => 'Версія CMS',
+    'Enable Detailed Logging' => 'Увімкнути детальне логування',
+    'Log all API requests and responses for debugging' => 'Логувати всі API запити та відповіді для налагодження',
+    
+    'Webhook Configuration' => 'Налаштування Webhook',
+    'Webhook URL' => 'URL Webhook',
+    'Copy' => 'Копіювати',
+    'Copied' => 'Скопійовано!',
+    'Configure this URL in your Monobank merchant panel to receive payment notifications' => 'Налаштуйте цей URL в панелі мерчанта Monobank для отримання сповіщень про платежі',
+    
+    'Webhook Security' => 'Безпека Webhook',
+    'Enable Webhook Signature Verification' => 'Увімкнути перевірку підпису Webhook',
+    'Verify webhook signatures to ensure authenticity (recommended)' => 'Перевіряти підписи webhook для забезпечення справжності (рекомендується)',
+    'Webhook Public Key' => 'Публічний ключ Webhook',
+    'Enter your webhook public key from Monobank' => 'Введіть ваш публічний ключ webhook від Monobank',
+    'Get your webhook public key from' => 'Отримайте ваш публічний ключ webhook на',
+    'This key is used to verify webhook signatures for security' => 'Цей ключ використовується для перевірки підписів webhook в цілях безпеки',
+    'Public key is currently configured' => 'Публічний ключ наразі налаштований',
+    'Leave empty to keep current key' => 'Залиште порожнім, щоб зберегти поточний ключ',
+    'Fetch public key from Monobank API' => 'Отримати публічний ключ від API Monobank',
+    'Click the download button to automatically fetch the key from Monobank API' => 'Натисніть кнопку завантаження для автоматичного отримання ключа від API Monobank',
+    'Public key fetched successfully' => 'Публічний ключ успішно отримано',
+    'Failed to fetch public key' => 'Не вдалося отримати публічний ключ',
+    'Key length' => 'Довжина ключа',
+    'Fetched at' => 'Отримано в',
+    'Fetch failed' => 'Отримання не вдалося',
+    'Unknown error' => 'Невідома помилка',
+    ':token_type token is required for fetching public key' => 'Для отримання публічного ключа потрібен :token_type токен',
+    
+    // Payment Status Page
+    'Payment Status' => 'Статус платежу',
+    'Payment Successful' => 'Платіж успішний',
+    'Payment Failed' => 'Платіж не вдався',
+    'Thank you for your payment! Your transaction has been successfully completed' => 'Дякуємо за ваш платіж! Ваша транзакція була успішно завершена',
+    'Go to Invoice' => 'Перейти до рахунку',
+    'Go to Invoices' => 'Перейти до рахунків',
+    'Try Again' => 'Спробувати ще раз',
+    'Loading...' => 'Завантаження...',
+    'Checking payment status...' => 'Перевірка статусу платежу...',
+    'Missing invoice ID' => 'Відсутній ID рахунку',
+    'Payment completed successfully' => 'Платіж успішно завершено',
+    'Payment not found or not processed yet' => 'Платіж не знайдено або ще не оброблено',
+    'Redirecting to invoice' => 'Перенаправлення до рахунку',
+    'Payment status is being verified' => 'Статус платежу перевіряється',
+    'Payment status unknown or failed' => 'Статус платежу невідомий або невдалий',
+    'System error occurred' => 'Сталася системна помилка',
+    
+    // Monobank Error Messages
+    'Operation blocked by issuing bank' => 'Операцію заблоковано банком-емітентом',
+    'Card lost. Expenses limited' => 'Карта втрачена. Витрати обмежені',
+    'Card expenses limited' => 'Витрати по карті обмежені',
+    'Card expiration date expired' => 'У картки закінчився строк дії',
+    'Incorrect card number' => 'Номер картки вказано невірно',
+    'Technical failure occurred' => 'Стався технічний збій',
+    'Merchant point configuration error' => 'Помилка налаштувань торгівельної точки',
+    'Card type does not support such payments' => 'Тип карти не підтримує подібні оплати',
+    'Transaction not supported' => 'Транзакція не підтримується',
+    'Card expenses limited for purchases' => 'Витрати по карті обмежені на покупку',
+    'Insufficient funds on card' => 'На картці недостатньо коштів для завершення покупки',
+    'Card expense operation limit exceeded' => 'На картці перевищено ліміт кількості видаткових операцій',
+    'Card internet limit exceeded' => 'На картці перевищено інтернет-ліміт',
+    'PIN code limit exceeded' => 'Досягнуто або перевищено ліміт на кількість неправильних вводів PIN-коду',
+    'Operation rejected by payment system' => 'Відмова в проведені операції з боку МПС',
+    'Routing error' => 'Помилка маршрутизації',
+    'Incorrect CVV code' => 'Неправильний CVV код',
+    'Incorrect CVV2 code' => 'Неправильний CVV2 код',
+    'Transaction not allowed with such conditions' => 'Транзакція не дозволена з такими умовами проведення',
+    'Card payment attempt limits exceeded' => 'Перевищені ліміти спроб оплати з карт',
+    'Incorrect 3D Secure verification value' => 'Неправильне значення перевірочного числа 3D Secure',
+    'Internal system error' => 'Здається, наш кіт облажався',
+    'Full card details required for payment' => 'Для проведення оплати потрібно вказати повні реквізити карти',
+    '3-D Secure verification failed' => '3-D Secure перевірку не пройдено',
+    'Transfer only possible to Ukrainian bank card' => 'Переказ можливий тільки на картку українського банку',
+    'Payment only possible with Mastercard or Visa' => 'Оплата можлива лише з використанням карток Mastercard або Visa',
+    'Payment amount less than minimum allowed' => 'Сума оплати менша ніж допустима сума',
+    'Incorrect card expiration date' => 'Термін дії карти вказаний невірно',
+    'Customer information not found' => 'Інформація про клієнта не знайдена',
+    'Minimum transfer amount' => 'Мінімальна сума переказу',
+    'Recipient name required' => 'Треба вказати імя отримувача',
+    'This top-up method only works with other bank cards' => 'Цей спосіб поповнення працює тільки з картами інших банків',
+    'CVV code required' => 'Обов\'язкова наявність CVV коду',
+    'Payment system limited transfers' => 'Платіжна система обмежила перекази',
+    'Card blocked by risk management' => 'Карта заблокована риск-менеджемнтом',
+    'Operation blocked by risk management' => 'Операцію заблоковано ризик-менеджментом',
+    'This type of operations with hryvnia cards temporarily limited' => 'Цей вид операцій з гривневих карток тимчасово обмежений',
+    '3-D Secure stage error' => 'Виникла помилка на етапі 3-D Secure',
+    'Check recipient name and surname' => 'Перевірте імʼя та прізвище отримувача',
+    'Russian cards not supported' => 'Кацапське гівно не обслуговуємо',
+    'Operation not allowed for eVidnovlennya program' => 'Недопустима операція для використання за програмою єВідновлення',
+    'Operation rejected at 3DS step' => 'Операция відхилена на кроці 3DS',
+    'Payment link expired' => 'Минув термін дії посилання на оплату',
+    'Client cancelled payment' => 'Клієнт відмінив оплату',
+    '3-D Secure processing problems' => 'Проблеми з проведенням 3-D Secure',
+    'Payment acceptance limits exceeded' => 'Перевищено ліміти на прийом оплат',
+    
+    'Support Information' => 'Інформація про підтримку',
+    'Supported Features' => 'Підтримувані функції',
+    'Card payments (Visa, Mastercard)' => 'Оплата картками (Visa, Mastercard)',
+    'Monobank app payments' => 'Оплата через додаток Monobank',
+    'Apple Pay / Google Pay' => 'Apple Pay / Google Pay',
+    'QR code payments' => 'Оплата QR кодом',
+    'Payment holds and cancellations' => 'Холд платежів та скасування',
+    'iFrame integration' => 'Інтеграція iFrame',
+    'Supported Currency' => 'Підтримувана валюта',
+    'Documentation' => 'Документація',
+    
+    'Save Configuration' => 'Зберегти налаштування',
+    'Test Connection' => 'Перевірити з\'єднання',
+    'Testing...' => 'Перевірка...',
+    
+    // Client Area
+    'Payment Details' => 'Деталі платежу',
+    'Invoice' => 'Рахунок',
+    'Amount' => 'Сума',
+    'Client' => 'Клієнт',
+    'Guest' => 'Гість',
+    'Payment Methods' => 'Способи оплати',
+    'Bank cards (Visa, Mastercard)' => 'Банківські картки (Visa, Mastercard)',
+    'Monobank mobile app' => 'Мобільний додаток Monobank',
+    'QR code payment' => 'Оплата QR кодом',
+    
+    'Loading payment form...' => 'Завантаження форми оплати...',
+    'Loading secure payment form...' => 'Завантаження захищеної форми оплати...',
+    'Having trouble with the payment form?' => 'Проблеми з формою оплати?',
+    'Open in new window' => 'Відкрити в новому вікні',
+    
+    'You will be redirected to secure payment page in' => 'Вас буде перенаправлено на захищену сторінку оплати через',
+    'seconds' => 'секунд',
+    'Proceed to Payment' => 'Перейти до оплати',
+    'You will be redirected to Monobank secure payment page' => 'Вас буде перенаправлено на захищену сторінку оплати Monobank',
+    
+    'Your payment is protected by Monobank security systems' => 'Ваш платіж захищений системами безпеки Monobank',
+    'Transaction ID' => 'ID транзакції',
+    
+    'Need Help?' => 'Потрібна допомога?',
+    'Payment Issues' => 'Проблеми з оплатою',
+    'Contact our support team' => 'Зв\'яжіться з нашою службою підтримки',
+    'Monobank Support' => 'Підтримка Monobank',
+    
+    // Error Messages
+    'Payment Error' => 'Помилка платежу',
+    'Unable to process payment' => 'Неможливо обробити платіж',
+    'An error occurred while processing your payment. Please try again.' => 'Сталася помилка під час обробки вашого платежу. Спробуйте ще раз.',
+    'Error Code' => 'Код помилки',
+    'Try Again' => 'Спробувати ще раз',
+    'Go Back' => 'Назад',
+    'If the problem persists, please contact our support team or try using a different payment method.' => 'Якщо проблема зберігається, зверніться до служби підтримки або спробуйте інший спосіб оплати.',
+    
+    'Currency Not Supported' => 'Валюта не підтримується',
+    'Sorry, this currency is not supported' => 'Вибачте, ця валюта не підтримується',
+    'Monobank currently only supports UAH (Ukrainian Hryvnia) payments.' => 'Monobank наразі підтримує лише платежі в гривнях (UAH).',
+    'Your invoice currency is' => 'Валюта вашого рахунку',
+    'Ukrainian Hryvnia' => 'Українська гривня',
+    'Choose Different Payment Method' => 'Оберіть інший спосіб оплати',
+    'Alternative Options' => 'Альтернативні варіанти',
+    'Contact support to change invoice currency' => 'Зверніться до підтримки для зміни валюти рахунку',
+    'Use a different payment method that supports your currency' => 'Використайте інший спосіб оплати, що підтримує вашу валюту',
+    'Consider currency conversion services' => 'Розгляньте послуги конвертації валют',
+    
+    // Validation Messages
+    'Production token is required when sandbox mode is disabled' => 'Токен для продакшену обов\'язковий, коли тестовий режим вимкнений',
+    'Production token must be at least 10 characters' => 'Токен для продакшену повинен містити не менше 10 символів',
+    'Sandbox token is required when sandbox mode is enabled' => 'Тестовий токен обов\'язковий, коли увімкнений тестовий режим',
+    'Sandbox token must be at least 10 characters' => 'Тестовий токен повинен містити не менше 10 символів',
+    'Payment timeout must be at least 5 minutes' => 'Тайм-аут платежу повинен бути не менше 5 хвилин',
+    'Payment timeout cannot exceed 24 hours' => 'Тайм-аут платежу не може перевищувати 24 години',
+    'Payment type must be either debit or hold' => 'Тип платежу повинен бути дебет або холд',
+    
+    // API Messages
+    'API token is required' => 'Токен API обов\'язковий',
+    'Connection successful' => 'З\'єднання успішне',
+    'Connection failed' => 'З\'єднання не вдалося',
+    'Test failed' => 'Тест не пройшов',
+    'Module not configured' => 'Модуль не налаштований',
+    'Failed to get transaction status' => 'Не вдалося отримати статус транзакції',
+    'Invoice ID is required' => 'ID рахунку обов\'язковий',
+    'Payment cancelled successfully' => 'Платіж успішно скасований',
+    'Failed to cancel payment' => 'Не вдалося скасувати платіж',
+    'Payment cancellation failed' => 'Скасування платежу не вдалося',
+    'Failed to get merchant info' => 'Не вдалося отримати інформацію про мерчанта',
+    'Payment for invoice' => 'Оплата за рахунком',
+    'Payment for services' => 'Оплата за послуги',
+    'Failed to create payment' => 'Не вдалося створити платіж',
+    'System error occurred' => 'Сталася системна помилка',
+    
+    // Token Management
+    'Configured' => 'Налаштований',
+    'Leave empty to keep current token' => 'Залиште порожнім, щоб зберегти поточний токен',
+    'Token is currently configured' => 'Токен наразі налаштований',
+    
+    // Test Connection
+    'Payment gateway not found' => 'Платіжний шлюз не знайдений',
+    ':token_type token is required for testing' => 'Для тестування потрібен :token_type токен',
+    'Merchant' => 'Мерчант',
+    'Merchant ID' => 'ID мерчанта',
+    'API Mode' => 'Режим API',
+    'Endpoint' => 'Кінцева точка',
+    'Error Code' => 'Код помилки',
+    'Please check your API token and network connection' => 'Будь ласка, перевірте ваш API токен та мережеве з\'єднання',
+    'Check browser console for details' => 'Перевірте консоль браузера для деталей',
+    'Connected via API route' => 'Підключено через API маршрут',
+]; 

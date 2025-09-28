@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.0-beta.3] - 2025-09-28
+### Added
+- Proxmox Module 
+
+### Fixed
+- puqMonobank 
+- puqTraccarSMS
+
+---
+
 ## [1.0.0-beta.1] - 2025-07-03
 ### Added
 - Added new options to the puqcloud:demo-data command: create/pay proformas, deploy/terminate services.

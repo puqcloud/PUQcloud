@@ -1,0 +1,250 @@
+<?php
+
+/*
+ * PUQcloud - Free Cloud Billing System
+ * Main billing system core logic
+ *
+ * Copyright (C) 2025 PUQ sp. z o.o.
+ * Licensed under GNU GPLv3
+ * https://www.gnu.org/licenses/gpl-3.0.html
+ *
+ * Author: Dmytro Kravchenko <dmytro@kravchenko.im>
+ * Website: https://puqcloud.com
+ * E-mail: support@puqcloud.com
+ *
+ * Do not remove this header.
+ */
+
+return [
+    // General
+    'Pay with Monobank' => 'Pay with Monobank',
+    'Secure payment powered by Monobank' => 'Secure payment powered by Monobank',
+    'Monobank Configuration' => 'Monobank Configuration',
+    
+    // Configuration Page
+    'API Configuration' => 'API Configuration',
+    'Production Token' => 'Production Token',
+    'Enter your production API token from Monobank merchant panel' => 'Enter your production API token from Monobank merchant panel',
+    'Get your token from' => 'Get your token from',
+    'Enable Sandbox Mode' => 'Enable Sandbox Mode',
+    'Use for testing. Get test token from' => 'Use for testing. Get test token from',
+    'Sandbox Token' => 'Sandbox Token',
+    'Enter your test API token' => 'Enter your test API token',
+    
+    'Payment Settings' => 'Payment Settings',
+    'Payment Timeout (seconds)' => 'Payment Timeout (seconds)',
+    'Time limit for payment completion (5 minutes to 24 hours)' => 'Time limit for payment completion (5 minutes to 24 hours)',
+    'Payment Type' => 'Payment Type',
+    'Debit (Immediate payment)' => 'Debit (Immediate payment)',
+    'Hold (Authorize and capture later)' => 'Hold (Authorize and capture later)',
+    'Hold payments require manual finalization within 9 days' => 'Hold payments require manual finalization within 9 days',
+    'Enable iFrame Mode' => 'Enable iFrame Mode',
+    'Display payment form in iframe instead of redirect' => 'Display payment form in iframe instead of redirect',
+    'Auto Redirect to Payment' => 'Auto Redirect to Payment',
+    'Automatically redirect customers to payment page' => 'Automatically redirect customers to payment page',
+    
+    'Advanced Settings' => 'Advanced Settings',
+    'CMS Name' => 'CMS Name',
+    'Used for analytics in Monobank dashboard' => 'Used for analytics in Monobank dashboard',
+    'CMS Version' => 'CMS Version',
+    'Enable Detailed Logging' => 'Enable Detailed Logging',
+    'Log all API requests and responses for debugging' => 'Log all API requests and responses for debugging',
+    
+    'Webhook Configuration' => 'Webhook Configuration',
+    'Webhook URL' => 'Webhook URL',
+    'Copy' => 'Copy',
+    'Copied' => 'Copied!',
+    'Configure this URL in your Monobank merchant panel to receive payment notifications' => 'Configure this URL in your Monobank merchant panel to receive payment notifications',
+    
+    'Webhook Security' => 'Webhook Security',
+    'Enable Webhook Signature Verification' => 'Enable Webhook Signature Verification',
+    'Verify webhook signatures to ensure authenticity (recommended)' => 'Verify webhook signatures to ensure authenticity (recommended)',
+    'Webhook Public Key' => 'Webhook Public Key',
+    'Enter your webhook public key from Monobank' => 'Enter your webhook public key from Monobank',
+    'Get your webhook public key from' => 'Get your webhook public key from',
+    'This key is used to verify webhook signatures for security' => 'This key is used to verify webhook signatures for security',
+    'Public key is currently configured' => 'Public key is currently configured',
+    'Leave empty to keep current key' => 'Leave empty to keep current key',
+    'Fetch public key from Monobank API' => 'Fetch public key from Monobank API',
+    'Click the download button to automatically fetch the key from Monobank API' => 'Click the download button to automatically fetch the key from Monobank API',
+    'Public key fetched successfully' => 'Public key fetched successfully',
+    'Failed to fetch public key' => 'Failed to fetch public key',
+    'Key length' => 'Key length',
+    'Fetched at' => 'Fetched at',
+    'Fetch failed' => 'Fetch failed',
+    'Unknown error' => 'Unknown error',
+    ':token_type token is required for fetching public key' => ':token_type token is required for fetching public key',
+    
+    // Payment Status Page
+    'Payment Status' => 'Payment Status',
+    'Payment Successful' => 'Payment Successful',
+    'Payment Failed' => 'Payment Failed',
+    'Thank you for your payment! Your transaction has been successfully completed' => 'Thank you for your payment! Your transaction has been successfully completed',
+    'Go to Invoice' => 'Go to Invoice',
+    'Go to Invoices' => 'Go to Invoices',
+    'Try Again' => 'Try Again',
+    'Loading...' => 'Loading...',
+    'Checking payment status...' => 'Checking payment status...',
+    'Missing invoice ID' => 'Missing invoice ID',
+    'Payment completed successfully' => 'Payment completed successfully',
+    'Payment not found or not processed yet' => 'Payment not found or not processed yet',
+    'Redirecting to invoice' => 'Redirecting to invoice',
+    'Payment status is being verified' => 'Payment status is being verified',
+    'Payment status unknown or failed' => 'Payment status unknown or failed',
+    'System error occurred' => 'System error occurred',
+    
+    // Monobank Error Messages
+    'Operation blocked by issuing bank' => 'Operation blocked by issuing bank',
+    'Card lost. Expenses limited' => 'Card lost. Expenses limited',
+    'Card expenses limited' => 'Card expenses limited',
+    'Card expiration date expired' => 'Card expiration date expired',
+    'Incorrect card number' => 'Incorrect card number',
+    'Technical failure occurred' => 'Technical failure occurred',
+    'Merchant point configuration error' => 'Merchant point configuration error',
+    'Card type does not support such payments' => 'Card type does not support such payments',
+    'Transaction not supported' => 'Transaction not supported',
+    'Card expenses limited for purchases' => 'Card expenses limited for purchases',
+    'Insufficient funds on card' => 'Insufficient funds on card',
+    'Card expense operation limit exceeded' => 'Card expense operation limit exceeded',
+    'Card internet limit exceeded' => 'Card internet limit exceeded',
+    'PIN code limit exceeded' => 'PIN code limit exceeded',
+    'Operation rejected by payment system' => 'Operation rejected by payment system',
+    'Routing error' => 'Routing error',
+    'Incorrect CVV code' => 'Incorrect CVV code',
+    'Incorrect CVV2 code' => 'Incorrect CVV2 code',
+    'Transaction not allowed with such conditions' => 'Transaction not allowed with such conditions',
+    'Card payment attempt limits exceeded' => 'Card payment attempt limits exceeded',
+    'Incorrect 3D Secure verification value' => 'Incorrect 3D Secure verification value',
+    'Internal system error' => 'Internal system error',
+    'Full card details required for payment' => 'Full card details required for payment',
+    '3-D Secure verification failed' => '3-D Secure verification failed',
+    'Transfer only possible to Ukrainian bank card' => 'Transfer only possible to Ukrainian bank card',
+    'Payment only possible with Mastercard or Visa' => 'Payment only possible with Mastercard or Visa',
+    'Payment amount less than minimum allowed' => 'Payment amount less than minimum allowed',
+    'Incorrect card expiration date' => 'Incorrect card expiration date',
+    'Customer information not found' => 'Customer information not found',
+    'Minimum transfer amount' => 'Minimum transfer amount',
+    'Recipient name required' => 'Recipient name required',
+    'This top-up method only works with other bank cards' => 'This top-up method only works with other bank cards',
+    'CVV code required' => 'CVV code required',
+    'Payment system limited transfers' => 'Payment system limited transfers',
+    'Card blocked by risk management' => 'Card blocked by risk management',
+    'Operation blocked by risk management' => 'Operation blocked by risk management',
+    'This type of operations with hryvnia cards temporarily limited' => 'This type of operations with hryvnia cards temporarily limited',
+    '3-D Secure stage error' => '3-D Secure stage error',
+    'Check recipient name and surname' => 'Check recipient name and surname',
+    'Russian cards not supported' => 'Russian cards not supported',
+    'Operation not allowed for eVidnovlennya program' => 'Operation not allowed for eVidnovlennya program',
+    'Operation rejected at 3DS step' => 'Operation rejected at 3DS step',
+    'Payment link expired' => 'Payment link expired',
+    'Client cancelled payment' => 'Client cancelled payment',
+    '3-D Secure processing problems' => '3-D Secure processing problems',
+    'Payment acceptance limits exceeded' => 'Payment acceptance limits exceeded',
+    
+    'Support Information' => 'Support Information',
+    'Supported Features' => 'Supported Features',
+    'Card payments (Visa, Mastercard)' => 'Card payments (Visa, Mastercard)',
+    'Monobank app payments' => 'Monobank app payments',
+    'Apple Pay / Google Pay' => 'Apple Pay / Google Pay',
+    'QR code payments' => 'QR code payments',
+    'Payment holds and cancellations' => 'Payment holds and cancellations',
+    'iFrame integration' => 'iFrame integration',
+    'Supported Currency' => 'Supported Currency',
+    'Documentation' => 'Documentation',
+    
+    'Save Configuration' => 'Save Configuration',
+    'Test Connection' => 'Test Connection',
+    'Testing...' => 'Testing...',
+    
+    // Client Area
+    'Payment Details' => 'Payment Details',
+    'Invoice' => 'Invoice',
+    'Amount' => 'Amount',
+    'Client' => 'Client',
+    'Guest' => 'Guest',
+    'Payment Methods' => 'Payment Methods',
+    'Bank cards (Visa, Mastercard)' => 'Bank cards (Visa, Mastercard)',
+    'Monobank mobile app' => 'Monobank mobile app',
+    'QR code payment' => 'QR code payment',
+    
+    'Loading payment form...' => 'Loading payment form...',
+    'Loading secure payment form...' => 'Loading secure payment form...',
+    'Having trouble with the payment form?' => 'Having trouble with the payment form?',
+    'Open in new window' => 'Open in new window',
+    
+    'You will be redirected to secure payment page in' => 'You will be redirected to secure payment page in',
+    'seconds' => 'seconds',
+    'Proceed to Payment' => 'Proceed to Payment',
+    'You will be redirected to Monobank secure payment page' => 'You will be redirected to Monobank secure payment page',
+    
+    'Your payment is protected by Monobank security systems' => 'Your payment is protected by Monobank security systems',
+    'Transaction ID' => 'Transaction ID',
+    
+    'Need Help?' => 'Need Help?',
+    'Payment Issues' => 'Payment Issues',
+    'Contact our support team' => 'Contact our support team',
+    'Monobank Support' => 'Monobank Support',
+    
+    // Error Messages
+    'Payment Error' => 'Payment Error',
+    'Unable to process payment' => 'Unable to process payment',
+    'An error occurred while processing your payment. Please try again.' => 'An error occurred while processing your payment. Please try again.',
+    'Error Code' => 'Error Code',
+    'Try Again' => 'Try Again',
+    'Go Back' => 'Go Back',
+    'If the problem persists, please contact our support team or try using a different payment method.' => 'If the problem persists, please contact our support team or try using a different payment method.',
+    
+    'Currency Not Supported' => 'Currency Not Supported',
+    'Sorry, this currency is not supported' => 'Sorry, this currency is not supported',
+    'Monobank currently only supports UAH (Ukrainian Hryvnia) payments.' => 'Monobank currently only supports UAH (Ukrainian Hryvnia) payments.',
+    'Your invoice currency is' => 'Your invoice currency is',
+    'Ukrainian Hryvnia' => 'Ukrainian Hryvnia',
+    'Choose Different Payment Method' => 'Choose Different Payment Method',
+    'Alternative Options' => 'Alternative Options',
+    'Contact support to change invoice currency' => 'Contact support to change invoice currency',
+    'Use a different payment method that supports your currency' => 'Use a different payment method that supports your currency',
+    'Consider currency conversion services' => 'Consider currency conversion services',
+    
+    // Validation Messages
+    'Production token is required when sandbox mode is disabled' => 'Production token is required when sandbox mode is disabled',
+    'Production token must be at least 10 characters' => 'Production token must be at least 10 characters',
+    'Sandbox token is required when sandbox mode is enabled' => 'Sandbox token is required when sandbox mode is enabled',
+    'Sandbox token must be at least 10 characters' => 'Sandbox token must be at least 10 characters',
+    'Payment timeout must be at least 5 minutes' => 'Payment timeout must be at least 5 minutes',
+    'Payment timeout cannot exceed 24 hours' => 'Payment timeout cannot exceed 24 hours',
+    'Payment type must be either debit or hold' => 'Payment type must be either debit or hold',
+    
+    // API Messages
+    'API token is required' => 'API token is required',
+    'Connection successful' => 'Connection successful',
+    'Connection failed' => 'Connection failed',
+    'Test failed' => 'Test failed',
+    'Module not configured' => 'Module not configured',
+    'Failed to get transaction status' => 'Failed to get transaction status',
+    'Invoice ID is required' => 'Invoice ID is required',
+    'Payment cancelled successfully' => 'Payment cancelled successfully',
+    'Failed to cancel payment' => 'Failed to cancel payment',
+    'Payment cancellation failed' => 'Payment cancellation failed',
+    'Failed to get merchant info' => 'Failed to get merchant info',
+    'Payment for invoice' => 'Payment for invoice',
+    'Payment for services' => 'Payment for services',
+    'Failed to create payment' => 'Failed to create payment',
+    'System error occurred' => 'System error occurred',
+    
+    // Token Management
+    'Configured' => 'Configured',
+    'Leave empty to keep current token' => 'Leave empty to keep current token',
+    'Token is currently configured' => 'Token is currently configured',
+    
+    // Test Connection
+    'Payment gateway not found' => 'Payment gateway not found',
+    ':token_type token is required for testing' => ':token_type token is required for testing',
+    'Merchant' => 'Merchant',
+    'Merchant ID' => 'Merchant ID',
+    'API Mode' => 'API Mode',
+    'Endpoint' => 'Endpoint',
+    'Error Code' => 'Error Code',
+    'Please check your API token and network connection' => 'Please check your API token and network connection',
+    'Check browser console for details' => 'Check browser console for details',
+    'Connected via API route' => 'Connected via API route',
+]; 

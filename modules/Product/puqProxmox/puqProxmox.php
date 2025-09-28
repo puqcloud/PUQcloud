@@ -1251,11 +1251,15 @@ class puqProxmox extends Product
                 return $status;
             }
 
-            $suspend = $lxc_instance->stop();
+            $status = $lxc_instance->getStatus();
+            if ($status['status'] != 'stopped') {
+                $suspend = $lxc_instance->stop();
 
-            if ($suspend['status'] == 'error') {
-                $this->suspendCallback($suspend);
-                return $suspend;
+                if ($suspend['status'] == 'error') {
+                    $this->suspendCallback($suspend);
+
+                    return $suspend;
+                }
             }
 
             $status = ['status' => 'success'];
@@ -1307,6 +1311,7 @@ class puqProxmox extends Product
 
             if ($unsuspend['status'] == 'error') {
                 $this->unsuspendCallback($unsuspend);
+
                 return $unsuspend;
             }
 
