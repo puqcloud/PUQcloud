@@ -47,4 +47,11 @@ return [
     'Invoices' => 'Invoices',
     'Home Companies' => 'Home Companies',
     'Tax Rules' => 'Tax Rules',
+
+    'DNS Manager' => 'DNS Manager',
+    'Server Groups' => 'Server Groups',
+    'Servers' => 'Servers',
+    'Domains' => 'Domains',
+    'Records' => 'Records',
+    'Zones' => 'Zones',
 ];

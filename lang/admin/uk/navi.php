@@ -47,4 +47,11 @@ return [
     'Invoices' => 'Рахунки',
     'Home Companies' => 'Домашні компанії',
     'Tax Rules' => 'Податкові правила',
+
+    'DNS Manager' => 'Менеджер DNS',
+    'Server Groups' => 'Групи серверів',
+    'Servers' => 'Сервери',
+    'Domains' => 'Домени',
+    'Records' => 'Записи',
+    'Zones' => 'Зони',
 ];

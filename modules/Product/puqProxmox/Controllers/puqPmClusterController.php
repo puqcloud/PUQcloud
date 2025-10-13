@@ -1234,5 +1234,4 @@ class puqPmClusterController extends Controller
         ]);
     }
 
-
 }

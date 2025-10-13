@@ -1,5 +1,4 @@
 <?php
-
 /*
  * PUQcloud - Free Cloud Billing System
  * Main billing system core logic
@@ -15,15 +14,11 @@
  * Do not remove this header.
  */
 
-use Illuminate\Support\Facades\Crypt;
-use Illuminate\Support\Str;
-use phpseclib3\Net\SSH2;
+namespace Modules\DnsServer\puqPowerDNS\Controllers;
 
-class puqProxmoxEngine
+use App\Http\Controllers\Controller;
+
+class puqPowerDNS extends Controller
 {
 
-    public function __construct(array $config, $timeout = 10)
-    {
-
-    }
 }

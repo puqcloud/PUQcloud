@@ -106,9 +106,9 @@ class puqPmLxcOsTemplateController extends Controller
         $model->name = $request->input('name');
         $model->distribution = $request->input('distribution');
         $model->version = $request->input('version');
-        $model->init_script = '';
-        $model->post_start_script = '';
-        $model->reset_password_script = '';
+        //$model->init_script = '';
+        //$model->post_start_script = '';
+        //$model->reset_password_script = '';
         $model->puq_pm_lxc_template_uuid = $request->input('puq_pm_lxc_template_uuid');
 
         $model->save();
@@ -214,9 +214,9 @@ class puqPmLxcOsTemplateController extends Controller
         $model->name = $request->input('name');
         $model->distribution = $request->input('distribution');
         $model->version = $request->input('version');
-        $model->init_script = '';
-        $model->post_start_script = '';
-        $model->reset_password_script = '';
+        //$model->init_script = '';
+        //$model->post_start_script = '';
+        //$model->reset_password_script = '';
         $model->puq_pm_lxc_template_uuid = $request->input('puq_pm_lxc_template_uuid');
 
         $model->save();

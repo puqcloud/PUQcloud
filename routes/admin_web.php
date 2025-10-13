@@ -19,6 +19,7 @@ use App\Http\Controllers\Admin\AdminAdminsController;
 use App\Http\Controllers\Admin\AdminAutomationController;
 use App\Http\Controllers\Admin\AdminClientsController;
 use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Admin\AdminDnsManagerController;
 use App\Http\Controllers\Admin\AdminFinanceController;
 use App\Http\Controllers\Admin\AdminGroupsController;
 use App\Http\Controllers\Admin\AdminLogController;
@@ -94,6 +95,29 @@ Route::get('notification_template/{uuid}', [AdminNotificationsController::class,
 
 Route::get('notification_histories', [AdminNotificationsController::class, 'notificationHistories'])->name('notification_histories')
     ->middleware('WebPermission:notification-history-view');
+
+
+
+Route::get('dns_server_groups', [AdminDnsManagerController::class, 'dnsServerGroups'])->name('dns_server_groups')
+    ->middleware('WebPermission:dns-manager-dns-server-groups');
+
+Route::get('dns_server_group/{uuid}', [AdminDnsManagerController::class, 'dnsServerGroup'])->name('dns_server_group')
+    ->middleware('WebPermission:dns-manager-dns-server-groups');
+
+Route::get('dns_servers', [AdminDnsManagerController::class, 'dnsServers'])->name('dns_servers')
+    ->middleware('WebPermission:dns-manager-dns-servers');
+
+Route::get('dns_server/{uuid}', [AdminDnsManagerController::class, 'dnsServer'])->name('dns_server')
+    ->middleware('WebPermission:dns-manager-dns-servers');
+
+Route::get('dns_zones', [AdminDnsManagerController::class, 'dnsZones'])->name('dns_zones')
+    ->middleware('WebPermission:dns-manager-dns-zones');
+
+Route::get('dns_zone/{uuid}', [AdminDnsManagerController::class, 'dnsZone'])->name('dns_zone')
+    ->middleware('WebPermission:dns-manager-dns-zones');
+
+
+
 
 Route::get('general_settings', [AdminSettingsController::class, 'generalSettings'])->name('general_settings')
     ->middleware('WebPermission:general-settings-management');

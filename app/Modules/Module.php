@@ -107,6 +107,11 @@ class Module
         return [];
     }
 
+    public function queues(): array
+    {
+        return [];
+    }
+
     public function logInfo(string $action, mixed $request = [], mixed $response = []): void
     {
         if ($this->log_level == 'info' or $this->log_level == 'debug') {

@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.0-beta.4] - 2025-10-13
+### Added
+- DNS Manager
+- PowerDNS Module
+- Available create own module task queues
+- Module log function is follow global log level
+- Module log, Delete all function and button
+- Task Queue: Task Detail more detailed
+
+---
+
 ## [1.0.0-beta.3] - 2025-09-28
 ### Added
 - Proxmox Module 

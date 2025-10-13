@@ -55,7 +55,7 @@ class AdminLogController extends Controller
         return response()->json([
             'data' => DataTables::eloquent($query)
                 ->filter(function ($query) use ($request) {
-                    if ($request->has('search') && ! empty($request->search['value'])) {
+                    if ($request->has('search') && !empty($request->search['value'])) {
                         $search = $request->search['value'];
                         $query->where(function ($q) use ($search) {
                             $q->where('created_at', 'like', "%{$search}%")
@@ -105,7 +105,7 @@ class AdminLogController extends Controller
         return response()->json([
             'data' => DataTables::of($query)
                 ->filter(function ($query) use ($request) {
-                    if ($request->has('search') && ! empty($request->search['value'])) {
+                    if ($request->has('search') && !empty($request->search['value'])) {
                         $search = $request->search['value'];
                         $query->where(function ($q) use ($search) {
                             $q->where('activity_logs.created_at', 'like', "%{$search}%")
@@ -127,7 +127,7 @@ class AdminLogController extends Controller
                     $admin_online = app('admin');
                     $urls = [];
                     if ($admin_online->hasPermission('activity-log-view')) {
-                        if (! empty($activity_log->model_uuid)) {
+                        if (!empty($activity_log->model_uuid)) {
                             $urls['get'] = route('admin.api.activity_log.get', $activity_log->uuid);
                         }
                     }
@@ -215,6 +215,16 @@ class AdminLogController extends Controller
         return view_admin('module_logs.module_logs', compact('title'));
     }
 
+
+    public function deleteModuleLogsDeleteAll(): JsonResponse
+    {
+        ModuleLog::query()->delete();
+
+        return response()->json([
+            'status' => 'success',
+        ]);
+    }
+
     public function getModuleLogs(Request $request): JsonResponse
     {
         $query = ModuleLog::query()
@@ -236,7 +246,7 @@ class AdminLogController extends Controller
         return response()->json([
             'data' => DataTables::of($query)
                 ->filter(function ($query) use ($request) {
-                    if ($request->has('search') && ! empty($request->search['value'])) {
+                    if ($request->has('search') && !empty($request->search['value'])) {
                         $search = $request->search['value'];
                         $query->where(function ($q) use ($search) {
                             $q->where('module_logs.created_at', 'like', "%{$search}%")
@@ -343,7 +353,7 @@ class AdminLogController extends Controller
         return response()->json([
             'data' => DataTables::eloquent($query)
                 ->filter(function ($query) use ($request) {
-                    if ($request->has('search') && ! empty($request->search['value'])) {
+                    if ($request->has('search') && !empty($request->search['value'])) {
                         $search = $request->search['value'];
                         $query->where(function ($q) use ($search) {
                             $q->where('created_at', 'like', "%{$search}%")

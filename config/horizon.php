@@ -2,6 +2,16 @@
 
 use Illuminate\Support\Str;
 
+
+if (app()->runningInConsole()
+    && !empty($_SERVER['argv'][1])
+    && str_starts_with($_SERVER['argv'][1], 'horizon')) {
+    $php = PHP_BINARY;
+    $output = shell_exec($php.' '.base_path('artisan').' generate:horizon-config');
+    $config = json_decode($output, true) ?: [];
+}
+
+
 return [
 
     /*
@@ -178,142 +188,12 @@ return [
     |
     */
 
-    'queue' => ['System', 'Cleanup', 'AdminNotification', 'ClientNotification', 'Module', 'Client'],
-
-    'defaults' => [
-        'supervisor-Client' => [
-            'connection' => 'redis',
-            'queue' => ['Client'],
-            'balance' => 'auto',
-            'autoScalingStrategy' => 'time',
-            'maxProcesses' => 50,
-            'maxTime' => 0,
-            'maxJobs' => 0,
-            'memory' => 128,
-            'tries' => 1,
-            'timeout' => 36000,
-            'nice' => 0,
-        ],
-        'supervisor-Module' => [
-            'connection' => 'redis',
-            'queue' => ['Module'],
-            'balance' => 'auto',
-            'autoScalingStrategy' => 'time',
-            'maxProcesses' => 50,
-            'maxTime' => 0,
-            'maxJobs' => 0,
-            'memory' => 128,
-            'tries' => 1,
-            'timeout' => 36000,
-            'nice' => 0,
-        ],
-
-        'supervisor-System' => [
-            'connection' => 'redis',
-            'queue' => ['System'],
-            'balance' => 'auto',
-            'autoScalingStrategy' => 'time',
-            'maxProcesses' => 50,
-            'maxTime' => 0,
-            'maxJobs' => 0,
-            'memory' => 128,
-            'tries' => 1,
-            'timeout' => 36000,
-            'nice' => 0,
-        ],
-
-        'supervisor-Cleanup' => [
-            'connection' => 'redis',
-            'queue' => ['Cleanup'],
-            'balance' => 'auto',
-            'autoScalingStrategy' => 'time',
-            'maxProcesses' => 50,
-            'maxTime' => 0,
-            'maxJobs' => 0,
-            'memory' => 128,
-            'tries' => 1,
-            'timeout' => 36000,
-            'nice' => 0,
-        ],
-
-        'supervisor-adminNotification' => [
-            'connection' => 'redis',
-            'queue' => ['AdminNotification'],
-            'balance' => 'auto',
-            'autoScalingStrategy' => 'time',
-            'maxProcesses' => 50,
-            'maxTime' => 0,
-            'maxJobs' => 0,
-            'memory' => 128,
-            'tries' => 1,
-            'timeout' => 36000,
-            'nice' => 0,
-        ],
-
-        'supervisor-clientNotification' => [
-            'connection' => 'redis',
-            'queue' => ['ClientNotification'],
-            'balance' => 'auto',
-            'autoScalingStrategy' => 'time',
-            'maxProcesses' => 50,
-            'maxTime' => 0,
-            'maxJobs' => 0,
-            'memory' => 128,
-            'tries' => 1,
-            'timeout' => 36000,
-            'nice' => 0,
-        ],
-    ],
-
     'environments' => [
-        'production' => [
-            'supervisor-Client' => [
-                'connection' => 'redis',
-                'queue' => ['Client'],
-                'balance' => 'auto',
-                'processes' => 10,
-                'tries' => 3,
-            ],
-
-            'supervisor-Module' => [
-                'connection' => 'redis',
-                'queue' => ['Module'],
-                'balance' => 'auto',
-                'processes' => 10,
-                'tries' => 3,
-            ],
-
-            'supervisor-System' => [
-                'connection' => 'redis',
-                'queue' => ['System'],
-                'balance' => 'auto',
-                'processes' => 10,
-                'tries' => 3,
-            ],
-
-            'supervisor-Cleanup' => [
-                'connection' => 'redis',
-                'queue' => ['Cleanup'],
-                'balance' => 'auto',
-                'processes' => 10,
-                'tries' => 3,
-            ],
-
-            'supervisor-adminNotification' => [
-                'connection' => 'redis',
-                'queue' => ['AdminNotification'],
-                'balance' => 'auto',
-                'processes' => 10,
-                'tries' => 3,
-            ],
-
-            'supervisor-clientNotification' => [
-                'connection' => 'redis',
-                'queue' => ['ClientNotification'],
-                'balance' => 'auto',
-                'processes' => 10,
-                'tries' => 3,
-            ],
-        ],
+        'production' => $config['supervisors'] ?? [],
+        'local' => [],
     ],
+
+    'defaults' => $config['supervisors'] ?? [],
+
+    'queues' => $config['queues'] ?? [],
 ];

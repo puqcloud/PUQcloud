@@ -219,6 +219,30 @@ return [
                 ],
             ],
             [
+                'title' => 'DNS Manager',
+                'icon' => 'metismenu-icon fas fa-globe',
+                'subItems' => [
+                    [
+                        'title' => 'Server Groups',
+                        'link' => 'admin.web.dns_server_groups',
+                        'active_links' => ['admin.web.dns_server_groups', 'admin.web.dns_server_group'],
+                        'permission' => 'dns-manager-dns-server-groups',
+                    ],
+                    [
+                        'title' => 'Servers',
+                        'link' => 'admin.web.dns_servers',
+                        'active_links' => ['admin.web.dns_servers', 'admin.web.dns_server'],
+                        'permission' => 'dns-manager-dns-servers',
+                    ],
+                    [
+                        'title' => 'Zones',
+                        'link' => 'admin.web.dns_zones',
+                        'active_links' => ['admin.web.dns_zones', 'admin.web.dns_zone'],
+                        'permission' => 'dns-manager-dns-zones',
+                    ],
+                ],
+            ],
+            [
                 'title' => 'General',
                 'icon' => 'metismenu-icon fas fa-tools',
                 'subItems' => [
@@ -258,12 +282,6 @@ return [
                         'active_links' => ['admin.web.add_ons.modules'],
                         'permission' => 'add-ons-modules-management',
                     ],
-                    //                    [
-                    //                        'title' => 'Reports',
-                    //                        'link' => 'admin.web.add_ons.reports',
-                    //                        'active_links' => ['admin.web.add_ons.reports'],
-                    //                        'permission' => 'add-ons-reports-management'
-                    //                    ],
                 ],
             ],
 

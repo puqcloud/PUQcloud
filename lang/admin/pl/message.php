@@ -18,4 +18,5 @@ return [
     'Payment add Successfully' => 'Płatność została pomyślnie dodana',
     'Status forcibly changed' => 'Status został wymuszony',
     'Idle forcibly changed' => 'Bezczynność została wymuszona',
+    'Reload successfully' => 'Pomyślnie przeładowano',
 ];

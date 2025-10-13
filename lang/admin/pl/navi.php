@@ -47,4 +47,11 @@ return [
     'Invoices' => 'Faktury',
     'Home Companies' => 'Firmy krajowe',
     'Tax Rules' => 'Zasady podatkowe',
+
+    'DNS Manager' => 'Menedżer DNS',
+    'Server Groups' => 'Grupy serwerów',
+    'Servers' => 'Serwery',
+    'Domains' => 'Domeny',
+    'Records' => 'Rekordy',
+    'Zones' => 'Strefy',
 ];

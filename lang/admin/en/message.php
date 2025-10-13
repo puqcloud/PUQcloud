@@ -18,4 +18,5 @@ return [
     'Payment add Successfully' => 'Payment add Successfully',
     'Status forcibly changed' => 'Status forcibly changed',
     'Idle forcibly changed' => 'Idle forcibly changed',
+    'Reload successfully' => 'Reload successfully',
 ];

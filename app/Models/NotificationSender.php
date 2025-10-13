@@ -114,31 +114,28 @@ class NotificationSender extends Model
         }
 
         $data_array = $this->module->moduleExecute('saveModuleData', $data);
+
         if ($data_array['status'] == 'error') {
             $data_array['code'] = $data_array['code'] ?? 500;
 
             return $data_array;
         }
-        if ($data_array['data']['status'] == 'error') {
-            $data_array['code'] = $data_array['code'] ?? 500;
 
-            return $data_array['data'];
-        }
-
-        $this->configuration = $data_array['data']['data'];
+        $this->configuration = $data_array['data'];
 
         return $data_array;
     }
-
     public function send(array $data = []): array
     {
         if (empty($this->module)) {
             return [
                 'status' => 'error',
                 'error' => __('error.Module not found'),
-                'to_email' => $data['to_email'] ?? '',
-                'to_phone' => $data['to_phone'] ?? '',
-                'attachments' => $data['attachments'] ?? [],
+                'data' => [
+                    'to_email' => $data['to_email'] ?? '',
+                    'to_phone' => $data['to_phone'] ?? '',
+                    'attachments' => $data['attachments'] ?? [],
+                ],
             ];
         }
 
@@ -150,18 +147,15 @@ class NotificationSender extends Model
         $data = array_merge($data, $data_array['data']);
         $data_array = $this->module->moduleExecute('send', $data);
 
-        if ($data_array['status'] == 'error') {
-            return $data_array;
-        }
-
-        return $data_array['data'];
+        return $data_array;
     }
 
     // -----------------------------------------------------------------------------------------------------------------
 
     public function notificationRules(): BelongsToMany
     {
-        return $this->belongsToMany(NotificationRule::class, 'notification_rule_x_notification_sender', 'notification_sender_uuid', 'notification_rule_uuid');
+        return $this->belongsToMany(NotificationRule::class, 'notification_rule_x_notification_sender',
+            'notification_sender_uuid', 'notification_rule_uuid');
     }
 
     public function module(): BelongsTo

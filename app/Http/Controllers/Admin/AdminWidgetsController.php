@@ -31,6 +31,7 @@ use Laravel\Horizon\Contracts\MasterSupervisorRepository;
 use Laravel\Horizon\Contracts\SupervisorRepository;
 use Laravel\Horizon\Http\Controllers\MasterSupervisorController;
 use Mosquitto\Exception;
+use Illuminate\Contracts\Console\Kernel;
 
 class AdminWidgetsController extends Controller
 {
@@ -177,8 +178,11 @@ class AdminWidgetsController extends Controller
             }
         }
 
-        $horizonConfig = config('horizon');
-        $queues = $horizonConfig['queue'];
+        $artisan = app(Kernel::class);
+        $exitCode = $artisan->call('generate:horizon-config');
+        $output = trim($artisan->output());
+        $horizonConfig = json_decode($output, true);
+        $queues = $horizonConfig['queues'];
 
         $activeQueues = true;
         $inactiveQueueNames = [];

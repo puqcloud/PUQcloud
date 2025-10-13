@@ -141,7 +141,7 @@
                     start = selectedStart;
                     end = selectedEnd;
                     cb(start, end);
-                    dataTable.ajax.reload(null, false);
+                    $dataTable.ajax.reload(null, false);
                 }
             );
 
@@ -238,7 +238,6 @@
             });
 
             function displayModalData(data) {
-
                 var $modalTitle = $('#universalModal .modal-title');
                 var $modalBody = $('#universalModal .modal-body');
                 $('#universalModal #modalSaveButton').remove();
@@ -248,19 +247,107 @@
                 });
                 $modalTitle.text(translate('Task Detail'));
 
-                const formattedData = `<div class="row">
+                // tags parsing
+                let tagsHtml = '';
+                try {
+                    const tags = JSON.parse(data.tags);
+                    if (Array.isArray(tags)) {
+                        tagsHtml = tags.map(tag => `<span class="badge bg-primary me-1">${tag}</span>`).join(' ');
+                    } else {
+                        tagsHtml = data.tags;
+                    }
+                } catch (e) {
+                    tagsHtml = data.tags;
+                }
 
-
-        <strong>${translate('Input Data')}:</strong>
-        <pre>${data.input_data}</pre>
-        <strong>${translate('Output Data')}:</strong>
-        <pre>${linkify(data.output_data)}</pre>
-
+                const tableRows = `
+        <tr><th>UUID</th><td>${data.uuid}</td></tr>
+        <tr><th>${translate('Job Name')}</th><td>${data.job_name}</td></tr>
+        <tr><th>${translate('Job ID')}</th><td>${data.job_id}</td></tr>
+        <tr><th>${translate('Queue')}</th><td>${data.queue}</td></tr>
+        <tr><th>${translate('Tags')}</th><td>${tagsHtml}</td></tr>
+        <tr><th>${translate('Status')}</th><td><div class="mb-1 me-1 badge bg-` + getQueueStatusLabelClass(data.status) + `">` + data.status + `</div></td></tr>
+        <tr><th>${translate('Attempts')}</th><td>${data.attempts}/${data.maxTries}</td></tr>
+        <tr><th>${translate('Added At')}</th><td>${data.added_at}</td></tr>
+        <tr><th>${translate('Started At')}</th><td>${data.started_at ?? '-'}</td></tr>
+        <tr><th>${translate('Completed At')}</th><td>${data.completed_at ?? '-'}</td></tr>
+        <tr><th>${translate('Created At')}</th><td>${data.created_at}</td></tr>
+        <tr><th>${translate('Updated At')}</th><td>${data.updated_at}</td></tr>
     `;
-                $modalBody.html(formattedData);
 
+                const accordion = `
+        <div class="accordion mt-3" id="taskAccordion">
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingInput">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseInput" aria-expanded="false">
+                        ${translate('Input Data')}
+                    </button>
+                </h2>
+                <div id="collapseInput" class="accordion-collapse collapse" aria-labelledby="headingInput" data-bs-parent="#taskAccordion">
+                    <div class="accordion-body">
+                        ${formatJsonOrText(data.input_data)}
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingOutput">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOutput" aria-expanded="false">
+                        ${translate('Output Data')}
+                    </button>
+                </h2>
+                <div id="collapseOutput" class="accordion-collapse collapse" aria-labelledby="headingOutput" data-bs-parent="#taskAccordion">
+                    <div class="accordion-body">
+                        ${formatJsonOrText(data.output_data, true)}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+                const formattedData = `
+        <table class="table table-bordered table-striped">
+            <tbody>
+                ${tableRows}
+            </tbody>
+        </table>
+        ${accordion}
+    `;
+
+                $modalBody.html(formattedData);
                 $('#universalModal').modal('show');
             }
+
+            function formatJsonOrText(str, linkifyEnabled = false) {
+                if (!str) return '<em>-</em>';
+
+                const parser = new DOMParser();
+                const decodedStr = parser.parseFromString(str, 'text/html').documentElement.textContent;
+
+                let content = '';
+                try {
+                    const obj = JSON.parse(decodedStr);
+                    content = `<pre class="bg-light p-2 rounded"><code>${escapeHtml(JSON.stringify(obj, null, 2))}</code></pre>`;
+                } catch (e) {
+                    content = `<pre class="bg-light p-2 rounded"><code>${linkifyEnabled ? linkify(decodedStr) : escapeHtml(decodedStr)}</code></pre>`;
+                }
+                return content;
+            }
+
+
+            function escapeHtml(str) {
+                if (!str) return '';
+                return str.replace(/[&<>"']/g, function (m) {
+                    return ({
+                        '&': '&amp;',
+                        '<': '&lt;',
+                        '>': '&gt;',
+                        '"': '&quot;',
+                        "'": '&#39;'
+                    })[m];
+                });
+            }
+
+
 
         });
     </script>

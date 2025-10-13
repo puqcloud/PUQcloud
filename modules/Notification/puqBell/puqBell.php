@@ -14,6 +14,7 @@
  *
  * Do not remove this header.
  */
+
 use App\Modules\Notification;
 
 class puqBell extends Notification
@@ -32,7 +33,7 @@ class puqBell extends Notification
     {
         return [
             'status' => 'success',
-            'bell' => true,
+            'data' => ['bell' => true],
         ];
 
     }

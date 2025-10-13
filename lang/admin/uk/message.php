@@ -18,4 +18,5 @@ return [
     'Payment add Successfully' => 'Платіж успішно додано',
     'Status forcibly changed' => 'Статус примусово змінено',
     'Idle forcibly changed' => 'Стан простою примусово змінено',
+    'Reload successfully' => 'Перезавантажено успішно',
 ];

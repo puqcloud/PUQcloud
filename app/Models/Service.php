@@ -626,6 +626,21 @@ class Service extends Model
             return ['status' => 'error', 'errors' => ['Status should be pending']];
         }
 
+        $this->activated_date = null;
+        $this->create_error = null;
+
+        $this->suspended_date = null;
+        $this->suspended_reason = null;
+
+        $this->terminated_date = null;
+        $this->terminated_reason = null;
+
+        $this->cancelled_date = null;
+        $this->cancelled_reason = null;
+
+        $this->billing_timestamp = null;
+        $this->termination_request = false;
+
         $priceTotal = $this->getPriceTotal();
         $setupAmount = $priceTotal['setup'] ?? 0;
 

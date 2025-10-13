@@ -142,15 +142,15 @@ class puqSMTP extends Notification
 
             return [
                 'status' => 'success',
-                'to_email' => $data['to_email'],
+                'data' => ['to_email' => $data['to_email']]
             ];
         } catch (\Exception $e) {
             $this->logError('send', ['mail_config' => $mail_config, 'data' => $data], $e->getMessage());
 
             return [
                 'status' => 'error',
-                'error' => $e->getMessage(),
-                'to_email' => $data['to_email'],
+                'errors' => [$e->getMessage()],
+                'data' => ['to_email' => $data['to_email']]
             ];
         }
     }

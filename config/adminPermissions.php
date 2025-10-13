@@ -302,4 +302,29 @@ return [
         'group' => 'Finance',
     ],
 
+    // DNS Manager
+    [
+        'name' => 'DNS Server Groups',
+        'key' => 'dns-manager-dns-server-groups',
+        'description' => 'Management of DNS Server Groups',
+        'group' => 'DNS Manager',
+    ],
+    [
+        'name' => 'DNS Servers',
+        'key' => 'dns-manager-dns-servers',
+        'description' => 'Management of DNS Servers',
+        'group' => 'DNS Manager',
+    ],
+    [
+        'name' => 'DNS Zones',
+        'key' => 'dns-manager-dns-zones',
+        'description' => 'Management of DNS Zones',
+        'group' => 'DNS Manager',
+    ],
+    [
+        'name' => 'DNS Records',
+        'key' => 'dns-manager-dns-records',
+        'description' => 'Management of DNS Records within Zones',
+        'group' => 'DNS Manager',
+    ],
 ];

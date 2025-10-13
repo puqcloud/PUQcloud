@@ -41,6 +41,11 @@
             </div>
             <div class="page-title-actions">
                 <div class="d-flex align-items-center justify-content-between">
+                    <button id="deleteAll" type="button"
+                            class="mb-0 me-2 btn-icon btn-outline-2x btn btn-outline-danger">
+                        <i class="fa fa-trash"></i> {{ __('main.Delete All') }}
+                    </button>
+
                     <div class="me-3">
                         <input type="checkbox" data-toggle="toggle" data-on="{{__('main.On')}}" id="autoReloadTable"
                                name="disable" data-off="{{__('main.Off')}}" data-onstyle="success"
@@ -238,6 +243,20 @@
 
                 $('#universalModal').modal('show');
             }
+
+
+            $('#deleteAll').on('click', function (event) {
+                event.preventDefault();
+                if (confirm(translate('Are you sure you want to delete ALL record?'))) {
+                    PUQajax('{{ route('admin.api.module_logs.delete_all.delete') }}', null, 3000, $(this), 'DELETE')
+                        .then(function (response) {
+                            if (response.status === "success") {
+                                $dataTable.ajax.reload(null, false);
+                            }
+                        });
+                }
+            });
+
         });
     </script>
 @endsection

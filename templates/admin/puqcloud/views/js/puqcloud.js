@@ -124,8 +124,15 @@ function PUQajax(url, data, timeOut, button, method = 'POST', form = null) {
         makeRequest();
     });
 }
+
 function alert_error(title, descriptions, timeOut) {
-    var descriptionText = descriptions.join('<br>');
+    // Фильтруем пустые и оставляем только уникальные в текущем вызове
+    const uniqueDescriptions = [...new Set(descriptions.filter(desc => desc && desc.trim() !== ''))];
+
+    if (uniqueDescriptions.length === 0) return;
+
+    const descriptionText = uniqueDescriptions.join('<br>');
+
     toastr.options = {
         closeButton: true,
         progressBar: true,
@@ -139,11 +146,17 @@ function alert_error(title, descriptions, timeOut) {
         showMethod: 'fadeIn',
         hideMethod: 'fadeOut'
     };
+
     toastr.error(descriptionText, title);
 }
 
 function alert_success(title, descriptions, timeOut) {
-    var descriptionText = descriptions.join('<br>');
+    const uniqueDescriptions = [...new Set(descriptions.filter(desc => desc && desc.trim() !== ''))];
+
+    if (uniqueDescriptions.length === 0) return;
+
+    const descriptionText = uniqueDescriptions.join('<br>');
+
     toastr.options = {
         closeButton: true,
         progressBar: true,
@@ -157,8 +170,11 @@ function alert_success(title, descriptions, timeOut) {
         showMethod: 'fadeIn',
         hideMethod: 'fadeOut'
     };
+
     toastr.success(descriptionText, title);
 }
+
+
 
 function initializeDataTable(tableId, ajaxUrl, columnsConfig, getCustomData, customOptions = {}) {
 

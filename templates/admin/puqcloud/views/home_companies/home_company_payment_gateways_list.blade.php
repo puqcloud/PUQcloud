@@ -201,7 +201,7 @@
                 var modelUrl = $(this).data('model-url');
 
                 if (confirm(translate('Are you sure you want to delete this record?'))) {
-                    PUQajax(modelUrl, null, 3000, null, 'DELETE')
+                    PUQajax(modelUrl, null, 3000, $(this), 'DELETE')
                         .then(function (response) {
                             if (response.status === "success") {
                                 $paymentGatewaysTable.ajax.reload(null, false);

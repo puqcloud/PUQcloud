@@ -624,7 +624,7 @@ ${location.price && Object.keys(location.price).length > 0
 
                 group.product_options.forEach(opt => {
                     let priceBlock = '';
-                    if (opt.prise_string) {
+                    if (opt.price) {
                         priceBlock = `
                 <div class="text-nowrap">
                     <span class="cpu-price text-success fw-bold">${opt.prise_string}</span>
@@ -708,7 +708,7 @@ ${location.price && Object.keys(location.price).length > 0
 
                 group.product_options.forEach(opt => {
                     let priceBlock = '';
-                    if (opt.prise_string) {
+                    if (opt.price) {
                         priceBlock = `
             <div class="text-nowrap">
                 <span class="ram-price text-success fw-bold">${opt.prise_string}</span>
@@ -791,7 +791,7 @@ ${location.price && Object.keys(location.price).length > 0
 
                 group.product_options.forEach(opt => {
                     let priceBlock = '';
-                    if (opt.prise_string) {
+                    if (opt.price) {
                         priceBlock = `
                 <div class="text-nowrap">
                     <span class="disk-price text-success fw-bold">${opt.prise_string}</span>
@@ -875,7 +875,7 @@ ${location.price && Object.keys(location.price).length > 0
 
                 group.product_options.forEach(opt => {
                     let priceBlock = '';
-                    if (opt.prise_string) {
+                    if (opt.price) {
                         priceBlock = `
                 <div class="text-nowrap">
                     <span class="disk-price text-success fw-bold">${opt.prise_string}</span>
@@ -953,7 +953,7 @@ style="cursor:pointer;">
                     group.product_options.forEach(opt => {
                         if (opt.value != 1) return;
 
-                        let priceBlock = opt.prise_string ?
+                        let priceBlock = opt.price ?
                             `<div class="text-nowrap">
                     <span class="disk-price text-success fw-bold">${opt.prise_string}</span>
                     <span class="text-muted" style="font-size:0.8rem;"> / {{__('Product.puqProxmox.mo')}}</span>
@@ -1059,7 +1059,7 @@ style="cursor:pointer;">
                     const selectId = `option_${group.uuid}`;
 
                     const optionsHtml = group.product_options.map((opt, i) => {
-                        let price = opt.prise_string ? `(${opt.prise_string} / {{__('Product.puqProxmox.mo')}})` : '';
+                        let price = opt.price ? `(${opt.prise_string} / {{__('Product.puqProxmox.mo')}})` : '';
                         let selected = i === 0 ? 'selected' : '';
                         return `<option value="${opt.uuid}" ${selected}>${opt.key} ${price}</option>`;
                     }).join('');
@@ -1104,7 +1104,7 @@ style="cursor:pointer;">
 
                 group.product_options.forEach(opt => {
                     let priceBlock = '';
-                    if (opt.prise_string) {
+                    if (opt.price) {
                         priceBlock = `
             <div class="text-nowrap">
                 <span class="disk-price text-success fw-bold">${opt.prise_string}</span>

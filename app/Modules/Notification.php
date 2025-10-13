@@ -29,7 +29,9 @@ class Notification extends Module
 
     public function getModuleData(array $data = []): array
     {
-        return $data;
+        $this->module_data = $data;
+
+        return $this->module_data;
     }
 
     public function getSettingsPage(array $data = []): string

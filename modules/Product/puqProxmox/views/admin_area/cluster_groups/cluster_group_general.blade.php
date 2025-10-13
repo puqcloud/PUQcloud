@@ -161,7 +161,7 @@
                 var modelUrl = $(this).data('model-url');
 
                 if (confirm('{{ __('Product.puqProxmox.Are you sure you want to delete this record?') }}')) {
-                    PUQajax(modelUrl, null, 50, null, 'DELETE');
+                    PUQajax(modelUrl, null, 50, $(this), 'DELETE');
                 }
             });
 

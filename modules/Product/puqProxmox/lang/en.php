@@ -578,7 +578,7 @@ return [
     'Current' => 'Current',
     'Switch Fee' => 'Switch Fee',
     'No update options selected' => 'No update options selected',
-    '' => '',
+    'Setup' => 'Setup',
     '' => '',
     '' => '',
     '' => '',

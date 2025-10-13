@@ -363,7 +363,7 @@ class PuqPmCluster extends Model
             'syncLxcTemplatesToStorages',
         ];
 
-        Task::add('ModuleJob', 'Module', $data, $tags);
+        Task::add('ModuleJob', 'puqProxmox-Cluster', $data, $tags);
 
         return ['status' => 'success'];
     }
@@ -406,7 +406,7 @@ class PuqPmCluster extends Model
                 'syncLxcTemplatesToStorage',
             ];
 
-            Task::add('ModuleJob', 'Module', $data, $tags);
+            Task::add('ModuleJob', 'puqProxmox-Cluster', $data, $tags);
         }
 
         return 'success';
@@ -1063,7 +1063,6 @@ class PuqPmCluster extends Model
         $command = 'getClusterResources';
         $response = $this->firstSuccessfulResponse(function ($access_server) {
             $client = new puqProxmoxClient($access_server->toArray(), 20);
-
             return $client->getClusterResources();
         }, $command);
 
@@ -1079,26 +1078,31 @@ class PuqPmCluster extends Model
         }
 
         sort($cluster_vmids);
-        $vmid = null;
-        for ($i = 100; $i < 999999999; $i++) {
-            if (!in_array($i, $cluster_vmids)) {
-                $exists = PuqPmLxcInstance::where('vmid', $i)->exists();
-                if (!$exists) {
-                    $vmid = $i;
-                    break;
-                }
+
+        $minVmid = 100;
+        $maxVmid = 999999999;
+        $tries = 0;
+        $maxTries = $maxVmid - $minVmid;
+
+        while ($tries < $maxTries) {
+            $vmid = (int) (microtime(true) * 1000) % ($maxVmid - $minVmid + 1) + $minVmid;
+            $vmid += random_int(0, 50);
+
+            $existsInDb = PuqPmLxcInstance::where('vmid', $vmid)->exists();
+            $existsInCluster = in_array($vmid, $cluster_vmids);
+
+            if (!$existsInDb && !$existsInCluster) {
+                return [
+                    'status' => 'success',
+                    'data' => $vmid,
+                ];
             }
-        }
 
-        if (!$vmid) {
-            return ['status' => 'error', 'errors' => ['Vmid not found']];
+            $tries++;
         }
-
-        return [
-            'status' => 'success',
-            'data' => $vmid,
-        ];
+        return ['status' => 'error', 'errors' => ['Vmid not found']];
     }
+
 
     public function runSshScriptOnLxc($vmid, $script): array
     {

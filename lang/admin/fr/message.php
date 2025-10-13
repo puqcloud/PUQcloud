@@ -18,4 +18,5 @@ return [
     'Payment add Successfully' => 'Paiement ajouté avec succès',
     'Status forcibly changed' => 'Statut changé de force',
     'Idle forcibly changed' => 'Inactivité changée de force',
+    'Reload successfully' => 'Rechargement réussi',
 ];

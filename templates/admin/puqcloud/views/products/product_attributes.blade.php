@@ -179,7 +179,7 @@
                 var modelUrl = $(this).data('model-url');
 
                 if (confirm(translate('Are you sure you want to unlink this Attribute?'))) {
-                    PUQajax(modelUrl, null, 3000, null, 'DELETE')
+                    PUQajax(modelUrl, null, 3000, $(this), 'DELETE')
                         .then(function (response) {
                             if (response.status === "success") {
                                 $dataTable.ajax.reload(null, false);

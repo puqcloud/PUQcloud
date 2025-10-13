@@ -38,7 +38,7 @@ class Module extends Model
 
     public $incrementing = false;
 
-    protected static $directories = ['Plugin', 'Notification', 'Product', 'Payment'];
+    protected static $directories = ['Plugin', 'Notification', 'Product', 'Payment', 'DnsServer'];
 
     public $module;
 
@@ -350,12 +350,30 @@ class Module extends Model
             return [];
         }
 
-        $sidebar = $this->module->scheduler();
-        if (empty($sidebar) or !is_array($sidebar)) {
+        $scheduler = $this->module->scheduler();
+        if (empty($scheduler) or !is_array($scheduler)) {
             return [];
         }
 
-        return $sidebar;
+        return $scheduler;
+    }
+
+    public function moduleQueues(): array
+    {
+        if ($this->status != 'active') {
+            return [];
+        }
+
+        if (empty($this->module)) {
+            return [];
+        }
+
+        $queues = $this->module->queues();
+        if (empty($queues) or !is_array($queues)) {
+            return [];
+        }
+
+        return $queues;
     }
 
     public function moduleExecute(string $methodName, ...$parameters): JsonResponse|array

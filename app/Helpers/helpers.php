@@ -15,9 +15,12 @@
  * Do not remove this header.
  */
 
+use App\Models\Module;
 use Illuminate\Contracts\Console\Kernel as ConsoleKernel;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
-if (! function_exists('asset_admin')) {
+if (!function_exists('asset_admin')) {
 
     function asset_admin($path, $secure = null): string
     {
@@ -25,7 +28,7 @@ if (! function_exists('asset_admin')) {
     }
 }
 
-if (! function_exists('view_admin')) {
+if (!function_exists('view_admin')) {
 
     function view_admin(
         $view,
@@ -36,7 +39,7 @@ if (! function_exists('view_admin')) {
     }
 }
 
-if (! function_exists('view_admin_module')) {
+if (!function_exists('view_admin_module')) {
 
     function view_admin_module(
         $type,
@@ -49,7 +52,7 @@ if (! function_exists('view_admin_module')) {
     }
 }
 
-if (! function_exists('asset_client')) {
+if (!function_exists('asset_client')) {
 
     function asset_client($path, $secure = null): string
     {
@@ -57,7 +60,7 @@ if (! function_exists('asset_client')) {
     }
 }
 
-if (! function_exists('view_client')) {
+if (!function_exists('view_client')) {
 
     function view_client(
         $view,
@@ -68,7 +71,7 @@ if (! function_exists('view_client')) {
     }
 }
 
-if (! function_exists('get_gravatar')) {
+if (!function_exists('get_gravatar')) {
     function get_gravatar($email, $size = 80): string
     {
         $default = 'https://www.gravatar.com/avatar/'.md5(strtolower(trim('support@puqcloud.com')));
@@ -78,14 +81,14 @@ if (! function_exists('get_gravatar')) {
     }
 }
 
-if (! function_exists('setting')) {
+if (!function_exists('setting')) {
     function setting($key)
     {
         return App\Services\SettingService::get($key);
     }
 }
 
-if (! function_exists('logModule')) {
+if (!function_exists('logModule')) {
     /**
      * Log module call.
      *
@@ -104,6 +107,38 @@ if (! function_exists('logModule')) {
         mixed $request = [],
         mixed $response = []
     ): void {
+        $levels = [
+            'debug' => 100,
+            'info' => 200,
+            'notice' => 250,
+            'warning' => 300,
+            'error' => 400,
+            'critical' => 500,
+            'alert' => 550,
+            'emergency' => 600,
+        ];
+
+        $map = [
+            'debug'     => 'debug',
+            'info'      => 'info',
+            'notice'    => 'info',
+            'warning'   => 'info',
+            'error'     => 'error',
+            'critical'  => 'error',
+            'alert'     => 'error',
+            'emergency' => 'error',
+        ];
+
+        $currentLevel = env('LOG_LEVEL', 'debug');
+
+        if (!isset($map[$level]) || !isset($levels[$currentLevel])) {
+            return;
+        }
+
+        if ($levels[$map[$level]] < $levels[$currentLevel]) {
+            return;
+        }
+
         $module_log = new App\Models\ModuleLog;
         $module_log->type = $type;
         $module_log->name = $name;
@@ -158,7 +193,7 @@ if (! function_exists('logModule')) {
 
 }
 
-if (! function_exists('logActivity')) {
+if (!function_exists('logActivity')) {
     /**
      * Log activity in the system.
      *
@@ -195,7 +230,7 @@ if (! function_exists('logActivity')) {
 
         $admin = Illuminate\Support\Facades\Auth::guard('admin')->user();
 
-        if (! empty($admin->uuid)) {
+        if (!empty($admin->uuid)) {
             $activity_log->admin_uuid = $admin->uuid;
             $activity_log->ip_address = request()->ip();
         }
@@ -204,14 +239,14 @@ if (! function_exists('logActivity')) {
     }
 }
 
-if (! function_exists('add_hook')) {
+if (!function_exists('add_hook')) {
     function add_hook(string $hookName, int $priority, callable $callback): void
     {
         app(App\Services\HookService::class)->addHook($hookName, $callback, $priority);
     }
 }
 
-if (! function_exists('loadAdminModulesDynamicRoutes')) {
+if (!function_exists('loadAdminModulesDynamicRoutes')) {
     function loadAdminModulesDynamicRoutes(): void
     {
         $modules = app('Modules');
@@ -223,7 +258,7 @@ if (! function_exists('loadAdminModulesDynamicRoutes')) {
 
             foreach ($routes as $route) {
                 try {
-                    if (! isset($route['method'], $route['uri'], $route['name'], $route['controller'])) {
+                    if (!isset($route['method'], $route['uri'], $route['name'], $route['controller'])) {
                         continue;
                     }
 
@@ -238,17 +273,17 @@ if (! function_exists('loadAdminModulesDynamicRoutes')) {
                         substr($controllerPath, strpos($controllerPath, 'modules'))
                     );
 
-                    if (! file_exists($controllerPath)) {
+                    if (!file_exists($controllerPath)) {
                         Illuminate\Support\Facades\Log::error('Controller file does not exist: '.$controllerPath);
 
                         continue;
                     }
 
-                    if (! class_exists($class)) {
+                    if (!class_exists($class)) {
                         throw new Exception('Class not found: '.$class);
                     }
 
-                    if (! method_exists($class, $method)) {
+                    if (!method_exists($class, $method)) {
                         throw new Exception("Method '$method' not found in class: ".$class);
                     }
 
@@ -302,7 +337,7 @@ if (! function_exists('loadAdminModulesDynamicRoutes')) {
     }
 }
 
-if (! function_exists('loadApiModulesDynamicRoutes')) {
+if (!function_exists('loadApiModulesDynamicRoutes')) {
     function loadApiModulesDynamicRoutes(): void
     {
         $modules = app('Modules');
@@ -314,7 +349,7 @@ if (! function_exists('loadApiModulesDynamicRoutes')) {
 
             foreach ($routes as $route) {
                 try {
-                    if (! isset($route['method'], $route['uri'], $route['name'], $route['controller'])) {
+                    if (!isset($route['method'], $route['uri'], $route['name'], $route['controller'])) {
                         continue;
                     }
 
@@ -329,17 +364,17 @@ if (! function_exists('loadApiModulesDynamicRoutes')) {
                         substr($controllerPath, strpos($controllerPath, 'modules'))
                     );
 
-                    if (! file_exists($controllerPath)) {
+                    if (!file_exists($controllerPath)) {
                         Illuminate\Support\Facades\Log::error('Controller file does not exist: '.$controllerPath);
 
                         continue;
                     }
 
-                    if (! class_exists($class)) {
+                    if (!class_exists($class)) {
                         throw new Exception('Class not found: '.$class);
                     }
 
-                    if (! method_exists($class, $method)) {
+                    if (!method_exists($class, $method)) {
                         throw new Exception("Method '$method' not found in class: ".$class);
                     }
 
@@ -393,7 +428,7 @@ if (! function_exists('loadApiModulesDynamicRoutes')) {
     }
 }
 
-if (! function_exists('loadModulesNamespaces')) {
+if (!function_exists('loadModulesNamespaces')) {
     function loadModulesNamespaces(): void
     {
         $modules = app('Modules');
@@ -427,7 +462,7 @@ if (! function_exists('loadModulesNamespaces')) {
     }
 }
 
-if (! function_exists('loadModulesCommands')) {
+if (!function_exists('loadModulesCommands')) {
     function loadModulesCommands(): void
     {
         $kernel = app(ConsoleKernel::class);
@@ -455,7 +490,7 @@ if (! function_exists('loadModulesCommands')) {
     }
 }
 
-if (! function_exists('loadAdminTemplateNamespaces')) {
+if (!function_exists('loadAdminTemplateNamespaces')) {
     function loadAdminTemplateNamespaces(): void
     {
         $modelsPath = base_path('templates/admin/'.env('TEMPLATE_ADMIN', 'puqcloud')).'/Models/';
@@ -474,7 +509,7 @@ if (! function_exists('loadAdminTemplateNamespaces')) {
     }
 }
 
-if (! function_exists('loadClientTemplateNamespaces')) {
+if (!function_exists('loadClientTemplateNamespaces')) {
     function loadClientTemplateNamespaces(): void
     {
         $modelsPath = base_path('templates/client/'.env('TEMPLATE_CLIENT', 'puqcloud')).'/Models/';
@@ -501,7 +536,7 @@ if (! function_exists('loadClientTemplateNamespaces')) {
     }
 }
 
-if (! function_exists('number_format_custom')) {
+if (!function_exists('number_format_custom')) {
     function number_format_custom($num, int $decimals = 2, string $format = '1234.56'): string
     {
         $num = (float) $num;
@@ -510,7 +545,7 @@ if (! function_exists('number_format_custom')) {
         $decimal_part = explode('.', $num_fixed)[1] ?? '';
 
         if (strlen($decimal_part) >= 4 && $decimal_part[2] === '0' && $decimal_part[3] === '0') {
-            $num = round($num, 2,PHP_ROUND_HALF_UP);
+            $num = round($num, 2, PHP_ROUND_HALF_UP);
             $decimals = 2;
         } else {
             $decimals = 4;
@@ -534,10 +569,10 @@ if (! function_exists('number_format_custom')) {
     }
 }
 
-if (! function_exists('formatCurrency')) {
+if (!function_exists('formatCurrency')) {
     function formatCurrency($amount, $currency = null, $fallbackCode = 'USD'): string
     {
-        if (! $currency || ! is_object($currency)) {
+        if (!$currency || !is_object($currency)) {
             return number_format_custom($amount ?? 0, 2).' '.$fallbackCode;
         }
 
@@ -559,7 +594,7 @@ if (! function_exists('formatCurrency')) {
             $result .= ' '.$suffix;
         }
 
-        if (! $prefix && ! $suffix) {
+        if (!$prefix && !$suffix) {
             $result .= ' '.$code;
         }
 
@@ -567,7 +602,7 @@ if (! function_exists('formatCurrency')) {
     }
 }
 
-if (! function_exists('renderServiceStatusClass')) {
+if (!function_exists('renderServiceStatusClass')) {
 
     function renderServiceStatusClass($status)
     {
@@ -593,7 +628,7 @@ if (! function_exists('renderServiceStatusClass')) {
     }
 }
 
-if (! function_exists('generateStrongPassword')) {
+if (!function_exists('generateStrongPassword')) {
 
     function generateStrongPassword($length = 8): string
     {
@@ -616,7 +651,7 @@ if (! function_exists('generateStrongPassword')) {
     }
 }
 
-if (! function_exists('isValidCronExpression')) {
+if (!function_exists('isValidCronExpression')) {
     function isValidCronExpression(string $expression): bool
     {
         $pattern = '/^(\*|([0-5]?\d))(\/\d+)?(\s+)(\*|([01]?\d|2[0-3]))(\/\d+)?(\s+)(\*|([1-9]|[12]\d|3[01]))(\/\d+)?(\s+)(\*|(1[0-2]|0?[1-9]))(\/\d+)?(\s+)(\*|([0-6]))(\/\d+)?$/';
@@ -624,3 +659,4 @@ if (! function_exists('isValidCronExpression')) {
         return preg_match($pattern, $expression) === 1;
     }
 }
+

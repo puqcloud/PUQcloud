@@ -14,6 +14,7 @@
  *
  * Do not remove this header.
  */
+
 use App\Modules\Notification;
 use Illuminate\Support\Facades\Validator;
 
@@ -116,7 +117,7 @@ class puqPHPmail extends Notification
         $messageBody .= $message."\r\n\r\n";
         $messageBody .= "--alt-$boundary--\r\n";
 
-        if (! empty($data['attachments']) && is_array($data['attachments'])) {
+        if (!empty($data['attachments']) && is_array($data['attachments'])) {
             foreach ($data['attachments'] as $attachment) {
                 $fileName = $attachment['name'];
                 $mimeType = $attachment['mime'] ?? 'application/octet-stream';
@@ -144,7 +145,7 @@ class puqPHPmail extends Notification
 
             return [
                 'status' => 'success',
-                'to_email' => $to,
+                'data' => ['to_email' => $to],
             ];
         } else {
             $error = error_get_last();
@@ -154,8 +155,8 @@ class puqPHPmail extends Notification
 
             return [
                 'status' => 'error',
-                'error' => $error,
-                'to_email' => $to,
+                'errors' => [$error],
+                'data' => ['to_email' => $to],
             ];
         }
     }

@@ -61,11 +61,11 @@ class NotificationService
                 'notification_sender_uuid' => $notification_sender->uuid ?? '',
             ],
             [
-                'to_email' => $send['to_email'] ?? '',
-                'to_phone' => $send['to_phone'] ?? '',
-                'bell' => $send['bell'] ?? false,
+                'to_email' => $send['data']['to_email'] ?? '',
+                'to_phone' => $send['data']['to_phone'] ?? '',
+                'bell' => $send['data']['bell'] ?? false,
                 'notification_sender_module' => $notification_sender->module->module->name ?? '',
-                'sending_status' => $send['status'] ?? '',
+                'sending_status' => $send['data']['status'] ?? '',
                 'delivery_status' => '',
             ]
         );

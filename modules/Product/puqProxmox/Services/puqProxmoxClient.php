@@ -24,8 +24,6 @@ class puqProxmoxClient
 {
     public SSH2 $ssh;
 
-    public string $log_level = 'error'; // 'error', 'info', 'debug'
-
     public string $ssh_host;
     public int $ssh_port;
     public string $ssh_username;
@@ -733,12 +731,17 @@ class puqProxmoxClient
         return $this->request("/nodes/{$node}/tasks/{$upidEncoded}/status", 'GET', [], $ssh);
     }
 
+    private function logDebug(string $action, array $details = [], mixed $message = ''): void
+    {
+        if (function_exists('logModule')) {
+            logModule('Product', 'puqProxmox', $action, 'debug', $details, $message);
+        }
+    }
+
     private function logInfo(string $action, array $details = [], mixed $message = ''): void
     {
-        if ($this->log_level == 'info' or $this->log_level == 'debug') {
-            if (function_exists('logModule')) {
-                logModule('Product', 'puqProxmox', $action, 'info', $details, $message);
-            }
+        if (function_exists('logModule')) {
+            logModule('Product', 'puqProxmox', $action, 'info', $details, $message);
         }
     }
 

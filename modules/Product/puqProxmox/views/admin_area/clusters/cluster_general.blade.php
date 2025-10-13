@@ -596,7 +596,7 @@
                 var modelUrl = $(this).data('model-url');
 
                 if (confirm('{{ __('Product.puqProxmox.Are you sure you want to delete this record?') }}')) {
-                    PUQajax(modelUrl, null, 1000, null, 'DELETE')
+                    PUQajax(modelUrl, null, 1000, $(this), 'DELETE')
                         .then(function (response) {
                             if (response.status === "success") {
                                 $dataTable.ajax.reload(null, false);
@@ -610,7 +610,7 @@
                 var modelUrl = $(this).data('model-url');
 
                 if (confirm('{{ __('Product.puqProxmox.Are you sure you want to delete this record?') }}')) {
-                    PUQajax(modelUrl, null, 50, null, 'DELETE');
+                    PUQajax(modelUrl, null, 50, $(this), 'DELETE');
                 }
             });
 

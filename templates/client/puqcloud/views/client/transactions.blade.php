@@ -206,8 +206,8 @@
                 order: [[6, 'desc']],
                 responsive: true,
                 columnDefs: [
-                    { responsivePriority: 1, targets: 0 }, // первая колонка — самая важная
-                    { responsivePriority: 2, targets: -1 } // последняя — вторая по важности
+                    { responsivePriority: 1, targets: 0 },
+                    { responsivePriority: 2, targets: -1 }
                 ]
             });
 

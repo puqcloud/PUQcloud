@@ -1104,7 +1104,7 @@ class puqProxmox extends Product
 
         $service = Service::find($this->service_uuid);
         $service->setProvisionStatus('processing');
-        Task::add('ModuleJob', 'Module', $data, $tags);
+        Task::add('ModuleJob', 'puqProxmox-Create', $data, $tags);
 
         return ['status' => 'success'];
     }
@@ -1176,8 +1176,11 @@ class puqProxmox extends Product
                 return $crete_task;
             }
 
-            sleep(5);
-            usleep(5000000);
+            $puq_pm_cluster->getClusterResources(true);
+
+            $start = $lxc_instance->start();
+
+            sleep(10);
 
             $post_install = $lxc_instance->postInstallLxc();
             $log_response['post_install'] = $post_install;
@@ -1188,8 +1191,7 @@ class puqProxmox extends Product
                 return $post_install;
             }
 
-            sleep(6);
-            usleep(5000000);
+            sleep(10);
 
             $puq_pm_cluster->getClusterResources(true);
 
@@ -1471,7 +1473,7 @@ class puqProxmox extends Product
 
         $service = Service::find($this->service_uuid);
         $service->setProvisionStatus('change_package');
-        Task::add('ModuleJob', 'Module', $data, $tags);
+        Task::add('ModuleJob', 'puqProxmox-ChangePackage', $data, $tags);
 
         return ['status' => 'success'];
     }
@@ -2500,6 +2502,51 @@ class puqProxmox extends Product
                 'artisan' => 'MakeBackups',
                 'cron' => '* * * * *',
                 'disable' => false,
+            ],
+        ];
+    }
+
+    public function queues():array
+    {
+        return [
+            'Create' => [
+                'connection' => 'redis',
+                'queue' => ['Create'],
+                'balance' => 'auto',
+                'autoScalingStrategy' => 'time',
+                'maxProcesses' => 1,
+                'maxTime' => 0,
+                'maxJobs' => 0,
+                'memory' => 128,
+                'tries' => 1,
+                'timeout' => 3600,
+                'nice' => 0,
+            ],
+            'ChangePackage' => [
+                'connection' => 'redis',
+                'queue' => ['ChangePackage'],
+                'balance' => 'auto',
+                'autoScalingStrategy' => 'time',
+                'maxProcesses' => 1,
+                'maxTime' => 0,
+                'maxJobs' => 0,
+                'memory' => 128,
+                'tries' => 1,
+                'timeout' => 3600,
+                'nice' => 0,
+            ],
+            'Cluster' => [
+                'connection' => 'redis',
+                'queue' => ['Cluster'],
+                'balance' => 'auto',
+                'autoScalingStrategy' => 'time',
+                'maxProcesses' => 10,
+                'maxTime' => 0,
+                'maxJobs' => 0,
+                'memory' => 128,
+                'tries' => 1,
+                'timeout' => 3600,
+                'nice' => 0,
             ],
         ];
     }

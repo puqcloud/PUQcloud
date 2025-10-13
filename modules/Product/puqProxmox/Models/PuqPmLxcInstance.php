@@ -862,7 +862,7 @@ class PuqPmLxcInstance extends Model
         $start = $puq_pm_cluster->startLxc($status['node'], $status['vmid']);
 
         if ($start['status'] === 'success') {
-            $maxTries = 10;
+            $maxTries = 30;
             $tries = 0;
 
             do {
@@ -897,7 +897,7 @@ class PuqPmLxcInstance extends Model
         $stop = $puq_pm_cluster->stopLxc($status['node'], $status['vmid']);
 
         if ($stop['status'] === 'success') {
-            $maxTries = 10;
+            $maxTries = 30;
             $tries = 0;
 
             do {
