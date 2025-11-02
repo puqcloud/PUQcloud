@@ -2,13 +2,22 @@
 
 namespace App\Console\Commands;
 
+use App\Services\TranslationService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Schema;
 
 class GenerateHorizonConfig extends Command
 {
     protected $signature = 'generate:horizon-config';
     protected $description = 'Generate dynamic Horizon config based on active modules';
+
+    public function __construct()
+    {
+        parent::__construct();
+        App::setLocale(config('locale.admin.default'));
+        TranslationService::init('admin');
+    }
 
     public function handle(): int
     {
@@ -18,7 +27,7 @@ class GenerateHorizonConfig extends Command
             return 1;
         }
 
-        $queues = ['System', 'Cleanup', 'AdminNotification', 'ClientNotification', 'Client','Modules'];
+        $queues = ['System', 'Cleanup', 'AdminNotification', 'ClientNotification', 'Client', 'Module'];
         $supervisors = [
             'supervisor-Client' => [
                 'connection' => 'redis',
@@ -85,9 +94,9 @@ class GenerateHorizonConfig extends Command
                 'timeout' => 36000,
                 'nice' => 0,
             ],
-            'supervisor-Modules' => [
+            'supervisor-Module' => [
                 'connection' => 'redis',
-                'queue' => ['Modules'],
+                'queue' => ['Module'],
                 'balance' => 'auto',
                 'autoScalingStrategy' => 'time',
                 'maxProcesses' => 10,
@@ -113,13 +122,13 @@ class GenerateHorizonConfig extends Command
                 if (!empty($supervisor['queue'])) {
                     $prefixed_queues = [];
                     foreach ($supervisor['queue'] as $queue_name) {
-                        $prefixed_queues[] = $module->name . '-' . $queue_name;
+                        $prefixed_queues[] = $module->name.'-'.$queue_name;
                     }
 
                     $queues = array_unique(array_merge($queues, $prefixed_queues));
 
                     $supervisor['queue'] = $prefixed_queues;
-                    $supervisors['supervisor-' . $module->name . '-' . $supervisor_name] = $supervisor;
+                    $supervisors['supervisor-'.$module->name.'-'.$supervisor_name] = $supervisor;
                 }
             }
 

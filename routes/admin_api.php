@@ -30,6 +30,7 @@ use App\Http\Controllers\Admin\AdminNotificationsController;
 use App\Http\Controllers\Admin\AdminProductsController;
 use App\Http\Controllers\Admin\AdminServicesController;
 use App\Http\Controllers\Admin\AdminSettingsController;
+use App\Http\Controllers\Admin\AdminSslManagerController;
 use App\Http\Controllers\Admin\AdminTaskController;
 use App\Http\Controllers\Admin\AdminUsersController;
 use App\Http\Controllers\Admin\AdminWidgetsController;
@@ -220,6 +221,9 @@ Route::delete('dns_server_group/{uuid}',
     [AdminDnsManagerController::class, 'deleteDnsServerGroup'])->name('dns_server_group.delete')
     ->middleware('ApiPermission:dns-manager-dns-server-groups');
 
+Route::get('dns_server_group/{uuid}/reload_all_zones', [AdminDnsManagerController::class, 'getDnsServerGroupReloadAllZones'])->name('dns_server_group.reload_all_zones.get')
+    ->middleware('ApiPermission:dns-manager-dns-zones');
+
 // dns_servers --------------------------------------------------------------------------------------------------------
 Route::get('dns_servers', [AdminDnsManagerController::class, 'getDnsServers'])->name('dns_servers.get')
     ->middleware('ApiPermission:dns-manager-dns-servers');
@@ -230,6 +234,11 @@ Route::get('dns_server/{uuid}', [AdminDnsManagerController::class, 'getDnsServer
 Route::put('dns_server/{uuid}', [AdminDnsManagerController::class, 'putDnsServer'])->name('dns_server.put')
     ->middleware('ApiPermission:dns-manager-dns-servers');
 Route::delete('dns_server/{uuid}', [AdminDnsManagerController::class, 'deleteDnsServer'])->name('dns_server.delete')
+    ->middleware('ApiPermission:dns-manager-dns-servers');
+
+Route::get('dns_server/{uuid}/dns_zones', [AdminDnsManagerController::class, 'getDnsServerDnsZones'])->name('dns_server.dns_zones.get')
+    ->middleware('ApiPermission:dns-manager-dns-servers');
+Route::post('dns_server/{uuid}/import_zones', [AdminDnsManagerController::class, 'postDnsServerImportZones'])->name('dns_server.import_zones.post')
     ->middleware('ApiPermission:dns-manager-dns-servers');
 
 Route::get('dns_server/{uuid}/test_connection',
@@ -251,7 +260,6 @@ Route::delete('dns_zone/{uuid}', [AdminDnsManagerController::class, 'deleteDnsZo
 Route::get('dns_zone/{uuid}/reload', [AdminDnsManagerController::class, 'getDnsZoneReload'])->name('dns_zone.reload.get')
     ->middleware('ApiPermission:dns-manager-dns-zones');
 
-
 Route::get('dns_zone/{uuid}/export/bind', [AdminDnsManagerController::class, 'getDnsZoneExportBind'])->name('dns_zone.export.bind.get')
     ->middleware('ApiPermission:dns-manager-dns-zones');
 Route::get('dns_zone/{uuid}/export/json', [AdminDnsManagerController::class, 'getDnsZoneExportJson'])->name('dns_zone.export.json.get')
@@ -270,7 +278,7 @@ Route::put('dns_zone/{uuid}/dns_record/{r_uuid}', [AdminDnsManagerController::cl
 Route::delete('dns_zone/{uuid}/dns_record/{r_uuid}', [AdminDnsManagerController::class, 'deleteDnsZoneDnsRecord'])->name('dns_zone.dns_record.delete')
     ->middleware('ApiPermission:dns-manager-dns-records');
 
-// DNS
+// DNS Manager
 Route::get('dns_server_modules/select',
     [AdminDnsManagerController::class, 'getDnsServerModulesSelect'])->name('dns_server_modules.select.get')
     ->middleware('ApiPermission:dns-manager-dns-servers');
@@ -282,6 +290,53 @@ Route::get('dns_servers/select',
 Route::get('dns_server_groups/select',
     [AdminDnsManagerController::class, 'getDnsServerGroupsSelect'])->name('dns_server_groups.select.get')
     ->middleware('ApiPermission:dns-manager-dns-zones');
+
+Route::get('dns_zones/select',
+    [AdminDnsManagerController::class, 'getDnsZonesSelect'])->name('dns_zones.select.get');
+
+// certificate_authorities --------------------------------------------------------------------------------------------------------
+Route::get('certificate_authorities', [AdminSslManagerController::class, 'getCertificateAuthorities'])->name('certificate_authorities.get')
+    ->middleware('ApiPermission:ssl-manager-certificate-authorities');
+Route::post('certificate_authority', [AdminSslManagerController::class, 'postCertificateAuthority'])->name('certificate_authority.post')
+    ->middleware('ApiPermission:ssl-manager-certificate-authorities');
+Route::get('certificate_authority/{uuid}', [AdminSslManagerController::class, 'getCertificateAuthority'])->name('certificate_authority.get')
+    ->middleware('ApiPermission:ssl-manager-certificate-authorities');
+Route::put('certificate_authority/{uuid}', [AdminSslManagerController::class, 'putCertificateAuthority'])->name('certificate_authority.put')
+    ->middleware('ApiPermission:ssl-manager-certificate-authorities');
+Route::delete('certificate_authority/{uuid}', [AdminSslManagerController::class, 'deleteCertificateAuthority'])->name('certificate_authority.delete')
+    ->middleware('ApiPermission:ssl-manager-certificate-authorities');
+
+Route::get('certificate_authority/{uuid}/test_connection',
+    [AdminSslManagerController::class, 'getCertificateAuthorityTestConnection'])->name('certificate_authority.test_connection.get')
+    ->middleware('ApiPermission:ssl-manager-certificate-authorities');
+
+// ssl_certificates --------------------------------------------------------------------------------------------------------------
+Route::get('ssl_certificates', [AdminSslManagerController::class, 'getSslCertificates'])->name('ssl_certificates.get')
+    ->middleware('ApiPermission:ssl-manager-ssl-certificates');
+Route::post('ssl_certificate', [AdminSslManagerController::class, 'postSslCertificate'])->name('ssl_certificate.post')
+    ->middleware('ApiPermission:ssl-manager-ssl-certificates');
+Route::get('ssl_certificate/{uuid}', [AdminSslManagerController::class, 'getSslCertificate'])->name('ssl_certificate.get')
+    ->middleware('ApiPermission:ssl-manager-ssl-certificates');
+Route::put('ssl_certificate/{uuid}', [AdminSslManagerController::class, 'putSslCertificate'])->name('ssl_certificate.put')
+    ->middleware('ApiPermission:ssl-manager-ssl-certificates');
+Route::delete('ssl_certificate/{uuid}', [AdminSslManagerController::class, 'deleteSslCertificate'])->name('ssl_certificate.delete')
+    ->middleware('ApiPermission:ssl-manager-ssl-certificates');
+
+Route::get('ssl_certificate/{uuid}/generate_csr', [AdminSslManagerController::class, 'getSslCertificateGenerateCsr'])->name('ssl_certificate.generate_csr.get')
+    ->middleware('ApiPermission:ssl-manager-ssl-certificates');
+
+Route::put('ssl_certificate/{uuid}/status', [AdminSslManagerController::class, 'putSslCertificateStatus'])->name('ssl_certificate.status.put')
+    ->middleware('ApiPermission:ssl-manager-ssl-certificates');
+
+
+// SSL Manager
+Route::get('certificate_authority_modules/select',
+    [AdminSslManagerController::class, 'getCertificateAuthorityModulesSelect'])->name('certificate_authority_modules.select.get')
+    ->middleware('ApiPermission:ssl-manager-certificate-authorities');
+
+Route::get('certificate_authorities/select',
+    [AdminSslManagerController::class, 'getCertificateAuthoritiesSelect'])->name('certificate_authorities.select.get')
+    ->middleware('ApiPermission:ssl-manager-ssl-certificates');
 
 
 // general_settings ----------------------------------------------------------------------------------------------------
@@ -615,6 +670,8 @@ Route::post('product_options/update_order',
     ->middleware('WebPermission:product-options-management');
 
 // Service -------------------------------------------------------------------------------------------------------------
+Route::get('services', [AdminServicesController::class, 'getServices'])->name('services.get')
+    ->middleware('WebPermission:clients-edit');
 Route::get('service/{uuid}', [AdminServicesController::class, 'getService'])->name('service.get')
     ->middleware('WebPermission:clients-edit');
 Route::post('service', [AdminServicesController::class, 'postService'])->name('service.post')

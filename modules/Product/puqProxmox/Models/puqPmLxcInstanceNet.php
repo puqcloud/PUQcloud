@@ -19,7 +19,6 @@ namespace Modules\Product\puqProxmox\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 class puqPmLxcInstanceNet extends Model
@@ -75,4 +74,5 @@ class puqPmLxcInstanceNet extends Model
     {
         return $this->belongsTo(PuqPmIpPool::class, 'puq_pm_ipv6_pool_uuid', 'uuid');
     }
+
 }

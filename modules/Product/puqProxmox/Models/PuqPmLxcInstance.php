@@ -92,9 +92,11 @@ class PuqPmLxcInstance extends Model
     protected static function boot(): void
     {
         parent::boot();
+
         static::creating(function ($model) {
             $model->uuid = Str::uuid();
         });
+
     }
 
     public function puqPmLxcPreset(): BelongsTo
@@ -1576,11 +1578,15 @@ class PuqPmLxcInstance extends Model
             $this->save();
         }
 
+        $this->load('puqPmLxcInstanceNets');
+
         // Delete networks
         $delete_networks = $this->deleteNetworks($product_options);
         if ($delete_networks['status'] == 'error') {
             return $delete_networks;
         }
+        $this->load('puqPmLxcInstanceNets');
+
         // Create networks
         $create_networks = $this->createNetworks($product_options);
         if ($create_networks['status'] == 'error') {
@@ -1721,7 +1727,7 @@ class PuqPmLxcInstance extends Model
             $data['mp0'] .= ',backup=1';
         }
 
-        $set_config = $puq_pm_cluster->setLxcConfig($status['node'], $this->vmid,$data);
+        $set_config = $puq_pm_cluster->setLxcConfig($status['node'], $this->vmid, $data);
 
         if ($set_config['status'] == 'error') {
             return $set_config;
@@ -1753,10 +1759,14 @@ class PuqPmLxcInstance extends Model
 
                 if ($product_options['ipv4_public_network'] != '1') {
                     $net->puq_pm_ipv4_pool_uuid = null;
+                    $net->ipv4 = null;
+                    $net->save();
                 }
 
                 if ($product_options['ipv6_public_network'] != '1') {
                     $net->puq_pm_ipv6_pool_uuid = null;
+                    $net->ipv6 = null;
+                    $net->save();
                 }
 
                 if (empty($net->puq_pm_ipv4_pool_uuid) and empty($net->puq_pm_ipv6_pool_uuid)) {
@@ -1774,7 +1784,6 @@ class PuqPmLxcInstance extends Model
 
     public function createNetworks(array $product_options): array
     {
-        $this->load('puqPmLxcInstanceNets');
 
         $ipv4_public_network = $this->puqPmLxcInstanceNets()
             ->where('type', 'public')
@@ -1878,6 +1887,7 @@ class PuqPmLxcInstance extends Model
 
         if ($ipv6_public_network) {
             $ipv6_public_network->name = $puq_pm_lxc_preset->pn_name.'v6';
+            $ipv6_public_network->save();
         }
 
         $puq_pm_lxc_instance_net = new PuqPmLxcInstanceNet();
@@ -1950,6 +1960,7 @@ class PuqPmLxcInstance extends Model
 
         if ($ipv4_public_network) {
             $ipv4_public_network->name = $puq_pm_lxc_preset->pn_name;
+            $ipv4_public_network->save();
         }
 
         $puq_pm_lxc_instance_net = new PuqPmLxcInstanceNet();
@@ -2122,4 +2133,73 @@ class PuqPmLxcInstance extends Model
 
         return $set_config;
     }
+
+    public function updateRDNS(): void
+    {
+
+        $puq_pm_lxc_instance_nets = $this->puqPmLxcInstanceNets()->where('type', 'public')->get();
+
+        foreach ($puq_pm_lxc_instance_nets as $puq_pm_lxc_instance_net) {
+
+            if (!empty($puq_pm_lxc_instance_net->puq_pm_ipv4_pool_uuid)) {
+                $puq_pm_dns_zone = PuqPmDnsZone::findReverseZoneByPoolUuid($puq_pm_lxc_instance_net->puq_pm_ipv4_pool_uuid);
+                if ($puq_pm_dns_zone) {
+                    $puq_pm_dns_zone->updateReversRecord($puq_pm_lxc_instance_net->ipv4,
+                        $puq_pm_lxc_instance_net->rdns_v4);
+                }
+            }
+            if (!empty($puq_pm_lxc_instance_net->puq_pm_ipv6_pool_uuid)) {
+                $puq_pm_dns_zone = PuqPmDnsZone::findReverseZoneByPoolUuid($puq_pm_lxc_instance_net->puq_pm_ipv6_pool_uuid);
+                if ($puq_pm_dns_zone) {
+                    $puq_pm_dns_zone->updateReversRecord($puq_pm_lxc_instance_net->ipv6,
+                        $puq_pm_lxc_instance_net->rdns_v6);
+                }
+            }
+        }
+    }
+
+    public function updateFDNS(): void
+    {
+        $puq_pm_dns_zone = $this->puqPmDnsZone;
+        if (!$puq_pm_dns_zone) {
+            return;
+        }
+        $puq_pm_lxc_instance_nets = $this->puqPmLxcInstanceNets()->where('type', 'public')->get();
+        foreach ($puq_pm_lxc_instance_nets as $puq_pm_lxc_instance_net) {
+            if (!empty($puq_pm_lxc_instance_net->puq_pm_ipv4_pool_uuid)) {
+                $puq_pm_dns_zone->updateForwardRecord($this->hostname, $puq_pm_lxc_instance_net->ipv4);
+            }
+            if (!empty($puq_pm_lxc_instance_net->puq_pm_ipv6_pool_uuid)) {
+                $puq_pm_dns_zone->updateForwardRecord($this->hostname, $puq_pm_lxc_instance_net->ipv6);
+            }
+        }
+    }
+
+    public function deleteDNS(): void
+    {
+        $puq_pm_dns_zone = $this->puqPmDnsZone;
+        if ($puq_pm_dns_zone) {
+            $puq_pm_dns_zone->deleteForwardRecord($this->hostname);
+        }
+
+        $puq_pm_lxc_instance_nets = $this->puqPmLxcInstanceNets()->where('type', 'public')->get();
+
+        foreach ($puq_pm_lxc_instance_nets as $puq_pm_lxc_instance_net) {
+
+            if (!empty($puq_pm_lxc_instance_net->puq_pm_ipv4_pool_uuid)) {
+                $puq_pm_dns_zone = PuqPmDnsZone::findReverseZoneByPoolUuid($puq_pm_lxc_instance_net->puq_pm_ipv4_pool_uuid);
+                if ($puq_pm_dns_zone) {
+                    $puq_pm_dns_zone->deleteReversRecord($puq_pm_lxc_instance_net->ipv4);
+                }
+            }
+            if (!empty($puq_pm_lxc_instance_net->puq_pm_ipv6_pool_uuid)) {
+                $puq_pm_dns_zone = PuqPmDnsZone::findReverseZoneByPoolUuid($puq_pm_lxc_instance_net->puq_pm_ipv6_pool_uuid);
+                if ($puq_pm_dns_zone) {
+                    $puq_pm_dns_zone->deleteReversRecord($puq_pm_lxc_instance_net->ipv6);
+                }
+            }
+        }
+
+    }
+
 }

@@ -17,14 +17,23 @@
 
 namespace App\Console\Commands;
 
+use App\Services\TranslationService;
 use Illuminate\Console\Command;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Support\Facades\App;
 
 class ScheduleListCommandsJson extends Command
 {
-    protected $signature = 'Schedule:listCommandsJson';
 
+    protected $signature = 'Schedule:listCommandsJson';
     protected $description = 'Get list of scheduled commands for the application';
+
+    public function __construct()
+    {
+        parent::__construct();
+        App::setLocale(config('locale.admin.default'));
+        TranslationService::init('admin');
+    }
 
     public function handle(Schedule $schedule)
     {

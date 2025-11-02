@@ -274,7 +274,6 @@ return [
     'Icon image' => 'Icon image',
     'Background image' => 'Background image',
     'Logo' => 'Logo',
-
     'Enter at least :n characters' => 'Enter at least :n characters',
     'No results found' => 'No results found',
     'Searching...' => 'Searching...',
@@ -323,4 +322,10 @@ return [
     'E.g. "letsencrypt.org' => 'E.g. "letsencrypt.org',
     'FQDN the IP should resolve to, e.g. host.example.com' => 'FQDN the IP should resolve to, e.g. host.example.com',
     'PTR Target' => 'PTR Target',
+    'Domain' => 'Domain',
+    'Certificate Authority' => 'Certificate Authority',
+    'Create Certificate Authority' => 'Create Certificate Authority',
+    'Create SSL Certificate' => 'Create SSL Certificate',
+    'Each alias should be entered on a new line (one domain per line)' => 'Each alias should be entered on a new line (one domain per line)',
+    'Auto Renew' => 'Auto Renew',
 ];

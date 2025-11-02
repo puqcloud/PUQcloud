@@ -174,8 +174,6 @@
             $('#termination_request').on('click', function (e) {
                 e.preventDefault();
                 openConfirmActionModal({
-                    fetchUrl: '{{ route('client.api.verification.get') }}',
-                    fetchMethod: 'GET',
                     actionUrl: '{{ route('client.api.cloud.service.manage.post', ['uuid' => $service->uuid, 'method' => 'TerminationRequest']) }}',
                     actionMethod: 'POST',
                     actionText:

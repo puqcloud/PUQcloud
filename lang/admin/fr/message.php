@@ -19,4 +19,5 @@ return [
     'Status forcibly changed' => 'Statut changé de force',
     'Idle forcibly changed' => 'Inactivité changée de force',
     'Reload successfully' => 'Rechargement réussi',
+    'The task has been added to the queue' => 'La tâche a été ajoutée à la file d\'attente',
 ];

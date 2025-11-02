@@ -17,15 +17,24 @@
 
 namespace App\Console\Commands;
 
+use App\Services\TranslationService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class TestS3Connection extends Command
 {
-    protected $signature = 'test:s3';
 
+    protected $signature = 'test:s3';
     protected $description = 'Test connection to S3 storage with performance metrics';
+
+    public function __construct()
+    {
+        parent::__construct();
+        App::setLocale(config('locale.admin.default'));
+        TranslationService::init('admin');
+    }
 
     public function handle()
     {
@@ -71,7 +80,7 @@ class TestS3Connection extends Command
                 }
 
                 // Check file existence
-                if (! Storage::disk($disk)->exists($fileName)) {
+                if (!Storage::disk($disk)->exists($fileName)) {
                     $this->error("[✘] Failed to confirm upload for file: {$fileName}");
                     $results[] = [
                         'size' => $size,

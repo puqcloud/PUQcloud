@@ -114,16 +114,14 @@ class Module
 
     public function logInfo(string $action, mixed $request = [], mixed $response = []): void
     {
-        if ($this->log_level == 'info' or $this->log_level == 'debug') {
-            logModule(
-                $this->module_type,
-                $this->module_name,
-                $action,
-                'info',
-                $request,
-                $response
-            );
-        }
+        logModule(
+            $this->module_type,
+            $this->module_name,
+            $action,
+            'info',
+            $request,
+            $response
+        );
     }
 
     public function logError(string $action, mixed $request = [], mixed $response = []): void
@@ -140,15 +138,13 @@ class Module
 
     public function logDebug(string $action, mixed $request = [], mixed $response = []): void
     {
-        if ($this->log_level == 'debug') {
-            logModule(
-                $this->module_type,
-                $this->module_name,
-                $action,
-                'debug',
-                $request,
-                $response
-            );
-        }
+        logModule(
+            $this->module_type,
+            $this->module_name,
+            $action,
+            'debug',
+            $request,
+            $response
+        );
     }
 }

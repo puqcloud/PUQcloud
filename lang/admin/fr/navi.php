@@ -47,11 +47,16 @@ return [
     'Invoices' => 'Factures',
     'Home Companies' => 'Sociétés principales',
     'Tax Rules' => 'Règles fiscales',
-
     'DNS Manager' => 'Gestionnaire DNS',
     'Server Groups' => 'Groupes de serveurs',
     'Servers' => 'Serveurs',
     'Domains' => 'Domaines',
     'Records' => 'Enregistrements',
     'Zones' => 'Zones',
+    'Services' => 'Services',
+    'All Services' => 'Tous les services',
+    'Create New Service' => 'Créer un nouveau service',
+    'SSL Manager' => 'Gestionnaire SSL',
+    'Certificate Authorities' => 'Autorités de certification',
+    'SSL Certificates' => 'Certificats SSL',
 ];

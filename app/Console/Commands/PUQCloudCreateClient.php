@@ -25,7 +25,9 @@ use App\Models\Invoice;
 use App\Models\PaymentGateway;
 use App\Models\Region;
 use App\Models\User;
+use App\Services\TranslationService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -62,11 +64,11 @@ class PUQCloudCreateClient extends Command
     public function __construct()
     {
         parent::__construct();
+        App::setLocale(config('locale.admin.default'));
+        TranslationService::init('admin');
     }
 
-    /**
-     * Execute the console command
-     */
+
     public function handle(): int
     {
         $this->info('=== PUQCloud Client Creator ===');
@@ -74,7 +76,7 @@ class PUQCloudCreateClient extends Command
 
         // Get all options
         $options = $this->options();
-        
+
         // Show help if no required parameters provided
         if (!$this->hasRequiredParameters($options)) {
             $this->showHelp();
@@ -94,7 +96,7 @@ class PUQCloudCreateClient extends Command
         // Create client
         try {
             $result = $this->createClient($validation['data']);
-            
+
             if ($result['success']) {
                 $this->info('✅ Client created successfully!');
                 $this->info('');
@@ -109,7 +111,7 @@ class PUQCloudCreateClient extends Command
                 $this->info("• Status: {$result['client']->status}");
                 $this->info("• Language: {$result['client']->language}");
                 $this->info("• Address: {$result['address']->address_1}, {$result['address']->city}");
-                
+
                 // Show payment information if extrapay was processed
                 if ($result['proforma']) {
                     $this->info('');
@@ -117,12 +119,12 @@ class PUQCloudCreateClient extends Command
                     $this->info("• Proforma Invoice: {$result['proforma']->number} ({$result['proforma']->uuid})");
                     $this->info("• Amount: {$result['proforma']->total} {$result['proforma']->currency_code}");
                     $this->info("• Status: {$result['proforma']->status}");
-                    
+
                     if ($result['payment_result']) {
                         if ($result['payment_result']['status'] === 'success') {
                             $this->info('• ✅ Payment processed successfully!');
                             $this->info('• Client balance has been updated');
-                            
+
                             // Reload proforma to check if it was converted to invoice
                             $result['proforma']->refresh();
                             if ($result['proforma']->status === 'invoiced' && $result['proforma']->invoice_uuid) {
@@ -140,7 +142,7 @@ class PUQCloudCreateClient extends Command
                         $this->error('• ⚠️ Payment gateway not found - manual payment required');
                     }
                 }
-                
+
                 $this->info('');
                 return 0;
             } else {
@@ -163,13 +165,13 @@ class PUQCloudCreateClient extends Command
     private function hasRequiredParameters(array $options): bool
     {
         $required = ['firstname', 'email', 'password', 'address1', 'city', 'postcode', 'country', 'region'];
-        
+
         foreach ($required as $param) {
             if (empty($options[$param])) {
                 return false;
             }
         }
-        
+
         return true;
     }
 
@@ -346,7 +348,7 @@ class PUQCloudCreateClient extends Command
             $errors[] = 'Country not found. Use country code (US, GB, DE) or UUID';
         } else {
             $data['country_uuid'] = $country->uuid;
-            
+
             $region = $this->findRegion($data['region'], $country);
             if (!$region) {
                 $errors[] = 'Region not found for the specified country. Use region code or UUID';
@@ -381,7 +383,7 @@ class PUQCloudCreateClient extends Command
         if (strlen($identifier) === 36) {
             return Country::find($identifier);
         }
-        
+
         // Try by code
         return Country::where('code', strtoupper($identifier))->first();
     }
@@ -397,7 +399,7 @@ class PUQCloudCreateClient extends Command
                          ->where('country_uuid', $country->uuid)
                          ->first();
         }
-        
+
         // Try by code within the country
         return Region::where('code', strtoupper($identifier))
                      ->where('country_uuid', $country->uuid)
@@ -476,7 +478,7 @@ class PUQCloudCreateClient extends Command
                         // Create proforma invoice for add funds
                         $proformaUuid = $client->createInvoiceProformaAddFunds($data['extrapay']);
                         $proforma = Invoice::find($proformaUuid);
-                        
+
                         if ($proforma) {
                             // Find bank transfer payment gateway
                             $homeCompany = $proforma->homeCompany;
@@ -485,19 +487,19 @@ class PUQCloudCreateClient extends Command
                                     $query->where('name', 'puqBankTransfer');
                                 })
                                 ->first();
-                            
+
                             if (!$bankTransferGateway) {
                                 // Try to find by key as fallback
                                 $bankTransferGateway = $homeCompany->paymentGateways()
                                     ->where('key', 'like', '%Bank Transfer%')
                                     ->first();
                             }
-                            
+
                             if ($bankTransferGateway) {
                                 // Generate transaction ID
                                 $transactionId = 'CLIENT-CREATION-' . strtoupper(uniqid()) . '-' . rand(1000, 9999);
                                 $description = 'Automatic payment during client creation';
-                                
+
                                 // Add payment using the payment gateway
                                 $payment_result = $proforma->addPaymentByPaymentGateway(
                                     (float) $proforma->total,
@@ -529,4 +531,4 @@ class PUQCloudCreateClient extends Command
             }
         });
     }
-} 
+}

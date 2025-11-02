@@ -18,13 +18,21 @@
 namespace App\Console\Commands;
 
 use App\Models\Country;
+use App\Services\TranslationService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\App;
 
 class Regions extends Command
 {
     protected $signature = 'puqcloud:regions';
-
     protected $description = '';
+
+    public function __construct()
+    {
+        parent::__construct();
+        App::setLocale(config('locale.admin.default'));
+        TranslationService::init('admin');
+    }
 
     public function handle()
     {

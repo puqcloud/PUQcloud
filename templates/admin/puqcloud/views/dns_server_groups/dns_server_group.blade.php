@@ -37,6 +37,13 @@
                 </div>
             </div>
             <div class="page-title-actions">
+                @if($admin->hasPermission('dns-manager-dns-zones'))
+                    <button id="reloadZones" type="button"
+                            class="mb-2 me-2 btn-icon btn-outline-2x btn btn-outline-primary">
+                        <i class="fa fa-sync-alt"></i> {{ __('main.Reload All Zones') }}
+                    </button>
+                @endif
+
                 <button id="save" type="button"
                         class="mb-2 me-2 btn-icon btn-outline-2x btn btn-outline-success">
                     <i class="fa fa-save"></i> {{__('main.Save')}}
@@ -65,7 +72,8 @@
 
                         <div class="mb-3">
                             <label class="form-label" for="ns_ttl">{{ __('main.NS TTL') }}</label>
-                            <input type="number" min="0" step="1" class="form-control" id="ns_ttl" name="ns_ttl" value="" required>
+                            <input type="number" min="0" step="1" class="form-control" id="ns_ttl" name="ns_ttl"
+                                   value="" required>
                         </div>
 
                         <div class="mb-3">
@@ -78,7 +86,8 @@
                     <div class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-3 col-xxl-3">
                         <div class="mb-3">
                             <label for="dns_server_uuids" class="form-label">{{ __('main.DNS Servers') }}</label>
-                            <select multiple name="dns_server_uuids" id="dns_server_uuids" class="form-select mb-2 form-control"></select>
+                            <select multiple name="dns_server_uuids" id="dns_server_uuids"
+                                    class="form-select mb-2 form-control"></select>
                         </div>
                     </div>
                 </div>
@@ -133,6 +142,11 @@
                     .then(function (response) {
                         loadFormData();
                     });
+            });
+
+            $('#reloadZones').on('click', function (event) {
+                event.preventDefault();
+                PUQajax('{{route('admin.api.dns_server_group.reload_all_zones.get',$uuid)}}', null, 3000, $(this), 'GET');
             });
 
             loadFormData();

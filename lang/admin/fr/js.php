@@ -274,7 +274,6 @@ return [
     'Icon image' => 'Icône',
     'Background image' => 'Image d’arrière-plan',
     'Logo' => 'Logo',
-
     'Enter at least :n characters' => 'Entrez au moins :n caractères',
     'No results found' => 'Aucun résultat trouvé',
     'Searching...' => 'Recherche en cours...',
@@ -323,4 +322,10 @@ return [
     'E.g. "letsencrypt.org' => 'Ex. "letsencrypt.org',
     'FQDN the IP should resolve to, e.g. host.example.com' => 'FQDN auquel l’IP doit résoudre, ex. host.example.com',
     'PTR Target' => 'Cible PTR',
+    'Domain' => 'Domaine',
+    'Certificate Authority' => 'Autorité de certification',
+    'Create Certificate Authority' => 'Créer une autorité de certification',
+    'Create SSL Certificate' => 'Créer un certificat SSL',
+    'Each alias should be entered on a new line (one domain per line)' => 'Chaque alias doit être saisi sur une nouvelle ligne (un domaine par ligne)',
+    'Auto Renew' => 'Renouvellement automatique',
 ];

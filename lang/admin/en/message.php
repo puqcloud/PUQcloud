@@ -19,4 +19,5 @@ return [
     'Status forcibly changed' => 'Status forcibly changed',
     'Idle forcibly changed' => 'Idle forcibly changed',
     'Reload successfully' => 'Reload successfully',
+    'The task has been added to the queue' => 'The task has been added to the queue',
 ];

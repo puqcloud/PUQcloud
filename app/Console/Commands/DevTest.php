@@ -17,7 +17,9 @@
 
 namespace App\Console\Commands;
 
+use App\Services\TranslationService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\App;
 use phpseclib3\Net\SSH2;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -25,8 +27,14 @@ use RecursiveIteratorIterator;
 class DevTest extends Command
 {
     protected $signature = 'Dev:test';
-
     protected $description = 'Count non-empty lines in files inside specified folders';
+
+    public function __construct()
+    {
+        parent::__construct();
+        App::setLocale(config('locale.admin.default'));
+        TranslationService::init('admin');
+    }
 
     public function handle()
     {

@@ -28,6 +28,7 @@ use App\Http\Controllers\Admin\AdminNotificationsController;
 use App\Http\Controllers\Admin\AdminProductsController;
 use App\Http\Controllers\Admin\AdminServicesController;
 use App\Http\Controllers\Admin\AdminSettingsController;
+use App\Http\Controllers\Admin\AdminSslManagerController;
 use App\Http\Controllers\Admin\AdminTaskController;
 use App\Http\Controllers\Admin\AdminUsersController;
 use App\Http\Controllers\Admin\AdminWidgetsController;
@@ -97,7 +98,6 @@ Route::get('notification_histories', [AdminNotificationsController::class, 'noti
     ->middleware('WebPermission:notification-history-view');
 
 
-
 Route::get('dns_server_groups', [AdminDnsManagerController::class, 'dnsServerGroups'])->name('dns_server_groups')
     ->middleware('WebPermission:dns-manager-dns-server-groups');
 
@@ -110,6 +110,9 @@ Route::get('dns_servers', [AdminDnsManagerController::class, 'dnsServers'])->nam
 Route::get('dns_server/{uuid}', [AdminDnsManagerController::class, 'dnsServer'])->name('dns_server')
     ->middleware('WebPermission:dns-manager-dns-servers');
 
+Route::get('dns_server/{uuid}/import', [AdminDnsManagerController::class, 'dnsZoneImport'])->name('dns_server.import')
+    ->middleware('WebPermission:dns-manager-dns-zones');
+
 Route::get('dns_zones', [AdminDnsManagerController::class, 'dnsZones'])->name('dns_zones')
     ->middleware('WebPermission:dns-manager-dns-zones');
 
@@ -117,6 +120,17 @@ Route::get('dns_zone/{uuid}', [AdminDnsManagerController::class, 'dnsZone'])->na
     ->middleware('WebPermission:dns-manager-dns-zones');
 
 
+Route::get('certificate_authorities', [AdminSslManagerController::class, 'certificateAuthorities'])->name('certificate_authorities')
+    ->middleware('WebPermission:ssl-manager-certificate-authorities');
+
+Route::get('certificate_authority/{uuid}', [AdminSslManagerController::class, 'certificateAuthority'])->name('certificate_authority')
+    ->middleware('WebPermission:ssl-manager-certificate-authorities');
+
+Route::get('ssl_certificates', [AdminSslManagerController::class, 'sslCertificates'])->name('ssl_certificates')
+    ->middleware('WebPermission:ssl-manager-ssl-certificates');
+
+Route::get('ssl_certificate/{uuid}', [AdminSslManagerController::class, 'sslCertificate'])->name('ssl_certificate')
+    ->middleware('WebPermission:ssl-manager-ssl-certificates');
 
 
 Route::get('general_settings', [AdminSettingsController::class, 'generalSettings'])->name('general_settings')
@@ -144,6 +158,10 @@ Route::get('client/{uuid}/{tab}', [AdminClientsController::class, 'clientTabs'])
 
 Route::get('users', [AdminUsersController::class, 'users'])->name('users')
     ->middleware('WebPermission:users-view');
+
+Route::get('services', [AdminServicesController::class, 'services'])->name('services')
+    ->middleware('WebPermission:clients-view');
+
 
 Route::get('add_ons/marketplace', [AdminAddOnsController::class, 'marketplace'])->name('add_ons.marketplace')
     ->middleware('WebPermission:add-ons-marketplace-management');

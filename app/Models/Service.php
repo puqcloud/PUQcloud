@@ -263,14 +263,16 @@ class Service extends Model
 
     public function getPriceTotal(): array
     {
+        $round = fn($v) => round((float) $v, 2);
+
         $price = $this->price;
         $price_total = [
-            'setup' => $price->setup ?? null,
-            'base' => $price->base ?? null,
-            'idle' => $price->idle ?? null,
-            'switch_down' => $price->switch_down ?? null,
-            'switch_up' => $price->switch_up ?? null,
-            'uninstall' => $price->uninstall ?? null,
+            'setup' => $round($price->setup ?? 0),
+            'base' => $round($price->base ?? 0),
+            'idle' => $round($price->idle ?? 0),
+            'switch_down' => $round($price->switch_down ?? 0),
+            'switch_up' => $round($price->switch_up ?? 0),
+            'uninstall' => $round($price->uninstall ?? 0),
         ];
 
         $product_options = $this->productOptions;
@@ -286,9 +288,9 @@ class Service extends Model
             }
 
             foreach ($price_total as $key => $value) {
-                $option_value = $option_price->$key ?? null;
+                $option_value = $option_price->$key ?? 0;
                 if (is_numeric($option_value)) {
-                    $price_total[$key] = is_numeric($value) ? $value + $option_value : $option_value;
+                    $price_total[$key] = $round($value + $option_value);
                 }
             }
         }
@@ -298,6 +300,8 @@ class Service extends Model
 
     public function getPriceDetailed(): array
     {
+        $round = fn($v) => round((float) $v, 2);
+
         $price = $this->price;
         $currency = $price->currency;
         $currency_uuid = $currency->uuid;
@@ -305,13 +309,14 @@ class Service extends Model
         $product = $this->product;
 
         $product_option_groups = $this->product->productOptionGroups;
+
         $service_price = [
-            'setup' => $price->setup ?? 0,
-            'base' => $price->base ?? 0,
-            'idle' => $price->idle ?? 0,
-            'switch_down' => $price->switch_down ?? 0,
-            'switch_up' => $price->switch_up ?? 0,
-            'uninstall' => $price->uninstall ?? 0,
+            'setup' => $round($price->setup ?? 0),
+            'base' => $round($price->base ?? 0),
+            'idle' => $round($price->idle ?? 0),
+            'switch_down' => $round($price->switch_down ?? 0),
+            'switch_up' => $round($price->switch_up ?? 0),
+            'uninstall' => $round($price->uninstall ?? 0),
         ];
 
         $price_total = $service_price;
@@ -327,27 +332,28 @@ class Service extends Model
                 continue;
             }
 
-            $product_option_product_option_group = $product_option->productOptionGroup;
-            $group_key = $product_option_product_option_group->name ?: $product_option_product_option_group->key;
+            $group = $product_option->productOptionGroup;
+            $group_key = $group->name ?: $group->key;
             $option_key = $product_option->name ?: $product_option->key;
+
             $order = 0;
             foreach ($product_option_groups as $product_option_group) {
-                if ($product_option_group->uuid == $product_option_product_option_group->uuid) {
+                if ($product_option_group->uuid == $group->uuid) {
                     $order = $product_option_group->pivot->order;
                 }
             }
 
             $price_data = [
-                'setup' => $option_price->setup ?? 0,
-                'base' => $option_price->base ?? 0,
-                'idle' => $option_price->idle ?? 0,
-                'switch_down' => $option_price->switch_down ?? 0,
-                'switch_up' => $option_price->switch_up ?? 0,
-                'uninstall' => $option_price->uninstall ?? 0,
+                'setup' => $round($option_price->setup ?? 0),
+                'base' => $round($option_price->base ?? 0),
+                'idle' => $round($option_price->idle ?? 0),
+                'switch_down' => $round($option_price->switch_down ?? 0),
+                'switch_up' => $round($option_price->switch_up ?? 0),
+                'uninstall' => $round($option_price->uninstall ?? 0),
             ];
 
             foreach ($price_total as $key => $val) {
-                $price_total[$key] += $price_data[$key] ?? 0;
+                $price_total[$key] = $round($val + ($price_data[$key] ?? 0));
             }
 
             $option_prices[] = [
@@ -361,14 +367,10 @@ class Service extends Model
 
         usort($option_prices, fn($a, $b) => $a['order'] <=> $b['order']);
 
-        $hourly_billing = false;
-        if ($product->hourly_billing and $period == 'monthly') {
-            $hourly_billing = true;
-        }
+        $hourly_billing = $product->hourly_billing && $period === 'monthly';
 
         return [
             'currency' => [
-                // 'uuid' => $currency->uuid,
                 'code' => $currency->code,
                 'prefix' => $currency->prefix,
                 'suffix' => $currency->suffix,

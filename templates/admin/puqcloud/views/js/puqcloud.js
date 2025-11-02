@@ -126,7 +126,6 @@ function PUQajax(url, data, timeOut, button, method = 'POST', form = null) {
 }
 
 function alert_error(title, descriptions, timeOut) {
-    // Фильтруем пустые и оставляем только уникальные в текущем вызове
     const uniqueDescriptions = [...new Set(descriptions.filter(desc => desc && desc.trim() !== ''))];
 
     if (uniqueDescriptions.length === 0) return;
@@ -1065,7 +1064,7 @@ function serializeForm(form, forcePromise = false) {
                                 name: file.name,
                                 type: file.type,
                                 size: file.size,
-                                content: e.target.result.split(',')[1] // только base64
+                                content: e.target.result.split(',')[1]
                             });
                             resolve();
                         };

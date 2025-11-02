@@ -249,6 +249,30 @@ class AdminDnsManagerController extends Controller
         ]);
     }
 
+    public function getDnsServerGroupReloadAllZones(Request $request, $uuid): JsonResponse
+    {
+        $model = DnsServerGroup::find($uuid);
+
+        if (empty($model)) {
+            return response()->json([
+                'errors' => [__('error.Not found')],
+            ], 404);
+        }
+
+        $dns_zones = $model->dnsZones;
+
+        foreach ($dns_zones as $zone_zone) {
+            $reload = $zone_zone->reloadZone();
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => __('message.Reload successfully'),
+            'data' => $model,
+        ]);
+    }
+
+
     public function dnsServers(): View
     {
         $title = __('main.DNS Servers');
@@ -262,6 +286,14 @@ class AdminDnsManagerController extends Controller
 
         return view_admin('dns_servers.dns_server', compact('title', 'uuid'));
     }
+
+    public function dnsZoneImport(Request $request, $uuid): View
+    {
+        $title = __('main.DNS Server Import Zones');
+
+        return view_admin('dns_servers.dns_server_import', compact('title', 'uuid'));
+    }
+
 
     public function getDnsServers(Request $request): JsonResponse
     {
@@ -321,6 +353,84 @@ class AdminDnsManagerController extends Controller
             'data' => $responseData,
         ], 200);
     }
+
+    public function getDnsServerDnsZones(Request $request, $uuid): JsonResponse
+    {
+        $model = DnsServer::find($uuid);
+
+        if (empty($model)) {
+            return response()->json([
+                'status' => 'error',
+                'errors' => [__('error.Not found')],
+            ], 404);
+        }
+
+        $dns_zones = $model->getDnsZones();
+
+        if ($dns_zones['status'] == 'error') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => $dns_zones['errors'],
+            ], $dns_zones['code'] ?? 500);
+        }
+
+        return response()->json([
+            'data' => [
+                'original' => [
+                    'data' => $dns_zones['data'],
+                ],
+            ],
+        ]);
+    }
+
+    public function postDnsServerImportZones(Request $request, $uuid): JsonResponse
+    {
+        $model = DnsServer::find($uuid);
+
+        if (empty($model)) {
+            return response()->json([
+                'status' => 'error',
+                'errors' => [__('error.Not found')],
+            ], 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'zones' => 'required|array|min:1',
+            'zones.*' => 'string',
+            'import_mode' => 'required|in:add,replace',
+            'dns_server_group_uuid' => 'required|exists:dns_server_groups,uuid',
+        ], [
+            'zones.required' => __('error.Zones list is required'),
+            'zones.array' => __('error.Zones must be an array'),
+            'zones.min' => __('error.At least one zone must be selected'),
+            'import_mode.required' => __('error.Mode is required'),
+            'import_mode.in' => __('error.Invalid mode selected'),
+            'dns_server_group_uuid.required' => __('error.DNS server group is required'),
+            'dns_server_group_uuid.exists' => __('error.DNS server group not found'),
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => $validator->errors(),
+            ], 422);
+        }
+
+        $import_status = [];
+        foreach ($request->zones as $zone) {
+            $status = $model->importZone($zone, $request->import_mode, $request->dns_server_group_uuid);
+            if ($status['status'] == 'error') {
+                $import_status[] = $zone.': '.__('error.Import failed');
+            } else {
+                $import_status[] = $zone.': Success: '.$status['data']['success'].'. Error: '.$status['data']['errors'];
+            }
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => implode('<br>', $import_status),
+        ]);
+    }
+
 
     public function postDnsServer(Request $request): JsonResponse
     {
@@ -523,6 +633,33 @@ class AdminDnsManagerController extends Controller
         ], 200);
     }
 
+    public function getDnsZonesSelect(Request $request): JsonResponse
+    {
+        $models = DnsZone::all();
+        $results = [];
+        foreach ($models as $model) {
+            $results[] = [
+                'id' => $model->uuid,
+                'text' => $model->name,
+            ];
+        }
+
+        $searchTerm = $request->get('term', '');
+
+        $filteredModules = array_filter($results, function ($result) use ($searchTerm) {
+            return empty($searchTerm) || stripos($result['text'], $searchTerm) !== false;
+        });
+
+        return response()->json([
+            'data' => [
+                'results' => array_values($filteredModules),
+                'pagination' => [
+                    'more' => false,
+                ],
+            ],
+        ], 200);
+    }
+
     public function dnsZones(): View
     {
         $title = __('main.DNS Zones');
@@ -557,6 +694,9 @@ class AdminDnsManagerController extends Controller
                 })
                 ->addColumn('soa_primary_ns', function ($model) {
                     return $model->getSoaPrimaryNs();
+                })
+                ->addColumn('dns_record_count', function ($model) {
+                    return $model->getDnsRecordCount();
                 })
                 ->addColumn('urls', function ($model) {
                     $admin = app('admin');
@@ -619,7 +759,7 @@ class AdminDnsManagerController extends Controller
 
             'soa_ttl.required' => __('error.The SOA TTL field is required'),
             'soa_ttl.integer' => __('error.The SOA TTL must be an integer'),
-            'soa_ttl.min' => __('error.The SOA TTL must be at least 30'),
+            'soa_ttl.min' => __('error.The SOA TTL must be at least 10'),
 
             'soa_refresh.required' => __('error.The SOA refresh field is required'),
             'soa_refresh.integer' => __('error.The SOA refresh must be an integer'),
@@ -736,7 +876,7 @@ class AdminDnsManagerController extends Controller
         ]);
     }
 
-    public function getDnsZoneExportBind(Request $request, $uuid)
+    public function getDnsZoneExportBind(Request $request, $uuid): JsonResponse
     {
         $model = DnsZone::find($uuid);
 
@@ -825,7 +965,7 @@ class AdminDnsManagerController extends Controller
             ], 404);
         }
 
-        $query = $model->dnsRecords();
+        $query = $model->dnsRecords()->orderByRaw("CAST(name AS UNSIGNED) ASC");
 
         return response()->json([
             'data' => DataTables::of($query)

@@ -38,7 +38,7 @@
     <script>
         $(document).ready(function () {
             let isLoading = true;
-            let loadingWidgets = new Set(); // Отслеживаем загружающиеся виджеты
+            let loadingWidgets = new Set();
             let refreshIntervals = {};
 
             let grid = GridStack.init({
@@ -119,7 +119,6 @@
                 PUQajax('{{ route('admin.api.client.summary.dashboard.get', $uuid) }}', {}, 500, null, 'GET')
                     .then(function (response) {
                         if (response.data && response.data.length > 0) {
-                            // Добавляем все виджеты в Set загружающихся
                             response.data.forEach(function (widget) {
                                 loadingWidgets.add(widget.key);
                             });
@@ -128,7 +127,6 @@
                                 addWidgetToGrid(widget.key, widget.width, widget.height, widget.name, widget.icon, widget.x, widget.y, widget.autoRefresh, true);
                             });
                         } else {
-                            // Если нет виджетов для загрузки, сразу завершаем загрузку
                             finishLoading();
                         }
                     })
@@ -146,7 +144,6 @@
             }
 
             function saveDashboardState() {
-                // Не сохраняем, если идет загрузка или есть загружающиеся виджеты
                 if (isLoading || loadingWidgets.size > 0) {
                     console.log('Skipping save - loading in progress');
                     return;
@@ -231,16 +228,13 @@
                             setAutoRefresh(key);
                         }
 
-                        // Убираем виджет из Set загружающихся
                         if (isInitialLoad) {
                             loadingWidgets.delete(key);
 
-                            // Если это был последний загружающийся виджет, завершаем загрузку
                             if (loadingWidgets.size === 0) {
                                 finishLoading();
                             }
                         } else {
-                            // Для новых виджетов (не при инициализации) сохраняем состояние
                             saveDashboardState();
                         }
 
@@ -251,7 +245,6 @@
                     .catch(function (error) {
                         console.error('Error: ', error);
 
-                        // В случае ошибки тоже убираем из загружающихся
                         if (isInitialLoad) {
                             loadingWidgets.delete(key);
                             if (loadingWidgets.size === 0) {
@@ -291,7 +284,6 @@
                     });
             }
 
-            // Обработчик изменения автообновления - НЕ сохраняет состояние автоматически
             $(document).on('change', '.auto-refresh-checkbox', function () {
                 let key = $(this).closest('.grid-stack-item').attr('id');
 
@@ -301,7 +293,6 @@
                     stopAutoRefresh(key);
                 }
 
-                // Сохраняем состояние только если не идет загрузка
                 if (!isLoading && loadingWidgets.size === 0) {
                     saveDashboardState();
                 }
@@ -334,7 +325,6 @@
                 $(".ui-theme-settings").toggleClass("settings-open");
             });
 
-            // Сохраняем состояние только при изменении размера/позиции виджетов
             grid.on('change', function (event, items) {
                 saveDashboardState();
             });

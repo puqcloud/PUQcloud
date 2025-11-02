@@ -185,7 +185,7 @@
                     render: function (data, type, row) {
                         var btn = '';
                         if (row.urls.web_edit) {
-                            btn = btn + renderEditButton(row.urls.web_edit);
+                            btn = btn + renderEditLink(row.urls.web_edit);
                         }
                         if (row.urls.delete) {
                             btn = btn + renderDeleteButton(row.urls.delete);
@@ -215,11 +215,6 @@
                             }
                         });
                 }
-            });
-
-            $tableId.on('click', 'button.edit-btn', function (e) {
-                e.preventDefault();
-                window.location.href = $(this).data('model-url');
             });
 
             $('#create').on('click', function () {

@@ -664,6 +664,9 @@ class OrderController
             $service->setProvisionData($provision_data);
         }
 
+        $service = Service::find($service->uuid);
+        $service->create();
+
         return response()->json([
             'status' => 'success',
             'message' => __('message.Created successfully'),

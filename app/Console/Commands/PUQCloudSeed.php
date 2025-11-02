@@ -19,6 +19,7 @@ namespace App\Console\Commands;
 
 use App\Models\Module;
 use App\Services\AdminPermissionService;
+use App\Services\TranslationService;
 use Database\Seeders\AdminSeeder;
 use Database\Seeders\CountrySeeder;
 use Database\Seeders\CurrencySeeder;
@@ -29,16 +30,19 @@ use Database\Seeders\NotificationLayoutSeeder;
 use Database\Seeders\NotificationSenderSeeder;
 use Database\Seeders\NotificationTemplateSeeder;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\App;
 
 class PUQCloudSeed extends Command
 {
-    protected $signature = 'puqcloud:seed {--email=} {--password=} {--name=}';
 
+    protected $signature = 'puqcloud:seed {--email=} {--password=} {--name=}';
     protected $description = 'Run Post Install Seed';
 
     public function __construct()
     {
         parent::__construct();
+        App::setLocale(config('locale.admin.default'));
+        TranslationService::init('admin');
     }
 
     public function handle()

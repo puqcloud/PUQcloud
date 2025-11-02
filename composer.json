@@ -35,7 +35,8 @@
         "robthree/twofactorauth": "^3.0.2",
         "setasign/fpdi": "^2.6.3",
         "tecnickcom/tcpdf": "^6.10.0",
-        "yajra/laravel-datatables-oracle": "^12.4.0"
+        "yajra/laravel-datatables-oracle": "^12.4.0",
+        "pear/net_dns2": "^2.0"
     },
     "autoload": {
         "files": [

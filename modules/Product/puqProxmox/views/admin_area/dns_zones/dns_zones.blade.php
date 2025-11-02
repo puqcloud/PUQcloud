@@ -55,7 +55,8 @@
                 <thead>
                 <tr>
                     <th>{{__('Product.puqProxmox.Name')}}</th>
-                    <th>{{__('Product.puqProxmox.Count')}}</th>
+                    <th>{{__('Product.puqProxmox.DNS Manager')}}</th>
+                    <th>{{__('Product.puqProxmox.Record Count')}}</th>
                     <th></th>
                 </tr>
                 </thead>
@@ -64,7 +65,8 @@
                 <tfoot>
                 <tr>
                     <th>{{__('Product.puqProxmox.Name')}}</th>
-                    <th>{{__('Product.puqProxmox.Count')}}</th>
+                    <th>{{__('Product.puqProxmox.DNS Manager')}}</th>
+                    <th>{{__('Product.puqProxmox.Record Count')}}</th>
                     <th></th>
                 </tr>
                 </tfoot>
@@ -83,20 +85,30 @@
             var ajaxUrl = '{{ route('admin.api.Product.puqProxmox.dns_zones.get') }}';
             var columnsConfig = [
                 {data: "name", name: "name"},
+                {
+                    data: "dns_manager",
+                    name: "dns_manager",
+                    render: function (data, type, row) {
+                        if (data && data.web_url) {
+                            return `<a href="${data.web_url}" target="_blank" class="text-primary">
+                            ${data.name}
+                        </a>
+                            (${data.record_count})
+`;
+                        } else {
+                            return `<span class="text-danger">{{__('Product.puqProxmox.No DNS zone found')}}</span>`;
+                        }
+                    }
+                },
                 {data: "count", name: "count"},
                 {
                     data: 'urls',
-                    className: "center",
+                    className: "text-center",
                     orderable: false,
                     render: function (data, type, row) {
                         var btn = '';
-
-                        if (row.urls.edit) {
-                            btn = btn + renderEditButton(row.urls.edit);
-                        }
-                        if (row.urls.delete) {
-                            btn = btn + renderDeleteButton(row.urls.delete);
-                        }
+                        if (row.urls.edit) btn += renderEditLink(row.urls.edit);
+                        if (row.urls.delete) btn += renderDeleteButton(row.urls.delete);
                         return btn;
                     }
                 }
@@ -120,11 +132,6 @@
 `;
                 $modalBody.html(formHtml);
                 $('#universalModal').modal('show');
-            });
-
-            $dataTable.on('click', 'button.edit-btn', function (e) {
-                e.preventDefault();
-                window.location.href = $(this).data('model-url');
             });
 
             $dataTable.on('click', 'button.delete-btn', function (e) {

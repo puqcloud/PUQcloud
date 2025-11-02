@@ -18,9 +18,11 @@
 namespace Modules\Product\puqProxmox\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\DnsZone;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Modules\Product\puqProxmox\Models\PuqPmDnsZone;
 use Yajra\DataTables\DataTables;
@@ -41,12 +43,26 @@ class puqPmDnsZoneController extends Controller
         return response()->json([
             'data' => DataTables::of($query)
                 ->filter(function ($query) use ($request) {
-                    if ($request->has('search') && ! empty($request->search['value'])) {
+                    if ($request->has('search') && !empty($request->search['value'])) {
                         $search = $request->search['value'];
                         $query->where(function ($q) use ($search) {
                             $q->where('name', 'like', "%{$search}%");
                         });
                     }
+                })
+                ->addColumn('dns_manager', function ($model) {
+                    $dns_zone = $model->getDnsZone();
+                    if ($dns_zone) {
+                        return [
+                            'name' => $dns_zone->name ?? null,
+                            'uuid' => $dns_zone->uuid ?? null,
+                            'web_url' => route('admin.web.dns_zone', $dns_zone->uuid),
+                            'api_url' => route('admin.api.dns_zone.get', $dns_zone->uuid),
+                            'record_count' => $dns_zone->getDnsRecordCount() ?? 0,
+                        ];
+                    }
+
+                    return null;
                 })
                 ->addColumn('count', function ($model) {
                     return $model->getRecordCount();
@@ -64,6 +80,9 @@ class puqPmDnsZoneController extends Controller
 
     public function postDnsZone(Request $request): JsonResponse
     {
+        $name = $request->input('name');
+
+        $isRdns = str_ends_with($name, '.in-addr.arpa') || str_ends_with($name, '.ip6.arpa');
 
         $validator = Validator::make($request->all(), [
             'name' => [
@@ -81,8 +100,28 @@ class puqPmDnsZoneController extends Controller
             return response()->json(['message' => $validator->errors()], 422);
         }
 
+        if ($isRdns) {
+            if (str_ends_with($name, '.in-addr.arpa')) {
+                $parts = explode('.', str_replace('.in-addr.arpa', '', $name));
+                if (count($parts) !== 3) {
+                    return response()->json([
+                        'message' => __('Product.puqProxmox.IPv4 rDNS must be /24 (3 octets)'),
+                    ], 422);
+                }
+            } else {
+                $parts = explode('.', str_replace('.ip6.arpa', '', $name));
+                $nibbles = count($parts);
+
+                if ($nibbles < 16 || $nibbles > 28 || ($nibbles % 4) !== 0) {
+                    return response()->json([
+                        'message' => __('Product.puqProxmox.IPv6 rDNS must be between /64 and /112 with step of 4 nibbles'),
+                    ], 422);
+                }
+            }
+        }
+
         $model = new PuqPmDnsZone;
-        $model->name = $request->input('name');
+        $model->name = $name;
         $model->save();
 
         return response()->json([
@@ -91,6 +130,7 @@ class puqPmDnsZoneController extends Controller
             'data' => $model,
         ]);
     }
+
 
     public function deleteDnsZone(Request $request, $uuid): JsonResponse
     {
@@ -104,7 +144,7 @@ class puqPmDnsZoneController extends Controller
 
         try {
             $deleted = $model->delete();
-            if (! $deleted) {
+            if (!$deleted) {
                 return response()->json([
                     'errors' => [__('Product.puqProxmox.Deletion failed')],
                 ], 500);
@@ -134,6 +174,18 @@ class puqPmDnsZoneController extends Controller
         $data = $model->toArray();
         $data['count'] = $model->getRecordCount();
 
+        $dns_zone = $model->getDnsZone();
+        $data['dns_manager'] = [];
+        if ($dns_zone) {
+            $data['dns_manager'] = [
+                'name' => $dns_zone->name ?? null,
+                'uuid' => $dns_zone->uuid ?? null,
+                'web_url' => route('admin.web.dns_zone', $dns_zone->uuid),
+                'api_url' => route('admin.api.dns_zone.get', $dns_zone->uuid),
+                'record_count' => $dns_zone->getDnsRecordCount() ?? 0,
+            ];
+        }
+
         return response()->json([
             'status' => 'success',
             'data' => $data,
@@ -150,6 +202,10 @@ class puqPmDnsZoneController extends Controller
             ], 404);
         }
 
+        $name = $request->input('name');
+
+        $isRdns = str_ends_with($name, '.in-addr.arpa') || str_ends_with($name, '.ip6.arpa');
+
         $validator = Validator::make($request->all(), [
             'name' => [
                 'required',
@@ -164,6 +220,26 @@ class puqPmDnsZoneController extends Controller
 
         if ($validator->fails()) {
             return response()->json(['message' => $validator->errors()], 422);
+        }
+
+        if ($isRdns) {
+            if (str_ends_with($name, '.in-addr.arpa')) {
+                $parts = explode('.', str_replace('.in-addr.arpa', '', $name));
+                if (count($parts) !== 3) {
+                    return response()->json([
+                        'message' => __('Product.puqProxmox.IPv4 rDNS must be /24 (3 octets)'),
+                    ], 422);
+                }
+            } else {
+                $parts = explode('.', str_replace('.ip6.arpa', '', $name));
+                $nibbles = count($parts);
+
+                if ($nibbles < 16 || $nibbles > 28 || ($nibbles % 4) !== 0) {
+                    return response()->json([
+                        'message' => __('Product.puqProxmox.IPv6 rDNS must be between /64 and /112 with step of 4 nibbles'),
+                    ], 422);
+                }
+            }
         }
 
         $model->name = $request->input('name');
@@ -191,8 +267,8 @@ class puqPmDnsZoneController extends Controller
             ->where('name', 'not like', '%.in-addr.arpa')
             ->where('name', 'not like', '%.ip6.arpa');
 
-        if (! empty($search)) {
-            $query->where('name', 'like', '%' . $search . '%');
+        if (!empty($search)) {
+            $query->where('name', 'like', '%'.$search.'%');
         }
 
         $models = $query->get();
@@ -224,8 +300,8 @@ class puqPmDnsZoneController extends Controller
                     ->orWhere('name', 'like', '%.ip6.arpa');
             });
 
-        if (! empty($search)) {
-            $query->where('name', 'like', '%' . $search . '%');
+        if (!empty($search)) {
+            $query->where('name', 'like', '%'.$search.'%');
         }
 
         $models = $query->get();
@@ -244,6 +320,129 @@ class puqPmDnsZoneController extends Controller
                     'more' => false,
                 ],
             ],
+        ]);
+    }
+
+
+    public function getDnsZoneRecords(Request $request, $uuid): JsonResponse
+    {
+        $model = PuqPmDnsZone::find($uuid);
+
+        if (empty($model)) {
+            return response()->json([
+                'errors' => [__('Product.puqProxmox.Not found')],
+            ], 404);
+        }
+
+        $model_type = $model->getZoneType();
+        $query = null;
+
+        if (in_array($model_type, ['reverse_ipv4', 'reverse_ipv6'])) {
+            $ip_pools = $model->getMatchingIpPools()->pluck('uuid')->toArray();
+
+            $query = DB::table('puq_pm_lxc_instance_nets')
+                ->join('puq_pm_lxc_instances', 'puq_pm_lxc_instances.uuid', '=',
+                    'puq_pm_lxc_instance_nets.puq_pm_lxc_instance_uuid')
+                ->where('puq_pm_lxc_instance_nets.type', 'public');
+
+            if ($model_type === 'reverse_ipv4') {
+                $query->whereIn('puq_pm_ipv4_pool_uuid', $ip_pools)
+                    ->select(
+                        'puq_pm_lxc_instance_nets.ipv4 as ip',
+                        'puq_pm_lxc_instance_nets.rdns_v4 as content',
+                        'puq_pm_lxc_instances.hostname',
+                        DB::raw("'reverse_ipv4' as zone_type"),
+                        DB::raw("'puq_pm_lxc_instance_nets' as table_name")
+                    );
+            } else {
+                $query->whereIn('puq_pm_ipv6_pool_uuid', $ip_pools)
+                    ->select(
+                        'puq_pm_lxc_instance_nets.ipv6 as ip',
+                        'puq_pm_lxc_instance_nets.rdns_v6 as content',
+                        'puq_pm_lxc_instances.hostname',
+                        DB::raw("'reverse_ipv6' as zone_type"),
+                        DB::raw("'puq_pm_lxc_instance_nets' as table_name")
+                    );
+            }
+
+            $query = DB::query()->fromSub($query, 'combined');
+        }
+
+        if ($model_type === 'forward') {
+            $ipv4Query = DB::table('puq_pm_lxc_instances')
+                ->join('puq_pm_lxc_instance_nets', 'puq_pm_lxc_instance_nets.puq_pm_lxc_instance_uuid', '=',
+                    'puq_pm_lxc_instances.uuid')
+                ->where('puq_pm_lxc_instances.puq_pm_dns_zone_uuid', $model->uuid)
+                ->where('puq_pm_lxc_instance_nets.type', 'public')
+                ->whereNotNull('puq_pm_lxc_instance_nets.ipv4')
+                ->select(
+                    'puq_pm_lxc_instance_nets.ipv4 as ip',
+                    DB::raw("'' as content"),
+                    'puq_pm_lxc_instances.hostname',
+                    DB::raw("'forward' as zone_type"),
+                    DB::raw("'puq_pm_lxc_instance_nets' as table_name")
+                );
+
+            $ipv6Query = DB::table('puq_pm_lxc_instances')
+                ->join('puq_pm_lxc_instance_nets', 'puq_pm_lxc_instance_nets.puq_pm_lxc_instance_uuid', '=',
+                    'puq_pm_lxc_instances.uuid')
+                ->where('puq_pm_lxc_instances.puq_pm_dns_zone_uuid', $model->uuid)
+                ->where('puq_pm_lxc_instance_nets.type', 'public')
+                ->whereNotNull('puq_pm_lxc_instance_nets.ipv6')
+                ->select(
+                    'puq_pm_lxc_instance_nets.ipv6 as ip',
+                    DB::raw("'' as content"),
+                    'puq_pm_lxc_instances.hostname',
+                    DB::raw("'forward' as zone_type"),
+                    DB::raw("'puq_pm_lxc_instance_nets' as table_name")
+                );
+
+            $query = DB::query()->fromSub(
+                $ipv4Query->unionAll($ipv6Query),
+                'combined'
+            );
+        }
+
+        return response()->json([
+            'data' => DataTables::of($query)
+                ->editColumn('ip', fn($row) => $row->ip)
+                ->editColumn('content', fn($row) => $row->content)
+                ->filter(function ($query) use ($request) {
+                    if ($request->has('search') && !empty($request->search['value'])) {
+                        $search = $request->search['value'];
+
+                        $query->where(function ($q) use ($search) {
+                            $q->where('ip', 'like', "%{$search}%")
+                                ->orWhere('hostname', 'like', "%{$search}%")
+                                ->orWhere('content', 'like', "%{$search}%");
+                        });
+                    }
+                })
+                ->make(true),
+        ], 200);
+    }
+
+    public function putDnsZonePushRecords(Request $request, $uuid): JsonResponse
+    {
+        $model = PuqPmDnsZone::find($uuid);
+
+        if (empty($model)) {
+            return response()->json([
+                'errors' => [__('Product.puqProxmox.Not found')],
+            ], 404);
+        }
+
+        $push = $model->pushZone();
+
+        if ($push['status'] == 'error') {
+            return response()->json([
+                'errors' => $push['errors'],
+            ], $push['code'] ?? 500);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => __('Product.puqProxmox.Pushed successfully'),
         ]);
     }
 

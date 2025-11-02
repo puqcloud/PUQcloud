@@ -17,14 +17,22 @@
 
 namespace App\Console\Commands;
 
+use App\Services\TranslationService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Cache;
 
 class CronLastRun extends Command
 {
     protected $signature = 'Cron:lastRun';
-
     protected $description = 'Log the last time the cron job was run';
+
+    public function __construct()
+    {
+        parent::__construct();
+        App::setLocale(config('locale.admin.default'));
+        TranslationService::init('admin');
+    }
 
     public function handle()
     {

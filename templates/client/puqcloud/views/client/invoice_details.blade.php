@@ -293,7 +293,7 @@
                     },
                     {
                         data: 'amount',
-                        className: 'text-start align-middle', // можно добавить nowrap если у тебя есть CSS
+                        className: 'text-start align-middle',
                         width: '1%',
                         render: function (data, type, row) {
                             const bold = row.notes === 'subtotal' || row.notes === 'total';

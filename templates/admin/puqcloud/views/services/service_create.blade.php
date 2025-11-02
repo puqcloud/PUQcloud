@@ -99,7 +99,7 @@
             }
 
             if (preselectedClientUUID) {
-                PUQajax(`{{ route('admin.api.clients.select.get') }}`, { term: preselectedClientUUID }, 1000, null, 'GET')
+                PUQajax(`{{ route('admin.api.clients.select.get') }}`, { q: preselectedClientUUID }, 1000, null, 'GET')
                     .then(response => {
                         const client = response.data.results.find(c => c.id === preselectedClientUUID);
                         if (client) {

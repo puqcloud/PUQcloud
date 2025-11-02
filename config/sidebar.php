@@ -44,6 +44,24 @@ return [
                 ],
             ],
             [
+                'title' => 'Services',
+                'icon' => 'metismenu-icon fas fa-cloud',
+                'subItems' => [
+                    [
+                        'title' => 'Create New Service',
+                        'link' => 'admin.web.service.create',
+                        'active_links' => ['admin.web.service.create'],
+                        'permission' => 'clients-view',
+                    ],
+                    [
+                        'title' => 'All Services',
+                        'link' => 'admin.web.services',
+                        'active_links' => ['admin.web.services'],
+                        'permission' => 'clients-view',
+                    ],
+                ],
+            ],
+            [
                 'title' => 'Finance',
                 'icon' => 'metismenu-icon fas fa-credit-card',
                 'subItems' => [
@@ -65,12 +83,6 @@ return [
                         'active_links' => ['admin.web.tax_rules'],
                         'permission' => 'finance-view',
                     ],
-                    //                    [
-                    //                        'title' => 'Invoices',
-                    //                        'link' => 'admin.web.invoices',
-                    //                        'active_links' => ['admin.web.invoices'],
-                    //                        'permission' => 'finance-view'
-                    //                    ],
                 ],
             ],
             [
@@ -92,7 +104,9 @@ return [
                     [
                         'title' => 'Attribute Groups',
                         'link' => 'admin.web.product_attribute_groups',
-                        'active_links' => ['admin.web.product_attribute_groups', 'admin.web.product_attribute_group.tab'],
+                        'active_links' => [
+                            'admin.web.product_attribute_groups', 'admin.web.product_attribute_group.tab',
+                        ],
                         'permission' => 'product-attributes-management',
                     ],
                     [
@@ -114,12 +128,6 @@ return [
                         'active_links' => ['admin.web.task_queue'],
                         'permission' => 'task-queue-view',
                     ],
-                    //                    [
-                    //                        'title' => 'Queues summary',
-                    //                        'link' => 'admin.web.queues_summary',
-                    //                        'active_links' => ['admin.web.queues_summary'],
-                    //                        'permission' => 'queues-summary-view'
-                    //                    ],
                     [
                         'title' => 'Admin Sessions',
                         'link' => 'admin.web.admin_session_logs',
@@ -231,7 +239,9 @@ return [
                     [
                         'title' => 'Servers',
                         'link' => 'admin.web.dns_servers',
-                        'active_links' => ['admin.web.dns_servers', 'admin.web.dns_server'],
+                        'active_links' => [
+                            'admin.web.dns_servers', 'admin.web.dns_server', 'admin.web.dns_server.import',
+                        ],
                         'permission' => 'dns-manager-dns-servers',
                     ],
                     [
@@ -239,6 +249,30 @@ return [
                         'link' => 'admin.web.dns_zones',
                         'active_links' => ['admin.web.dns_zones', 'admin.web.dns_zone'],
                         'permission' => 'dns-manager-dns-zones',
+                    ],
+                ],
+            ],
+            [
+                'title' => 'SSL Manager',
+                'icon' => 'metismenu-icon fas fa-shield-alt',
+                'subItems' => [
+                    [
+                        'title' => 'Certificate Authorities',
+                        'link' => 'admin.web.certificate_authorities',
+                        'active_links' => [
+                            'admin.web.certificate_authorities',
+                            'admin.web.certificate_authority',
+                        ],
+                        'permission' => 'ssl-manager-certificate-authorities',
+                    ],
+                    [
+                        'title' => 'SSL Certificates',
+                        'link' => 'admin.web.ssl_certificates',
+                        'active_links' => [
+                            'admin.web.ssl_certificates',
+                            'admin.web.ssl_certificate',
+                        ],
+                        'permission' => 'ssl-manager-ssl-certificates',
                     ],
                 ],
             ],

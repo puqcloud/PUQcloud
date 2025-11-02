@@ -274,7 +274,6 @@ return [
     'Icon image' => 'Зображення іконки',
     'Background image' => 'Фонове зображення',
     'Logo' => 'Логотип',
-
     'Enter at least :n characters' => 'Введіть принаймні :n символів',
     'No results found' => 'Результатів не знайдено',
     'Searching...' => 'Пошук...',
@@ -323,4 +322,10 @@ return [
     'E.g. "letsencrypt.org' => 'Наприклад "letsencrypt.org',
     'FQDN the IP should resolve to, e.g. host.example.com' => 'FQDN, на який має вирішуватися IP, наприклад host.example.com',
     'PTR Target' => 'Ціль PTR',
+    'Domain' => 'Домен',
+    'Certificate Authority' => 'Центр сертифікації',
+    'Create Certificate Authority' => 'Створити Центр сертифікації',
+    'Create SSL Certificate' => 'Створити SSL-сертифікат',
+    'Each alias should be entered on a new line (one domain per line)' => 'Кожен псевдонім потрібно вводити з нового рядка (один домен на рядок)',
+    'Auto Renew' => 'Автоподовження',
 ];

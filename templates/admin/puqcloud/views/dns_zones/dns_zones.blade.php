@@ -38,13 +38,10 @@
                 <thead>
                 <tr>
                     <th>{{ __('main.Name') }}</th>
+                    <th>{{ __('main.Record Count') }}</th>
                     <th>{{ __('main.Server Group') }}</th>
                     <th>{{ __('main.Primary NS') }}</th>
                     <th>{{ __('main.Admin Email') }}</th>
-                    <th>{{ __('main.Refresh') }}</th>
-                    <th>{{ __('main.Retry') }}</th>
-                    <th>{{ __('main.Expire') }}</th>
-                    <th>{{ __('main.Minimum TTL') }}</th>
                     <th>{{ __('main.Actions') }}</th>
                 </tr>
                 </thead>
@@ -53,13 +50,10 @@
                 <tfoot>
                 <tr>
                     <th>{{ __('main.Name') }}</th>
+                    <th>{{ __('main.Record Count') }}</th>
                     <th>{{ __('main.Server Group') }}</th>
                     <th>{{ __('main.Primary NS') }}</th>
                     <th>{{ __('main.Admin Email') }}</th>
-                    <th>{{ __('main.Refresh') }}</th>
-                    <th>{{ __('main.Retry') }}</th>
-                    <th>{{ __('main.Expire') }}</th>
-                    <th>{{ __('main.Minimum TTL') }}</th>
                     <th>{{ __('main.Actions') }}</th>
                 </tr>
                 </tfoot>
@@ -83,13 +77,10 @@
                         return '<strong class="highlight-name">' + data + '</strong>';
                     }
                 },
+                { data: "dns_record_count", name: "dns_record_count" },
                 { data: "dns_server_group.name", name: "dns_server_group.name" },
                 { data: "soa_primary_ns", name: "soa_primary_ns" },
                 { data: "soa_admin_email", name: "soa_admin_email" },
-                { data: "soa_refresh", name: "soa_refresh" },
-                { data: "soa_retry", name: "soa_retry" },
-                { data: "soa_expire", name: "soa_expire" },
-                { data: "soa_minimum", name: "soa_minimum" },
                 {
                     data: 'urls',
                     className: "center",

@@ -47,11 +47,16 @@ return [
     'Invoices' => 'Рахунки',
     'Home Companies' => 'Домашні компанії',
     'Tax Rules' => 'Податкові правила',
-
     'DNS Manager' => 'Менеджер DNS',
     'Server Groups' => 'Групи серверів',
     'Servers' => 'Сервери',
     'Domains' => 'Домени',
     'Records' => 'Записи',
     'Zones' => 'Зони',
+    'Services' => 'Сервіси',
+    'All Services' => 'Всі сервіси',
+    'Create New Service' => 'Створити новий сервіс',
+    'SSL Manager' => 'Менеджер SSL',
+    'Certificate Authorities' => 'Центри сертифікації',
+    'SSL Certificates' => 'SSL-сертифікати',
 ];

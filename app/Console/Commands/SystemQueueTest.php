@@ -18,23 +18,22 @@
 namespace App\Console\Commands;
 
 use App\Models\Task;
+use App\Services\TranslationService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\App;
 
 class SystemQueueTest extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
-    protected $signature = 'System:queueTest';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
+    protected $signature = 'System:queueTest';
     protected $description = 'Runs test tasks in all queues for 30 seconds';
+
+    public function __construct()
+    {
+        parent::__construct();
+        App::setLocale(config('locale.admin.default'));
+        TranslationService::init('admin');
+    }
 
     public function handle()
     {

@@ -18,23 +18,22 @@
 namespace App\Console\Commands;
 
 use App\Models\Task;
+use App\Services\TranslationService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\App;
 
 class SystemClearingLostTasks extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
-    protected $signature = 'System:clearingLostTasks';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
+    protected $signature = 'System:clearingLostTasks';
     protected $description = 'Lost "pending", "processing" set to "failed", "duplicate"-remove';
+
+    public function __construct()
+    {
+        parent::__construct();
+        App::setLocale(config('locale.admin.default'));
+        TranslationService::init('admin');
+    }
 
     public function handle()
     {

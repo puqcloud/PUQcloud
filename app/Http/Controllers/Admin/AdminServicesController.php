@@ -25,9 +25,17 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Yajra\DataTables\DataTables;
 
 class AdminServicesController extends Controller
 {
+    public function services(): View
+    {
+        $title = __('main.Services');
+
+        return view_admin('services.services', compact('title'));
+    }
+
     public function serviceCreate(): View
     {
         $title = __('main.Create New Service');
@@ -110,6 +118,84 @@ class AdminServicesController extends Controller
             'data' => $service,
         ]);
     }
+
+    public function getServices(Request $request): JsonResponse
+    {
+        $query = Service::query()
+            ->join('clients', 'clients.uuid', '=', 'services.client_uuid')
+            ->with('product', 'client')
+            ->select('services.*');
+
+        return response()->json([
+            'data' => DataTables::of($query)
+                ->filter(function ($query) use ($request) {
+                    if ($request->has('search') && !empty($request->search['value'])) {
+                        $search = $request->search['value'];
+
+                        $query->where(function ($q) use ($search) {
+                            $q->where('services.status', 'like', "%{$search}%")
+                                ->orWhere('services.admin_label', 'like', "%{$search}%")
+                                ->orWhere('services.uuid', 'like', "%{$search}%")
+                                ->orWhere('clients.firstname', 'like', "%{$search}%");
+                        });
+                    }
+                })
+                ->addColumn('client', function ($service) {
+                    $client = $service->client;
+                    $client->owner = $client->owner();
+                    $client->web_url = route('admin.web.client.tab', ['uuid' => $client->uuid, 'tab' => 'general']);
+
+                    return $client->toArray();
+                })
+                ->addColumn('product', function ($service) {
+                    $product = $service->product;
+                    return [
+                        'key' => $product->key,
+                        'name' => $product->name,
+                        'web_url' => route('admin.web.product.tab', ['uuid' => $product->uuid, 'tab' => 'general']),
+                    ];
+                })
+                ->addColumn('product_group', function ($service) {
+                    $product = $service->product;
+                    $product_group = $product->productGroups()->first();
+                    return [
+                        'key' => $product_group->key,
+                        'name' => $product_group->name,
+                        'web_url' => route('admin.web.product_group.tab', ['uuid' => $product_group->uuid, 'tab' => 'general']),
+                    ];
+                })
+
+                ->addColumn('termination_time', function ($service) {
+                    return $service->getTerminationTime();
+                })
+                ->addColumn('cancellation_time', function ($service) {
+                    return $service->getCancellationTime();
+                })
+                ->addColumn('price', function ($service) {
+                    $price = $service->price;
+                    $currency = $price->currency;
+                    $price_total = $service->getPriceTotal();
+
+                    return [
+                        'code' => $currency->code ?? '',
+                        'amount' => number_format((float) $price_total['base'], 2),
+                        'period' => $price->period,
+                    ];
+                })
+                ->addColumn('urls', function ($service) {
+                    $admin_online = app('admin');
+                    $urls = [];
+                    if ($admin_online->hasPermission('clients-view')) {
+                        $urls['edit'] = route('admin.web.client.tab',
+                            ['uuid' => $service->client->uuid, 'tab' => 'services', 'edit' => $service->uuid]);
+                    }
+
+                    return $urls;
+                })
+                ->make(true),
+        ], 200);
+    }
+
 
     public function putService(Request $request, $uuid): JsonResponse
     {

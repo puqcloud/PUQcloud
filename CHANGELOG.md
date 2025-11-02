@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.0-beta.5] - 2025-11-02
+### Added
+- SSL Manager
+- ACME SSL module, support Let's Encrypt and ZeroSSL
+- HestiaCP DNS module
+- Proxmox module: Added support DNS forward and revers DNS record automation
+
+### Fixed
+- DNS manager (record types and validation)
+
+---
+
 ## [1.0.0-beta.4] - 2025-10-13
 ### Added
 - DNS Manager

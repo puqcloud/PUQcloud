@@ -61,8 +61,8 @@
                     <th>{{__('Product.puqProxmox.Mask')}}</th>
                     <th>{{__('Product.puqProxmox.Gateway')}}</th>
                     <th>{{__('Product.puqProxmox.DNS')}}</th>
-                    <th>{{__('Product.puqProxmox.Used Count')}}</th>
-                    <th>{{__('Product.puqProxmox.Count')}}</th>
+                    <th>{{__('Product.puqProxmox.Used')}}</th>
+                    <th>{{__('Product.puqProxmox.Total')}}</th>
                     <th></th>
                 </tr>
                 </thead>
@@ -77,8 +77,8 @@
                     <th>{{__('Product.puqProxmox.Mask')}}</th>
                     <th>{{__('Product.puqProxmox.Gateway')}}</th>
                     <th>{{__('Product.puqProxmox.DNS')}}</th>
-                    <th>{{__('Product.puqProxmox.Used Count')}}</th>
-                    <th>{{__('Product.puqProxmox.Count')}}</th>
+                    <th>{{__('Product.puqProxmox.Used')}}</th>
+                    <th>{{__('Product.puqProxmox.Total')}}</th>
                     <th></th>
                 </tr>
                 </tfoot>

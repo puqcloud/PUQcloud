@@ -38,7 +38,9 @@ class Module extends Model
 
     public $incrementing = false;
 
-    protected static $directories = ['Plugin', 'Notification', 'Product', 'Payment', 'DnsServer'];
+    protected static $directories = [
+        'Plugin', 'Notification', 'Product', 'Payment', 'DnsServer', 'CertificateAuthority',
+    ];
 
     public $module;
 

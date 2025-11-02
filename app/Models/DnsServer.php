@@ -204,6 +204,134 @@ class DnsServer extends Model
         return $this->executeModule('deleteRecord', $zone_uuid, $name, $type, $content);
     }
 
+    public function getDnsZones(): array
+    {
+        $dns_zones = [];
+        $remote_zones = $this->executeModule('getZones');
+
+        if ($remote_zones['status'] == 'error') {
+            return $remote_zones;
+        }
+        $local_zones = DnsZone::query()->whereIn('name', $remote_zones['data'])->get();
+
+        foreach ($remote_zones['data'] as $remote_zone) {
+
+            $dns_zones[] = [
+                'name' => $remote_zone,
+                'local' => $local_zones->where('name', $remote_zone)->isNotEmpty(),
+            ];
+        }
+
+        return [
+            'status' => 'success',
+            'data' => $dns_zones,
+        ];
+    }
+
+    public function getDnsZoneRecords(string $zone_name): array
+    {
+        $remote_zone_records = $this->executeModule('getZoneRecords', $zone_name);
+
+        if ($remote_zone_records['status'] == 'error') {
+            return $remote_zone_records;
+        }
+
+        return [
+            'status' => 'success',
+            'data' => $remote_zone_records['data'],
+        ];
+    }
 
     // -----------------------------------------------------------------------------------------------------------------
+
+    public function importZone(string $zone_name, string $import_mode, string $dns_server_group_uuid): array
+    {
+        $dns_zone_records = $this->getDnsZoneRecords($zone_name);
+
+        if ($dns_zone_records['status'] == 'error') {
+            return $dns_zone_records;
+        }
+
+        $records = $dns_zone_records['data'];
+
+        $dns_server_group = DnsServerGroup::query()->where('uuid', $dns_server_group_uuid)->first();
+        if (!$dns_server_group) {
+            return [
+                'status' => 'error',
+                'errors' => [__('error.DNS server group not found')],
+            ];
+        }
+
+        if($import_mode == 'replace'){
+            DnsZone::query()->where('name', $zone_name)->delete();
+        }
+
+        $dns_zone = DnsZone::query()->where('name', $zone_name)->first();
+        if (!$dns_zone) {
+            $dns_zone = new DnsZone();
+            $dns_zone->name = $zone_name;
+            $dns_zone->soa_admin_email = 'admin@'.$zone_name;
+            $dns_zone->soa_ttl = 3600;
+            $dns_zone->soa_refresh = 3600;
+            $dns_zone->soa_retry = 1800;
+            $dns_zone->soa_expire = 1209600;
+            $dns_zone->soa_minimum = 3600;
+            $dns_zone->dns_server_group_uuid = $dns_server_group_uuid;
+        }
+        $dns_zone->save();
+
+        $success = 0;
+        $errors = 0;
+
+        foreach ($records as $record) {
+
+            if ($record['type'] == 'SOA') {
+                $parts = explode(' ', $record['content']);
+                if(isset($parts[1])) {
+                    $email_raw = rtrim($parts[1], '.');
+                    $dns_zone->soa_admin_email = preg_replace('/\./', '@', $email_raw, 1);
+                }
+                if (isset($parts[2])) {
+                    $dns_zone->soa_ttl = (int) $parts[2];
+                }
+                if (isset($parts[3])) {
+                    $dns_zone->soa_refresh = (int) $parts[3];
+                }
+                if (isset($parts[4])) {
+                    $dns_zone->soa_retry = (int) $parts[4];
+                }
+                if (isset($parts[5])) {
+                    $dns_zone->soa_expire = (int) $parts[5];
+                }
+                if (isset($parts[6])) {
+                    $dns_zone->soa_minimum = (int) $parts[6];
+                }
+                $dns_zone->save();
+            }
+
+            $status = $dns_zone->createUpdateRecord($record, null, true, true);
+            if ($status['status'] == 'error') {
+                $errors++;
+            } else {
+                $success++;
+            }
+        }
+
+        $dns_zone->reloadZone();
+
+        logActivity(
+            'info',
+            'Zone: '.$zone_name.'. Success: '.$success.'. Error: '.$errors,
+            'DNS zone import',
+        );
+
+        return [
+            'status' => 'success',
+            'data' => [
+                'success' => $success,
+                'errors' => $errors,
+            ],
+        ];
+
+    }
 }

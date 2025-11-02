@@ -660,3 +660,52 @@ if (!function_exists('isValidCronExpression')) {
     }
 }
 
+
+if (!function_exists('expandIpv6')) {
+    function expandIpv6(string $ip): string
+    {
+        if (strpos($ip, '::') !== false) {
+            $parts = explode('::', $ip);
+            $left = explode(':', $parts[0]);
+            $right = isset($parts[1]) ? explode(':', $parts[1]) : [];
+            $missing = 8 - (count($left) + count($right));
+            $ip = implode(':', array_merge(
+                $left,
+                array_fill(0, $missing, '0000'),
+                $right
+            ));
+        }
+
+        $groups = explode(':', $ip);
+        $groups = array_map(fn($g) => str_pad($g, 4, '0', STR_PAD_LEFT), $groups);
+
+        return implode(':', $groups);
+    }
+}
+
+if (!function_exists('compressIpv6')) {
+    function compressIpv6(string $ip): string
+    {
+        $groups = explode(':', $ip);
+        $groups = array_map(fn($g) => ltrim($g, '0') ?: '0', $groups);
+
+        $ip = implode(':', $groups);
+
+        if (preg_match_all('/(?:^|:)(0(?::0)+)(?::|$)/', $ip, $matches)) {
+            $longest = '';
+            foreach ($matches[1] as $block) {
+                if (strlen($block) > strlen($longest)) {
+                    $longest = $block;
+                }
+            }
+            $ip = str_replace($longest, '', $ip);
+            $ip = preg_replace('/(^|:):(:|$)/', '::', $ip, 1);
+        }
+
+        return $ip;
+    }
+}
+
+
+
+

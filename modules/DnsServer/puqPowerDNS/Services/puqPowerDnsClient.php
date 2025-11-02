@@ -21,10 +21,12 @@ use Illuminate\Support\Facades\Http;
 class puqPowerDnsClient
 {
     public string $api_host;
+
     public string $api_key;
+
     public int $api_timeout;
 
-    public function __construct(array $config, $api_timeout = 300)
+    public function __construct(array $config, int $api_timeout = 300)
     {
         $this->api_host = $config['server'] ?? '';
         $this->api_key = $config['api_key'] ?? '';
@@ -33,7 +35,7 @@ class puqPowerDnsClient
 
     private function requestAPI(string $path, string $method = 'GET', array $data = []): array
     {
-        $url = rtrim($this->api_host, '/') . '/api/v1/' . ltrim($path, '/');
+        $url = rtrim($this->api_host, '/').'/api/v1/'.ltrim($path, '/');
 
         $this->logInfo('API Request - Init', [
             'path' => $path,
@@ -64,6 +66,7 @@ class puqPowerDnsClient
 
             if ($response->successful()) {
                 $this->logInfo('API Request - Success', ['url' => $url, 'method' => $method, 'data' => $data], $json);
+
                 return [
                     'status' => 'success',
                     'data' => $json['data'] ?? $json,
@@ -71,18 +74,18 @@ class puqPowerDnsClient
                 ];
             }
 
-            if (is_array($json) && !empty($json['message'])) {
+            if (is_array($json) && ! empty($json['message'])) {
                 $errors = [$json['message']];
-            } elseif (is_array($json) && !empty($json['error'])) {
+            } elseif (is_array($json) && ! empty($json['error'])) {
                 $errors = [$json['error']];
-            } elseif (is_array($json) && !empty($json)) {
+            } elseif (is_array($json) && ! empty($json)) {
                 $errors = $json;
             } elseif (is_string($json)) {
                 $decoded = json_decode($json, true);
                 if (json_last_error() === JSON_ERROR_NONE) {
-                    if (!empty($decoded['error'])) {
+                    if (! empty($decoded['error'])) {
                         $errors = [$decoded['error']];
-                    } elseif (!empty($decoded['message'])) {
+                    } elseif (! empty($decoded['message'])) {
                         $errors = [$decoded['message']];
                     } else {
                         $errors = [$json];
@@ -94,7 +97,6 @@ class puqPowerDnsClient
                 $errors = [$response->body() ?: 'Unknown API error'];
             }
 
-
             $this->logError('API Request - Error Response', $response->body(), ['url' => $url, 'method' => $method, 'data' => $data, 'status' => $statusCode]);
 
             return [
@@ -105,9 +107,11 @@ class puqPowerDnsClient
 
         } catch (RequestException $e) {
             $this->logError('API Request - RequestException', $e->getMessage(), ['url' => $url, 'method' => $method, 'data' => $data]);
+
             return ['status' => 'error', 'errors' => [$e->getMessage()]];
         } catch (\Throwable $e) {
             $this->logError('API Request - Throwable', $e->getMessage(), ['url' => $url, 'method' => $method, 'data' => $data]);
+
             return ['status' => 'error', 'errors' => [$e->getMessage()]];
         }
     }
@@ -131,6 +135,11 @@ class puqPowerDnsClient
         ];
     }
 
+    public function getZones(): array
+    {
+        return $this->requestAPI('servers/localhost/zones', 'GET');
+    }
+
     public function getZone(string $zoneName): array
     {
         return $this->requestAPI("servers/localhost/zones/{$zoneName}", 'GET');
@@ -140,9 +149,9 @@ class puqPowerDnsClient
     {
         $initialData = $zoneData;
         $initialData['rrsets'] = [];
-        $result = $this->requestAPI("servers/localhost/zones", 'POST', $initialData);
+        $result = $this->requestAPI('servers/localhost/zones', 'POST', $initialData);
 
-        if (!isset($zoneData['rrsets']) || empty($zoneData['rrsets'])) {
+        if (! isset($zoneData['rrsets']) || empty($zoneData['rrsets'])) {
             return $result;
         }
 
@@ -155,14 +164,14 @@ class puqPowerDnsClient
 
     public function updateZone(string $zoneName, array $zoneData, int $chunkSize = 500): array
     {
-        if (!isset($zoneData['rrsets']) || empty($zoneData['rrsets'])) {
+        if (! isset($zoneData['rrsets']) || empty($zoneData['rrsets'])) {
             return $this->requestAPI("servers/localhost/zones/{$zoneName}", 'PATCH', $zoneData);
         }
 
         $rrsets = $zoneData['rrsets'];
         unset($zoneData['rrsets']);
 
-        if (!empty($zoneData)) {
+        if (! empty($zoneData)) {
             $this->requestAPI("servers/localhost/zones/{$zoneName}", 'PATCH', $zoneData);
         }
 
@@ -187,9 +196,9 @@ class puqPowerDnsClient
 
     private function logInfo(string $action, array $details = [], mixed $message = ''): void
     {
-            if (function_exists('logModule')) {
-                logModule('DnsServer', 'puqPowerDNS', $action, 'info', $details, $message);
-            }
+        if (function_exists('logModule')) {
+            logModule('DnsServer', 'puqPowerDNS', $action, 'info', $details, $message);
+        }
     }
 
     private function logError(string $action, string $message, mixed $details = []): void

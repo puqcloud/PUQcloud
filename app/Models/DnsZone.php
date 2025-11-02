@@ -80,6 +80,11 @@ class DnsZone extends Model
         return $this->hasMany(DnsRecord::class, 'dns_zone_uuid', 'uuid');
     }
 
+    public function getDnsRecordCount(): int
+    {
+        return $this->dnsRecords_count ??= $this->dnsRecords()->count();
+    }
+
     public function getSoaPrimaryNs(): string
     {
         return $this->dnsServerGroup->ns_domains[0] ?? '';
@@ -396,8 +401,26 @@ class DnsZone extends Model
 
     }
 
-    public function createUpdateRecord(array $data, $uuid = null): array
+    public function createUpdateRecord(array $data, $uuid = null, $shadow = false, $revers = false): array
     {
+
+        $type = strtoupper($data['type']);
+
+        if ($type === 'CNAME') {
+            $existingCname = $this->dnsRecords()
+                ->where('type', 'CNAME')
+                ->where('name', $data['name'])
+                ->where('uuid', '<>', $uuid)
+                ->exists();
+
+            if ($existingCname) {
+                return [
+                    'status' => 'error',
+                    'errors' => [__('error.Only one CNAME record is allowed per domain')],
+                    'code' => 412,
+                ];
+            }
+        }
 
         // ----------------------------------------------------------------------
         if ($uuid) {
@@ -445,7 +468,7 @@ class DnsZone extends Model
         $method = 'buildRecord'.$type;
 
         if (method_exists($this, $method)) {
-            $build_record = $this->{$method}($data);
+            $build_record = $this->{$method}($data,$revers);
         } else {
             return [
                 'status' => 'error',
@@ -487,19 +510,20 @@ class DnsZone extends Model
         $record->save();
         $record->refresh();
 
+        if (!$shadow) {
+            if ($uuid) {
+                $update_remote = $this->runOnDnsServers(fn($dns_server) => $dns_server->updateRecord($record->uuid,
+                    $old_content));
 
-        if ($uuid) {
-            $update_remote = $this->runOnDnsServers(fn($dns_server) => $dns_server->updateRecord($record->uuid,
-                $old_content));
+                if ($update_remote['status'] == 'error') {
+                    return $update_remote;
+                }
+            } else {
+                $create_remote = $this->runOnDnsServers(fn($dns_server) => $dns_server->createRecord($record->uuid));
 
-            if ($update_remote['status'] == 'error') {
-                return $update_remote;
-            }
-        } else {
-            $create_remote = $this->runOnDnsServers(fn($dns_server) => $dns_server->createRecord($record->uuid));
-
-            if ($create_remote['status'] == 'error') {
-                return $create_remote;
+                if ($create_remote['status'] == 'error') {
+                    return $create_remote;
+                }
             }
         }
 
@@ -511,7 +535,6 @@ class DnsZone extends Model
 
     private function buildRecordA(array $data, bool $reverse = false): array
     {
-
         if ($reverse) {
             $data['ipv4'] = $data['content'] ?? null;
         } else {
@@ -523,11 +546,9 @@ class DnsZone extends Model
             'name' => [
                 'required',
                 'string',
-                'max:63',
-                function ($attribute, $value, $fail) {
-                    if ($value !== '@' && !preg_match('/^[a-z0-9-]+$/i', $value)) {
-                        $fail(__('error.The name must be a valid subdomain prefix or @ for root'));
-                    }
+                'max:253',
+                function ($attribute, $value, $fail) use ($data) {
+                    $this->validateHostName($value, $data['type'] ?? 'A', $fail);
                 },
             ],
             'ttl' => 'required|integer|min:30',
@@ -579,11 +600,9 @@ class DnsZone extends Model
             'name' => [
                 'required',
                 'string',
-                'max:63',
-                function ($attribute, $value, $fail) {
-                    if ($value !== '@' && !preg_match('/^[a-z0-9-]+$/i', $value)) {
-                        $fail(__('error.The name must be a valid subdomain prefix or @ for root'));
-                    }
+                'max:253',
+                function ($attribute, $value, $fail) use ($data) {
+                    $this->validateHostName($value, $data['type'] ?? 'AAAA', $fail);
                 },
             ],
             'ttl' => 'required|integer|min:30',
@@ -641,13 +660,9 @@ class DnsZone extends Model
             'name' => [
                 'required',
                 'string',
-                'max:63',
-                function ($attribute, $value, $fail) {
-                    if ($value === '@') {
-                        $fail(__('error.CNAME record cannot be used on the root domain'));
-                    } elseif (!preg_match('/^[a-z0-9-]+$/i', $value)) {
-                        $fail(__('error.The name must be a valid subdomain prefix'));
-                    }
+                'max:253',
+                function ($attribute, $value, $fail) use ($data) {
+                    $this->validateHostName($value, $data['type'] ?? 'A', $fail);
                 },
             ],
             'ttl' => 'required|integer|min:30',
@@ -714,11 +729,9 @@ class DnsZone extends Model
             'name' => [
                 'required',
                 'string',
-                'max:63',
-                function ($attribute, $value, $fail) {
-                    if ($value !== '@' && !preg_match('/^[a-z0-9-]+$/i', $value)) {
-                        $fail(__('error.The name must be a valid subdomain prefix or @ for root'));
-                    }
+                'max:253',
+                function ($attribute, $value, $fail) use ($data) {
+                    $this->validateHostName($value, $data['type'] ?? 'A', $fail);
                 },
             ],
             'ttl' => 'required|integer|min:30',
@@ -796,11 +809,9 @@ class DnsZone extends Model
             'name' => [
                 'required',
                 'string',
-                'max:63',
-                function ($attribute, $value, $fail) {
-                    if ($value !== '@' && !preg_match('/^[a-z0-9-]+$/i', $value)) {
-                        $fail(__('error.The name must be a valid subdomain prefix or @ for root'));
-                    }
+                'max:253',
+                function ($attribute, $value, $fail) use ($data) {
+                    $this->validateHostName($value, $data['type'] ?? 'A', $fail);
                 },
             ],
             'ttl' => 'required|integer|min:30',
@@ -872,11 +883,9 @@ class DnsZone extends Model
             'name' => [
                 'required',
                 'string',
-                'max:63',
-                function ($attribute, $value, $fail) {
-                    if ($value !== '@' && !preg_match('/^[a-z0-9-]+$/i', $value)) {
-                        $fail(__('error.The name must be a valid subdomain prefix or @ for root'));
-                    }
+                'max:253',
+                function ($attribute, $value, $fail) use ($data) {
+                    $this->validateHostName($value, $data['type'] ?? 'A', $fail);
                 },
             ],
             'ttl' => 'required|integer|min:30',
@@ -952,11 +961,9 @@ class DnsZone extends Model
             'name' => [
                 'required',
                 'string',
-                'max:63',
-                function ($attribute, $value, $fail) {
-                    if ($value !== '@' && !preg_match('/^[a-z0-9-]+$/i', $value)) {
-                        $fail(__('The name must be a valid subdomain prefix or @ for root'));
-                    }
+                'max:253',
+                function ($attribute, $value, $fail) use ($data) {
+                    $this->validateHostName($value, $data['type'] ?? 'A', $fail);
                 },
             ],
             'ttl' => 'required|integer|min:30',
@@ -1019,13 +1026,9 @@ class DnsZone extends Model
             'name' => [
                 'required',
                 'string',
-                'max:63',
-                function ($attribute, $value, $fail) {
-                    if ($value === '@') {
-                        $fail(__('error.NS record cannot be used on the root domain'));
-                    } elseif (!preg_match('/^[a-z0-9-]+$/i', $value)) {
-                        $fail(__('error.The name must be a valid subdomain prefix'));
-                    }
+                'max:253',
+                function ($attribute, $value, $fail) use ($data) {
+                    $this->validateHostName($value, $data['type'] ?? 'A', $fail);
                 },
             ],
             'ttl' => 'required|integer|min:30',
@@ -1095,11 +1098,9 @@ class DnsZone extends Model
             'name' => [
                 'required',
                 'string',
-                'max:63',
-                function ($attribute, $value, $fail) {
-                    if ($value !== '@' && !preg_match('/^[a-z0-9-]+$/i', $value)) {
-                        $fail(__('The name must be a valid subdomain prefix or @ for root'));
-                    }
+                'max:253',
+                function ($attribute, $value, $fail) use ($data) {
+                    $this->validateHostName($value, $data['type'] ?? 'A', $fail);
                 },
             ],
             'ttl' => 'required|integer|min:30',
@@ -1219,6 +1220,76 @@ class DnsZone extends Model
             'status' => 'success',
             'data' => $data,
         ];
+    }
+
+    private function validateHostName(string $value, string $type, \Closure $fail): void
+    {
+        $value = trim($value);
+
+        switch ($type) {
+
+            case 'A':
+            case 'AAAA':
+            case 'CNAME':
+            case 'ALIAS':
+            case 'MX':
+            case 'CAA':
+                if ($value === '@') {
+                    return;
+                }
+                $this->validateDnsLabel($value, $fail);
+                break;
+
+            case 'NS':
+                if ($value === '@') {
+                    $fail(__('error.NS record cannot be @'));
+                    break;
+                }
+                $this->validateDnsLabel($value, $fail);
+                break;
+
+            case 'TXT':
+                if ($value === '@') {
+                    return;
+                }
+                $this->validateDnsLabel($value, $fail);
+                break;
+
+            case 'SRV':
+                if (!preg_match('/^_[a-z0-9]+(\._[a-z0-9]+)?(\.[a-z0-9-]+)*$/i', $value)) {
+                    $fail(__('error.Invalid SRV record format (_service._proto.name)'));
+                }
+                break;
+
+            default:
+                $fail(__('error.Unknown record type'));
+        }
+    }
+
+    private function validateDnsLabel(string $value, \Closure $fail): void
+    {
+        if (strlen($value) > 255) {
+            $fail(__('error.Fully qualified domain name cannot exceed 255 characters'));
+        }
+
+        $labels = explode('.', $value);
+        foreach ($labels as $label) {
+            if ($label === '*') {
+                continue;
+            }
+
+            if (strlen($label) < 1 || strlen($label) > 63) {
+                $fail(__('error.The label must be 1-63 characters long'));
+            }
+
+            if (!preg_match('/^[a-z0-9_-]+$/i', $label)) {
+                $fail(__('error.The label must contain only letters, digits, hyphens, or underscores'));
+            }
+
+            if ($label[0] === '-' || $label[strlen($label) - 1] === '-') {
+                $fail(__('error.Label cannot start or end with a hyphen'));
+            }
+        }
     }
 
     public function deleteRecord($uuid): array

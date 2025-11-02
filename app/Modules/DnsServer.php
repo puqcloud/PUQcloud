@@ -67,6 +67,22 @@ class DnsServer extends Module
         return ['status' => 'success'];
     }
 
+    public function getZones(): array
+    {
+        return [
+            'status' => 'success',
+            'data' => [],
+        ];
+    }
+
+    public function getZoneRecords($zone_name): array
+    {
+        return [
+            'status' => 'success',
+            'data' => [],
+        ];
+    }
+
     public function createZone(string $uuid): array
     {
         return ['status' => 'success'];

@@ -49,6 +49,13 @@
                     <i class="fa-solid fa-plug me-1"></i>
                     {{ __('main.Save and Test') }}
                 </button>
+
+                <a href="{{ route('admin.web.dns_server.import',$uuid)}} "
+                   class="mb-2 me-2 btn btn-outline-primary btn-icon btn-outline-2x">
+                    <i class="fa-solid fa-file-import me-1"></i>
+                    {{ __('main.Import') }}
+                </a>
+
                 <button id="save" type="button"
                         class="mb-2 me-2 btn-icon btn-outline-2x btn btn-outline-success">
                     <i class="fa fa-save"></i> {{__('main.Save')}}
@@ -204,7 +211,6 @@
                 $modalBody.html(successHtml);
                 $('#universalModal').modal('show');
             }
-
 
 
             loadFormData();

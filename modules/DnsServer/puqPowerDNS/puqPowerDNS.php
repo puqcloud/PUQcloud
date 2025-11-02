@@ -75,19 +75,6 @@ class puqPowerDNS extends DnsServer
 
     }
 
-    public function adminApiRoutes(): array
-    {
-        return [
-            [
-                'method' => 'post',
-                'uri' => 'test_connection/{uuid}',
-                'permission' => 'test-connection',
-                'name' => 'test_connection.post',
-                'controller' => 'puqPowerDNS@testConnection',
-            ],
-        ];
-    }
-
     public function queues(): array
     {
         return [
@@ -146,6 +133,69 @@ class puqPowerDNS extends DnsServer
     }
 
     // Zone actions ------------------------------------------------
+
+    public function getZones(): array
+    {
+        $client = new puqPowerDnsClient($this->module_data);
+        $zones = [];
+        $remote_zones = $client->getZones();
+
+        if ($remote_zones['status'] == 'error') {
+            return $remote_zones;
+        }
+
+        foreach ($remote_zones['data'] as $zone) {
+            $zones[] = rtrim($zone['id'], '.');
+        }
+        sort($zones);
+
+        return [
+            'status' => 'success',
+            'data' => $zones,
+        ];
+    }
+
+    public function getZoneRecords($zone_name): array
+    {
+        $client = new puqPowerDnsClient($this->module_data);
+        $records = [];
+        $remote_zone = $client->getZone($zone_name);
+
+        if ($remote_zone['status'] == 'error') {
+            return $remote_zone;
+        }
+        $rrsets = $remote_zone['data']['rrsets'];
+
+        foreach ($rrsets as $rrset) {
+            foreach ($rrset['records'] as $record) {
+                $name = rtrim($rrset['name'], '.');
+                if ($name === $zone_name) {
+                    $name = '';
+                } elseif (str_ends_with($name, '.' . $zone_name)) {
+                    $name = substr($name, 0, -strlen('.' . $zone_name));
+                }
+                if ($name === '') {
+                    $name = '@';
+                }
+                $records[] = [
+                    'name' => $name,
+                    'type' => $rrset['type'],
+                    'ttl' => $rrset['ttl'],
+                    'content' => $record['content'],
+                ];
+            }
+        }
+
+        $this->logDebug('TEST', $records, $zone_name);
+        $this->logError('TEST', $records, $zone_name);
+
+
+        return [
+            'status' => 'success',
+            'data' => $records,
+        ];
+    }
+
     public function createZone($uuid): array
     {
         $data = [
@@ -440,7 +490,7 @@ class puqPowerDNS extends DnsServer
                 'type' => 'NS',
                 'ttl' => $ns['ttl'],
                 'changetype' => 'REPLACE',
-                'records' => array_map(fn ($server) => [
+                'records' => array_map(fn($server) => [
                     'content' => rtrim($server, '.').'.',
                     'disabled' => false,
                 ], $ns['servers']),
@@ -496,7 +546,7 @@ class puqPowerDNS extends DnsServer
 
             $key = $record_name.'|'.$data['type'];
 
-            if (! isset($rrsets[$key])) {
+            if (!isset($rrsets[$key])) {
                 $rrsets[$key] = [
                     'name' => $record_name,
                     'type' => $data['type'],

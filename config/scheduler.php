@@ -81,4 +81,16 @@ return [
         'cron' => '* * * * *',
         'disable' => false,
     ],
+    [
+        'artisan' => 'SslManager:ProcessPending',
+        'group' => 'SSL Manager',
+        'cron' => '* * * * *',
+        'disable' => false,
+    ],
+    [
+        'artisan' => 'SslManager:ProcessRenewal',
+        'group' => 'SSL Manager',
+        'cron' => '0 * * * *',
+        'disable' => false,
+    ],
 ];

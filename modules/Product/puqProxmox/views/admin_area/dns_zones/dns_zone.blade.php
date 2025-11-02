@@ -40,6 +40,14 @@
             </div>
 
             <div class="page-title-actions">
+
+                <button type="button"
+                        class="mb-2 me-2 btn-icon btn-outline-2x btn btn-outline-primary"
+                        id="pushToDNS">
+                    <i class="fa fa-sync-alt"></i>
+                    {{__('Product.puqProxmox.Push All to DNS Manager')}}
+                </button>
+
                 <button type="button"
                         class="mb-2 me-2 btn-icon btn-outline-2x btn btn-outline-success"
                         id="save">
@@ -57,15 +65,20 @@
                 <form id="ipPoolForm" method="POST" action="" novalidate="novalidate">
                     <div class="row">
 
-                        <div class="col-xs-12 col-sm-6 col-md-6 col-lg-3 col-xl-3 col-xxl-2 mb-3">
+                        <div class="col-xs-12 col-sm-6 col-md-6 col-lg-4 col-xl-4 col-xxl-4 mb-3">
                             <label for="name" class="form-label">{{__('Product.puqProxmox.Name')}}</label>
                             <input type="text" name="name" id="name" value="" class="form-control"
                                    required>
                         </div>
 
-                        <div class="col-xs-12 col-sm-6 col-md-6 col-lg-3 col-xl-3 col-xxl-2 mb-3">
+                        <div class="col-xs-12 col-sm-6 col-md-6 col-lg-2 col-xl-2 col-xxl-2 mb-3">
                             <label for="dns" class="form-label">{{__('Product.puqProxmox.Count')}}</label>
                             <input type="text" name="count" id="count" class="form-control" disabled>
+                        </div>
+
+                        <div class="col-xs-12 col-sm-6 col-md-6 col-lg-4 col-xl-4 col-xxl-4 mb-3">
+                            <label class="form-label">{{__('Product.puqProxmox.DNS Manager')}}</label>
+                            <div id="dnsManagerInfo"></div>
                         </div>
 
                     </div>
@@ -74,41 +87,101 @@
         </div>
     </div>
 
+    <div class="main-card mb-3 card">
+        <div class="card-body">
+            <table style="width: 100%;" id="dns_records"
+                   class="table table-hover table-striped table-bordered">
+                <thead>
+                <tr>
+                    <th>{{__('Product.puqProxmox.Hostname')}}</th>
+                    <th>{{__('Product.puqProxmox.IP')}}</th>
+                    <th>{{__('Product.puqProxmox.Content')}}</th>
+                </tr>
+                </thead>
+                <tbody>
+                </tbody>
+                <tfoot>
+                <tr>
+                    <th>{{__('Product.puqProxmox.Hostname')}}</th>
+                    <th>{{__('Product.puqProxmox.IP')}}</th>
+                    <th>{{__('Product.puqProxmox.Content')}}</th>
+                </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
 @endsection
 
 @section('js')
     @parent
-        <script>
-            $(document).ready(function () {
-                function loadFormData() {
-                    blockUI('container');
+    <script>
+        $(document).ready(function () {
 
-                    PUQajax('{{route('admin.api.Product.puqProxmox.dns_zone.get',$uuid)}}', {}, 50, null, 'GET')
-                        .then(function (response) {
 
-                            $("#name").val(response.data?.name);
-                            $("#count").val(response.data?.count);
+            var tableId = '#dns_records';
+            var ajaxUrl = '{{ route('admin.api.Product.puqProxmox.dns_zone.records.get',$uuid) }}';
+            var columnsConfig = [
+                {data: "hostname", name: "hostname"},
+                {data: "ip", name: "ip"},
+                {data: "content", name: "content"},
+            ];
 
-                            unblockUI('container');
-                        })
+            var $dataTable = initializeDataTable(tableId, ajaxUrl, columnsConfig);
 
-                        .catch(function (error) {
-                            console.error('Error loading form data:', error);
-                        });
-                }
 
-                $("#save").on("click", function (event) {
-                    const $form = $("#ipPoolForm");
-                    event.preventDefault();
+            function loadFormData() {
+                blockUI('container');
 
-                    const formData = serializeForm($form);
-                    PUQajax('{{route('admin.api.Product.puqProxmox.dns_zone.put', $uuid)}}', formData, 1000, $(this), 'PUT', $form)
-                        .then(function (response) {
-                            loadFormData();
-                        });
-                });
+                PUQajax('{{route('admin.api.Product.puqProxmox.dns_zone.get',$uuid)}}', {}, 50, null, 'GET')
+                    .then(function (response) {
 
-                loadFormData();
+                        $("#name").val(response.data?.name);
+                        $("#count").val(response.data?.count);
+
+                        const dnsManager = response.data?.dns_manager;
+                        const dnsDiv = $("#dnsManagerInfo");
+
+                        if (dnsManager && dnsManager.web_url) {
+                            dnsDiv.html(`
+                    <a href="${dnsManager.web_url}" target="_blank" class="text-success">
+                        ${response.data?.name}
+                    </a>
+
+                    (${dnsManager.record_count})
+                `);
+                        } else {
+                            dnsDiv.html(`<span class="text-danger">{{__('Product.puqProxmox.No DNS zone found')}}</span>`);
+                        }
+
+                        unblockUI('container');
+                    })
+                    .catch(function (error) {
+                        console.error('Error loading form data:', error);
+                    });
+            }
+
+            $("#save").on("click", function (event) {
+                const $form = $("#ipPoolForm");
+                event.preventDefault();
+
+                const formData = serializeForm($form);
+                PUQajax('{{route('admin.api.Product.puqProxmox.dns_zone.put', $uuid)}}', formData, 1000, $(this), 'PUT', $form)
+                    .then(function (response) {
+                        loadFormData();
+                    });
             });
-        </script>
+
+            $("#pushToDNS").on("click", function (event) {
+                event.preventDefault();
+
+                PUQajax('{{route('admin.api.Product.puqProxmox.dns_zone.push_records.put', $uuid)}}', null, 1000, $(this), 'PUT', null)
+                    .then(function (response) {
+                        loadFormData();
+                    });
+            });
+
+            loadFormData();
+        });
+    </script>
 @endsection

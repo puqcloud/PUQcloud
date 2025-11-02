@@ -18,12 +18,13 @@
 namespace App\Console\Commands;
 
 use App\Services\FileService;
+use App\Services\TranslationService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\App;
 
 class TestFileService extends Command
 {
     protected $signature = 'test:fileservice';
-
     protected $description = 'Test the FileService functionality';
 
     protected $fileService;
@@ -32,6 +33,8 @@ class TestFileService extends Command
     {
         parent::__construct();
         $this->fileService = $fileService;
+        App::setLocale(config('locale.admin.default'));
+        TranslationService::init('admin');
     }
 
     public function handle()

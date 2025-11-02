@@ -24,23 +24,22 @@ use App\Models\ModuleLog;
 use App\Models\Notification;
 use App\Models\Task;
 use App\Services\CleanupService;
+use App\Services\TranslationService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\App;
 
 class SystemCleanup extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
-    protected $signature = 'System:Cleanup';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
+    protected $signature = 'System:Cleanup';
     protected $description = 'Clear all logs, sessions and other parameter lists as in history settings';
+
+    public function __construct()
+    {
+        parent::__construct();
+        App::setLocale(config('locale.admin.default'));
+        TranslationService::init('admin');
+    }
 
     public function handle()
     {

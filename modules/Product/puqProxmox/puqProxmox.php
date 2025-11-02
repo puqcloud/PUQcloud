@@ -322,7 +322,7 @@ class puqProxmox extends Product
                     $table->uuid()->primary();
 
                     $table->string('name');
-                    $table->integer('ttl')->default(3600);
+                    $table->integer('ttl')->default(300);
 
                     $table->timestamps();
                 });
@@ -585,30 +585,6 @@ class puqProxmox extends Product
                 });
             }
 
-            if (!Schema::hasTable('puq_pm_dns_servers')) {
-                Schema::create('puq_pm_dns_servers', function (Blueprint $table) {
-
-                    $table->uuid()->primary();
-
-                    $table->string('name');
-                    $table->string('type'); // PowerDNS, Bind, Hestia, etc
-                    $table->longText('config');
-
-                    $table->timestamps();
-                });
-            }
-
-            if (!Schema::hasTable('puq_pm_dns_server_x_dns_zone')) {
-                Schema::create('puq_pm_dns_server_x_dns_zone', function (Blueprint $table) {
-
-                    $table->uuid('puq_pm_dns_zone_uuid');
-                    $table->foreign('puq_pm_dns_zone_uuid')->references('uuid')->on('puq_pm_dns_zones')->onDelete('cascade');
-
-                    $table->uuid('puq_pm_dns_server_uuid');
-                    $table->foreign('puq_pm_dns_server_uuid')->references('uuid')->on('puq_pm_dns_servers')->onDelete('cascade');
-                });
-            }
-
             if (!Schema::hasTable('puq_pm_ssh_public_keys')) {
                 Schema::create('puq_pm_ssh_public_keys', function (Blueprint $table) {
 
@@ -646,7 +622,101 @@ class puqProxmox extends Product
 
             // Fill in the settings ---------------------------------------------------------------------
             SettingService::set('Product.puqProxmox.global_private_network', '10.0.100.0/24');
-            //-------------------------------------------------------------------------------------------
+
+            // APP --------------------------------------------------------------------------------------
+            if (!Schema::hasTable('puq_pm_app_presets')) {
+                Schema::create('puq_pm_app_presets', function (Blueprint $table) {
+
+                    $table->uuid()->primary();
+
+                    $table->string('name');
+
+                    $table->uuid('puq_pm_lxc_preset_uuid');
+                    $table->foreign('puq_pm_lxc_preset_uuid')->references('uuid')->on('puq_pm_lxc_presets')->onDelete('restrict');
+
+                    $table->uuid('puq_pm_lxc_os_template_uuid');
+                    $table->foreign('puq_pm_lxc_os_template_uuid')->references('uuid')->on('puq_pm_lxc_os_templates')->onDelete('restrict');
+
+                    $table->uuid('puq_pm_dns_zone_uuid');
+                    $table->foreign('puq_pm_dns_zone_uuid')->references('uuid')->on('puq_pm_dns_zones')->onDelete('restrict');
+
+
+                    $table->timestamps();
+                });
+            }
+
+            if (!Schema::hasTable('puq_pm_app_endpoints')) {
+                Schema::create('puq_pm_app_endpoints', function (Blueprint $table) {
+
+                    $table->uuid()->primary();
+
+                    $table->string('name');
+                    $table->string('protocol')->default('http'); // https/http/udp/tcp
+                    $table->integer('port')->default(80);
+                    $table->string('subdomain')->default('');
+
+                    $table->uuid('puq_pm_app_preset_uuid');
+                    $table->foreign('puq_pm_app_preset_uuid')->references('uuid')->on('puq_pm_app_presets')->onDelete('cascade');
+
+                    $table->timestamps();
+                });
+            }
+
+            if (!Schema::hasTable('puq_pm_app_instances')) {
+                Schema::create('puq_pm_app_instances', function (Blueprint $table) {
+
+                    $table->uuid()->primary();
+
+                    $table->uuid('puq_pm_lxc_instance_uuid');
+                    $table->foreign('puq_pm_lxc_instance_uuid')->references('uuid')->on('puq_pm_lxc_instances')->onDelete('restrict');
+
+                    $table->uuid('puq_pm_app_preset_uuid');
+                    $table->foreign('puq_pm_app_preset_uuid')->references('uuid')->on('puq_pm_app_presets')->onDelete('restrict');
+
+                    $table->uuid('puq_pm_load_balancer_uuid');
+                    $table->foreign('puq_pm_load_balancer_uuid')->references('uuid')->on('puq_pm_load_balancers')->onDelete('restrict');
+
+                    $table->timestamps();
+                });
+            }
+
+            if (!Schema::hasTable('puq_pm_load_balancers')) {
+                Schema::create('puq_pm_load_balancers', function (Blueprint $table) {
+
+                    $table->uuid()->primary();
+
+                    $table->string('name');
+                    $table->string('subdomain')->default('');
+
+                    $table->uuid('puq_pm_cluster_group_uuid');
+                    $table->foreign('puq_pm_cluster_group_uuid')->references('uuid')->on('puq_pm_cluster_groups')->onDelete('restrict');
+
+                    $table->uuid('puq_pm_dns_zone_uuid');
+                    $table->foreign('puq_pm_dns_zone_uuid')->references('uuid')->on('puq_pm_dns_zones')->onDelete('restrict');
+
+                    $table->timestamps();
+                });
+            }
+
+            if (!Schema::hasTable('puq_pm_web_proxys')) {
+                Schema::create('puq_pm_web_proxys', function (Blueprint $table) {
+
+                    $table->uuid()->primary();
+
+                    $table->string('name');
+
+                    $table->string('api_url');
+                    $table->string('api_key');
+                    $table->json('frontend_ips')->nullable();
+
+                    $table->uuid('puq_pm_load_balancer_uuid');
+                    $table->foreign('puq_pm_load_balancer_uuid')->references('uuid')->on('puq_pm_load_balancers')->onDelete('restrict');
+
+                    $table->timestamps();
+                });
+            }
+
+
 
             if (!Schema::hasTable('puq_pm_scripts')) {
                 Schema::create('puq_pm_scripts', function (Blueprint $table) {
@@ -657,8 +727,19 @@ class puqProxmox extends Product
 
                     $table->longText('script')->nullable();
 
+                    // LXC
                     $table->uuid('puq_pm_lxc_os_template_uuid')->nullable();
                     $table->foreign('puq_pm_lxc_os_template_uuid')->references('uuid')->on('puq_pm_lxc_os_templates')->onDelete('set null');
+
+                    // APP
+                    $table->uuid('puq_pm_app_endpoint_uuid')->nullable();
+                    $table->foreign('puq_pm_app_endpoint_uuid')->references('uuid')->on('puq_pm_app_endpoints')->onDelete('set null');
+
+                    $table->uuid('puq_pm_app_preset_uuid')->nullable();
+                    $table->foreign('puq_pm_app_preset_uuid')->references('uuid')->on('puq_pm_app_presets')->onDelete('set null');
+
+                    $table->uuid('puq_pm_load_balancer_uuid')->nullable();
+                    $table->foreign('puq_pm_load_balancer_uuid')->references('uuid')->on('puq_pm_load_balancers')->onDelete('set null');
 
                     $table->timestamps();
                 });
@@ -682,8 +763,6 @@ class puqProxmox extends Product
     {
         try {
             $tables = [
-                'puq_pm_dns_server_x_dns_zone',
-                'puq_pm_dns_servers',
                 'puq_pm_lxc_instance_nets',
                 'puq_pm_lxc_instances',
                 'puq_pm_lxc_preset_x_lxc_os_templates',
@@ -735,28 +814,30 @@ class puqProxmox extends Product
 
     public function update(): string
     {
-        Schema::table('puq_pm_lxc_instances', function (Blueprint $table) {
-            $table->string('firewall_policy_in')->nullable()->default('ACCEPT');
-            $table->string('firewall_policy_out')->nullable()->default('ACCEPT');
-            $table->longText('firewall_rules')->nullable(); // json
-        });
 
-        Schema::table('puq_pm_lxc_presets', function (Blueprint $table) {
-            $table->boolean('firewall_enable')->default(true);
-            $table->boolean('firewall_dhcp')->default(false);
-
-            $table->boolean('firewall_ipfilter')->default(true);
-            $table->boolean('firewall_macfilter')->default(true);
-
-            $table->string('firewall_log_level_in')->default('nolog');
-            $table->string('firewall_log_level_out')->default('nolog');
-            $table->string('firewall_policy_in')->default('ACCEPT');
-            $table->string('firewall_policy_out')->default('ACCEPT');
-
-            $table->boolean('firewall_ndp')->default(false);
-            $table->boolean('firewall_radv')->default(false);
-        });
         $this->activate();
+
+        Schema::table('puq_pm_scripts', function (Blueprint $table) {
+            // APP
+            $table->uuid('puq_pm_app_endpoint_uuid')->nullable()->after('puq_pm_lxc_os_template_uuid');
+            $table->foreign('puq_pm_app_endpoint_uuid')
+                ->references('uuid')
+                ->on('puq_pm_app_endpoints')
+                ->onDelete('set null');
+
+            $table->uuid('puq_pm_app_preset_uuid')->nullable()->after('puq_pm_app_endpoint_uuid');
+            $table->foreign('puq_pm_app_preset_uuid')
+                ->references('uuid')
+                ->on('puq_pm_app_presets')
+                ->onDelete('set null');
+
+            $table->uuid('puq_pm_load_balancer_uuid')->nullable()->after('puq_pm_app_preset_uuid');
+            $table->foreign('puq_pm_load_balancer_uuid')
+                ->references('uuid')
+                ->on('puq_pm_load_balancers')
+                ->onDelete('set null');
+        });
+
 
         return 'success';
     }
@@ -1142,19 +1223,25 @@ class puqProxmox extends Product
                 ];
             }
 
-            $create_lxc_instance = $puq_pm_lxc_preset->createLxcInstance($service, $this->product_data);
-            $log_response['create_lxc_instance'] = $create_lxc_instance;
-            $log_request['step'] = 'Create LXC Instance';
-            $this->logDebug(__FUNCTION__, $log_request, $log_response);
+            if (empty($lxc_instance)) {
+                $create_lxc_instance = $puq_pm_lxc_preset->createLxcInstance($service, $this->product_data);
 
-            if ($create_lxc_instance['status'] == 'error') {
-                return [
-                    'status' => 'error',
-                    'errors' => $create_lxc_instance['errors'],
-                ];
+                $log_response['create_lxc_instance'] = $create_lxc_instance;
+                $log_request['step'] = 'Create LXC Instance';
+                $this->logDebug(__FUNCTION__, $log_request, $log_response);
+
+                if ($create_lxc_instance['status'] == 'error') {
+                    return [
+                        'status' => 'error',
+                        'errors' => $create_lxc_instance['errors'],
+                    ];
+                }
+                $lxc_instance = $create_lxc_instance['data'];
             }
 
-            $lxc_instance = $create_lxc_instance['data'];
+            $lxc_instance->updateFDNS();
+            $lxc_instance->updateRDNS();
+
             $create_lxc = $lxc_instance->createLxc();
             $log_response['create_lxc'] = $create_lxc;
             $log_request['step'] = 'Create LXC';
@@ -1372,6 +1459,7 @@ class puqProxmox extends Product
                 return $delete_lxc;
             }
 
+            $lxc_instance->deleteDNS();
             $lxc_instance->puqPmLxcInstanceNets()->delete();
             $lxc_instance->delete();
 
@@ -1421,6 +1509,7 @@ class puqProxmox extends Product
             }
 
             if (!empty($lxc_instance)) {
+                $lxc_instance->deleteDNS();
                 $lxc_instance->puqPmLxcInstanceNets()->delete();
                 $lxc_instance->delete();
             }
@@ -1484,11 +1573,21 @@ class puqProxmox extends Product
         $service->setProvisionStatus('change_package');
 
         $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
+
         if (!$lxc_instance) {
             return ['status' => 'error', 'errors' => ['LXC is not ready']];
         }
 
-        return $lxc_instance->rescaleNow();
+        $rescale = $lxc_instance->rescaleNow();
+
+        if ($rescale['status'] == 'error') {
+            return $rescale;
+        }
+
+        $lxc_instance->updateFDNS();
+        $lxc_instance->updateRDNS();
+
+        return $rescale;
     }
 
     //------------------------------------------------------------------------------------------------------------------------
@@ -2229,7 +2328,6 @@ class puqProxmox extends Product
                 'controller' => 'puqPmLxcPresetController@getLxcPresetsSelect',
             ],
 
-
             // LXC Preset Cluster Groups
             [
                 'method' => 'get',
@@ -2317,6 +2415,7 @@ class puqProxmox extends Product
                 'name' => 'lxc_templates.sync_delete_templates.get',
                 'controller' => 'puqPmLxcTemplateController@getLxcTemplatesSyncDeleteTemplates',
             ],
+
             // LXC OS Templates
             [
                 'method' => 'get',
@@ -2396,6 +2495,20 @@ class puqProxmox extends Product
                 'permission' => 'configuration',
                 'name' => 'dns_zone.get',
                 'controller' => 'puqPmDnsZoneController@getDnsZone',
+            ],
+            [
+                'method' => 'get',
+                'uri' => 'dns_zone/{uuid}/records',
+                'permission' => 'configuration',
+                'name' => 'dns_zone.records.get',
+                'controller' => 'puqPmDnsZoneController@getDnsZoneRecords',
+            ],
+            [
+                'method' => 'put',
+                'uri' => 'dns_zone/{uuid}/push_records',
+                'permission' => 'configuration',
+                'name' => 'dns_zone.push_records.put',
+                'controller' => 'puqPmDnsZoneController@putDnsZonePushRecords',
             ],
             [
                 'method' => 'put',
@@ -2506,7 +2619,7 @@ class puqProxmox extends Product
         ];
     }
 
-    public function queues():array
+    public function queues(): array
     {
         return [
             'Create' => [
@@ -3240,6 +3353,8 @@ class puqProxmox extends Product
 
         $lxc_instance->setRdns($request->input('ipv4_rdns'), $request->input('ipv6_rdns'));
 
+        $lxc_instance->updateRDNS();
+
         return response()->json([
             'status' => 'success',
             'message' => __('Product.puqProxmox.Successfully'),
@@ -3701,6 +3816,8 @@ class puqProxmox extends Product
         }
 
         $lxc_instance->save();
+        $lxc_instance->updateFDNS();
+        $lxc_instance->updateRDNS();
 
         return response()->json([
             'status' => 'success',

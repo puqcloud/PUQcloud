@@ -327,4 +327,18 @@ return [
         'description' => 'Management of DNS Records within Zones',
         'group' => 'DNS Manager',
     ],
+    // SSL Manager
+    [
+        'name' => 'Certificate Authorities',
+        'key' => 'ssl-manager-certificate-authorities',
+        'description' => 'Management of Certificate Authorities',
+        'group' => 'SSL Manager',
+    ],
+    [
+        'name' => 'SSL Certificates',
+        'key' => 'ssl-manager-ssl-certificates',
+        'description' => 'Management of SSL Certificates',
+        'group' => 'SSL Manager',
+    ],
+
 ];

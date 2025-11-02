@@ -240,7 +240,6 @@ class PuqPmClusterGroup extends Model
 
     public function getAvailableResources(array $needs, array $tags): array
     {
-
         $memory = $needs['memory'];
         $rootfs_size = $needs['rootfs_size'] * 1024;
         $mp_size = $needs['mp_size'] * 1024;
@@ -250,127 +249,136 @@ class PuqPmClusterGroup extends Model
         $local_private_network = $needs['local_private_network'];
         $global_private_network = $needs['global_private_network'];
 
-
         $node_tags = $tags['node']?->pluck('name')->toArray() ?? [];
         $puq_pm_nodes = $this->getNodesByTags($node_tags);
-        $puq_pm_node_model = null;
 
         $rootfs_storage_tags = $tags['rootfs_storage']?->pluck('name')->toArray() ?? [];
         $rootfs_storages = $this->getStoragesByTags($rootfs_storage_tags);
-        $rootfs_storage_model = null;
 
         $additional_storage_tags = $tags['additional_storage']?->pluck('name')->toArray() ?? [];
         $additional_storages = $this->getStoragesByTags($additional_storage_tags);
-        $additional_storage_model = null;
 
         $backup_storage_tags = $tags['backup_storage']?->pluck('name')->toArray() ?? [];
         $backup_storages = $this->getStoragesByTags($backup_storage_tags);
-        $backup_storage_model = null;
 
         $public_network_tags = $tags['public_network']?->pluck('name')->toArray() ?? [];
         $puq_pm_public_networks = $this->getPublicNetworksByTags($public_network_tags);
-        $ipv4_public_network_model = null;
-        $ipv6_public_network_model = null;
-
 
         $local_private_networks = $this->getLocalPrivateNetworks();
-        $local_private_network_model = null;
-
         $global_private_networks = $this->getGlobalPrivateNetworks();
-        $global_private_network_model = null;
 
+        $best_result = null;
+        $best_missing_count = PHP_INT_MAX;
 
         foreach ($puq_pm_nodes as $puq_pm_node) {
-
-            // Get node uuid -------------------------------------------------------------------------------
-            $puq_pm_node_model = null;
             if ($puq_pm_node->status !== 'online') {
                 continue;
             }
+
             $free_mem = $puq_pm_node->maxmem - $puq_pm_node->mem;
             if ($free_mem < $memory) {
                 continue;
             }
-            $puq_pm_node_model = $puq_pm_node;
 
-            // Get rootfs storage uuid ---------------------------------------------------------------------
-            $rootfs_storage_model = $this->getAvailableStorage($puq_pm_node, $rootfs_storages, $rootfs_size);
-            if (!$rootfs_storage_model) {
-                continue;
+            $result = [
+                'puq_pm_node' => $puq_pm_node,
+                'rootfs_puq_pm_storage' => null,
+                'mp_puq_pm_storage' => null,
+                'backup_puq_pm_storage' => null,
+                'ipv4_public_network' => null,
+                'ipv6_public_network' => null,
+                'local_private_network' => null,
+                'global_private_network' => null,
+                'missing' => [],
+            ];
+
+            // RootFS
+            $rootfs = $this->getAvailableStorage($puq_pm_node, $rootfs_storages, $rootfs_size);
+            if ($rootfs) {
+                $result['rootfs_puq_pm_storage'] = $rootfs;
+            } else {
+                $result['missing'][] = 'rootfs_storage';
             }
 
-            // Get additional storage (only if needed) -----------------------------------------------------
-            $additional_storage_model = null;
+            // Additional storage
             if ($mp_size > 0) {
-                $additional_storage_model = $this->getAvailableStorage($puq_pm_node, $additional_storages, $mp_size);
-                if (!$additional_storage_model) {
-                    continue;
+                $mp = $this->getAvailableStorage($puq_pm_node, $additional_storages, $mp_size);
+                if ($mp) {
+                    $result['mp_puq_pm_storage'] = $mp;
+                } else {
+                    $result['missing'][] = 'additional_storage';
                 }
             }
 
-            // backup storage (only if needed)
-            $backup_storage_model = null;
+            // Backup storage
             if ($backup_count > 0) {
-                $backup_storage_model = $this->getAvailableStorage($puq_pm_node, $backup_storages);
-                if (!$backup_storage_model) {
-                    continue;
+                $backup = $this->getAvailableStorage($puq_pm_node, $backup_storages);
+                if ($backup) {
+                    $result['backup_puq_pm_storage'] = $backup;
+                } else {
+                    $result['missing'][] = 'backup_storage';
                 }
             }
 
-            // Get Public networks IPv4 and IPv6
-            $ipv4_public_network_model = $ipv4_public_network
-                ? $this->getAvailablePublicNetwork($puq_pm_node, $puq_pm_public_networks, 'ipv4')
-                : null;
-
-            if ($ipv4_public_network && !$ipv4_public_network_model) {
-                continue;
+            // Public networks
+            if ($ipv4_public_network) {
+                $ipv4 = $this->getAvailablePublicNetwork($puq_pm_node, $puq_pm_public_networks, 'ipv4');
+                if ($ipv4) {
+                    $result['ipv4_public_network'] = $ipv4;
+                } else {
+                    $result['missing'][] = 'ipv4_public_network';
+                }
             }
 
-            $ipv6_public_network_model = $ipv6_public_network
-                ? $this->getAvailablePublicNetwork($puq_pm_node, $puq_pm_public_networks, 'ipv6')
-                : null;
-
-            if ($ipv6_public_network && !$ipv6_public_network_model) {
-                continue;
+            if ($ipv6_public_network) {
+                $ipv6 = $this->getAvailablePublicNetwork($puq_pm_node, $puq_pm_public_networks, 'ipv6');
+                if ($ipv6) {
+                    $result['ipv6_public_network'] = $ipv6;
+                } else {
+                    $result['missing'][] = 'ipv6_public_network';
+                }
             }
 
-
-            // Get Private networks Local and Global
+            // Private networks
             if ($local_private_network) {
-                $local_private_network_model = $this->getAvailableLocalPrivateNetwork($puq_pm_node, $local_private_networks);
-                if (!$local_private_network_model) {
-                    continue;
+                $local = $this->getAvailableLocalPrivateNetwork($puq_pm_node, $local_private_networks);
+                if ($local) {
+                    $result['local_private_network'] = $local;
+                } else {
+                    $result['missing'][] = 'local_private_network';
                 }
             }
 
             if ($global_private_network) {
-                $global_private_network_model = $this->getAvailableGlobalPrivateNetwork($puq_pm_node, $global_private_networks);
-                if (!$global_private_network_model) {
-                    continue;
+                $global = $this->getAvailableGlobalPrivateNetwork($puq_pm_node, $global_private_networks);
+                if ($global) {
+                    $result['global_private_network'] = $global;
+                } else {
+                    $result['missing'][] = 'global_private_network';
                 }
             }
 
-            return [
-                'puq_pm_node' => $puq_pm_node_model,
-                'rootfs_puq_pm_storage' => $rootfs_storage_model,
-                'mp_puq_pm_storage' => $additional_storage_model,
-                'backup_puq_pm_storage' => $backup_storage_model,
-                'ipv4_public_network' => $ipv4_public_network_model,
-                'ipv6_public_network' => $ipv6_public_network_model,
-                'local_private_network' => $local_private_network_model,
-                'global_private_network' => $global_private_network_model,
-            ];
+            $missing_count = count($result['missing']);
+
+            if ($missing_count === 0) {
+                return $result;
+            }
+
+            if ($missing_count < $best_missing_count) {
+                $best_missing_count = $missing_count;
+                $best_result = $result;
+            }
         }
 
-        return [
-            'puq_pm_node' => $puq_pm_node_model,
-            'rootfs_puq_pm_storage' => $rootfs_storage_model,
-            'mp_puq_pm_storage' => $additional_storage_model,
-            'backup_puq_pm_storage' => $backup_storage_model,
-            'ipv4_public_network' => $ipv4_public_network_model,
-            'ipv6_public_network' => $ipv6_public_network_model,
-            'local_private_network' => $local_private_network_model,
-            'global_private_network' => $global_private_network_model,
+        return $best_result ?? [
+            'puq_pm_node' => null,
+            'rootfs_puq_pm_storage' => null,
+            'mp_puq_pm_storage' => null,
+            'backup_puq_pm_storage' => null,
+            'ipv4_public_network' => null,
+            'ipv6_public_network' => null,
+            'local_private_network' => null,
+            'global_private_network' => null,
         ];
     }
 
@@ -388,6 +396,7 @@ class PuqPmClusterGroup extends Model
                 return $storage;
             }
         }
+
         return null;
     }
 
@@ -406,6 +415,7 @@ class PuqPmClusterGroup extends Model
             if (!$puq_pm_mac_pool->hasAvailableMac()) {
                 continue;
             }
+
             return $network;
         }
 
@@ -427,6 +437,7 @@ class PuqPmClusterGroup extends Model
             if (!$puq_pm_mac_pool->hasAvailableMac()) {
                 continue;
             }
+
             return $network;
         }
 
@@ -451,6 +462,7 @@ class PuqPmClusterGroup extends Model
                 return $network;
             }
         }
+
         return null;
     }
 }

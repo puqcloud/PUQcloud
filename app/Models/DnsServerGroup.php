@@ -20,6 +20,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 class DnsServerGroup extends Model
@@ -48,6 +49,11 @@ class DnsServerGroup extends Model
         static::creating(function ($model) {
             $model->uuid = Str::uuid();
         });
+    }
+
+    public function dnsZones(): HasMany
+    {
+        return $this->hasMany(DnsZone::class, 'dns_server_group_uuid', 'uuid');
     }
 
     public function dnsServers(): BelongsToMany

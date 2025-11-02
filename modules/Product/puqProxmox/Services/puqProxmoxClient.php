@@ -61,7 +61,7 @@ class puqProxmoxClient
     {
         $url = "https://{$this->api_host}:{$this->api_port}/api2/json{$path}";
 
-        $this->logInfo('API Request - Init', [
+        $this->logDebug('API Request - Init', [
             'path' => $path,
             'method' => $method,
             'data' => $data,
@@ -71,7 +71,7 @@ class puqProxmoxClient
         try {
             $method = strtoupper($method);
 
-            $this->logInfo('API Request - Preparing HTTP client', [
+            $this->logDebug('API Request - Preparing HTTP client', [
                 'timeout' => $this->api_timeout,
                 'token_id' => $this->api_token_id,
             ]);
@@ -81,7 +81,7 @@ class puqProxmoxClient
             ])->timeout($this->api_timeout)
                 ->withOptions(['verify' => false]);
 
-            $this->logInfo('API Request - Sending Request', [
+            $this->logDebug('API Request - Sending Request', [
                 'method' => $method,
                 'url' => $url,
                 'data' => $data,
@@ -107,7 +107,7 @@ class puqProxmoxClient
             ];
 
             if ($response->successful()) {
-                $this->logInfo('API Request - Success', $logContext, $response->json());
+                $this->logDebug('API Request - Success', $logContext, $response->json());
 
                 return [
                     'status' => 'success',
@@ -186,7 +186,7 @@ class puqProxmoxClient
             $execCommand .= ' --output-format=json';
         }
 
-        $this->logInfo('SSH Request - Init', [
+        $this->logDebug('SSH Request - Init', [
             'command' => $path,
             'options' => $data,
             'execCommand' => $execCommand,
@@ -226,7 +226,7 @@ class puqProxmoxClient
                 ];
             }
 
-            $this->logInfo('SSH Request - Command executed', [
+            $this->logDebug('SSH Request - Command executed', [
                 'execCommand' => $execCommand,
                 'output' => $output,
             ]);
@@ -317,7 +317,7 @@ class puqProxmoxClient
                 ];
             }
 
-            $this->logInfo('SSH Request - Command executed', [
+            $this->logDebug('SSH Request - Command executed', [
                 'execCommand' => $execCommand,
                 'output' => $output,
                 'duration' => $duration.'s',
