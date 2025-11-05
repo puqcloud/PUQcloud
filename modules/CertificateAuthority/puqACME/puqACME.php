@@ -18,9 +18,9 @@
 use App\Models\DnsZone;
 use App\Models\SslCertificate;
 use App\Modules\CertificateAuthority;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Validator;
 use phpseclib3\Crypt\RSA;
-use Illuminate\Support\Facades\Crypt;
 
 class puqACME extends CertificateAuthority
 {
@@ -52,6 +52,14 @@ class puqACME extends CertificateAuthority
 
     public function getSettingsPage(array $data = []): string
     {
+        try {
+            $data['eab_hmac_key'] = !empty($data['eab_hmac_key'])
+                ? Crypt::decrypt($data['eab_hmac_key'])
+                : '';
+        } catch (\Exception $e) {
+            $data['eab_hmac_key'] = '';
+        }
+
         $dns_zone_uuid = $data['dns_zone_uuid'] ?? '';
         $dns_zone_model = DNSZone::where('uuid', $dns_zone_uuid)->first();
         $dns_zone_data = [];
@@ -103,6 +111,8 @@ class puqACME extends CertificateAuthority
                 'code' => 422,
             ];
         }
+
+        $data['eab_hmac_key'] = Crypt::encrypt($data['eab_hmac_key'] ?? '');
 
         return [
             'status' => 'success',
@@ -393,7 +403,7 @@ class puqACME extends CertificateAuthority
         // Generate Account Private Key
         $privateKey = RSA::createKey(2048)->withPadding(RSA::SIGNATURE_PKCS1);
 
-        $this->certificate_data['account_private_key'] = Crypt::encryptString($privateKey->toString('PKCS8'));
+        $this->certificate_data['account_private_key'] = Crypt::encrypt($privateKey->toString('PKCS8'));
         $this->certificate_data['account_email'] = $this->certificate_data['account_email'] ?? $this->module_data['email'];
         $this->certificate_data['account_id'] = '';
         $this->certificate_data['certificate_url'] = '';

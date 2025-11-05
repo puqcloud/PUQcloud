@@ -328,4 +328,22 @@ return [
     'Create SSL Certificate' => 'Create SSL Certificate',
     'Each alias should be entered on a new line (one domain per line)' => 'Each alias should be entered on a new line (one domain per line)',
     'Auto Renew' => 'Auto Renew',
+
+    'Move to another server group' => 'Move to another server group',
+    '' => '',
+    '' => '',
+    '' => '',
+    '' => '',
+    '' => '',
+    '' => '',
+    '' => '',
+    '' => '',
+    '' => '',
+    '' => '',
+    '' => '',
+    '' => '',
+    '' => '',
+    '' => '',
+    '' => '',
+
 ];

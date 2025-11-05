@@ -284,6 +284,13 @@ class puqHestiaDnsClient
      */
     public function deleteDnsRecord(string $domain, int $id, bool $restart = true): array
     {
+        $this->logInfo('deleteDnsRecord - Called', [
+            'domain' => $domain,
+            'id' => $id,
+            'restart' => $restart,
+            'username' => $this->username
+        ], []);
+        
         $params = [
             $this->username,
             $domain,
@@ -291,7 +298,17 @@ class puqHestiaDnsClient
             $restart ? 'yes' : 'no',
         ];
 
-        return $this->requestAPI('v-delete-dns-record', $params);
+        $result = $this->requestAPI('v-delete-dns-record', $params);
+        
+        $this->logInfo('deleteDnsRecord - Result', [
+            'domain' => $domain,
+            'id' => $id,
+            'result_status' => $result['status'] ?? 'unknown',
+            'result_errors' => $result['errors'] ?? [],
+            'result_code' => $result['code'] ?? null
+        ], $result);
+
+        return $result;
     }
 
     /**

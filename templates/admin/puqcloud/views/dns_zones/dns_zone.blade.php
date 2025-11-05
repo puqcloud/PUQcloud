@@ -48,8 +48,15 @@
                     <i class="fa fa-sync-alt"></i> {{ __('main.Reload Zone') }}
                 </button>
 
+                <button id="moveTo" type="button"
+                        class="mb-2 me-2 btn-icon btn-outline-2x btn btn-outline-secondary">
+                    <i class="fas fa-arrow-circle-right"></i> {{ __('main.Move To') }}
+                </button>
+
                 <div class="mb-2 me-2 btn-group">
-                    <button type="button" class="btn-icon btn-outline-2x btn btn-outline-warning dropdown-toggle d-flex align-items-center" data-bs-toggle="dropdown">
+                    <button type="button"
+                            class="btn-icon btn-outline-2x btn btn-outline-warning dropdown-toggle d-flex align-items-center"
+                            data-bs-toggle="dropdown">
                         <i class="fas fa-exchange-alt me-2"></i>
                         {{ __('main.Export / Import') }}
                     </button>
@@ -67,7 +74,9 @@
                                 <i class="fas fa-file-code me-2"></i> JSON File
                             </button>
                         </li>
-                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
                         <li>
                             <h6 class="dropdown-header">{{ __('main.Import') }}</h6>
                         </li>
@@ -271,7 +280,7 @@
                 {
                     data: "content",
                     name: "content",
-                    render: function(data, type, row) {
+                    render: function (data, type, row) {
                         if (!data) return '';
                         const short = data.length > 50 ? data.substring(0, 50) + "..." : data;
                         return `<span title="${data.replace(/"/g, '&quot;')}">${short}</span>`;
@@ -279,7 +288,15 @@
                 },
                 {data: "type", name: "type"},
                 {data: "ttl", name: "ttl"},
-                {data: "description", name: "description"},
+                                {
+                    data: "description",
+                    name: "description",
+                    render: function (data, type, row) {
+                        if (!data) return '';
+                        const short = data.length > 50 ? data.substring(0, 50) + "..." : data;
+                        return `<span title="${data.replace(/"/g, '&quot;')}">${short}</span>`;
+                    }
+                },
                 {
                     data: 'urls',
                     className: "center",
@@ -304,6 +321,119 @@
 
             function DataTableAddData() {
                 return {};
+            }
+
+            function updateDynamicFields(recordType, existingData = {}) {
+                let html = '';
+
+                switch (recordType) {
+                    case 'A':
+                        html = `
+                <div class="col-12">
+                    <label for="ipv4" class="form-label fw-semibold">${translate('IPv4 address')}</label>
+                    <input type="text" class="form-control" id="ipv4" name="ipv4" value="${existingData.ipv4 || ''}">
+                    <div class="form-text">${translate('E.g. 192.168.0.1')}</div>
+                </div>`;
+                        break;
+
+                    case 'AAAA':
+                        html = `
+                <div class="col-12">
+                    <label for="ipv6" class="form-label fw-semibold">${translate('IPv6 address')}</label>
+                    <input type="text" class="form-control" id="ipv6" name="ipv6" value="${existingData.ipv6 || ''}">
+                    <div class="form-text">${translate('E.g. 2001:0db8::7334')}</div>
+                </div>`;
+                        break;
+
+                    case 'MX':
+                        html = `
+                <div class="col-12 col-md-8">
+                    <label for="mailServer" class="form-label fw-semibold">${translate('Mail server')}</label>
+                    <input type="text" class="form-control" id="mailServer" name="mailServer" value="${existingData.mailServer || ''}">
+                    <div class="form-text">${translate('E.g. mx1.example.com')}</div>
+                </div>
+                <div class="col-12 col-md-4">
+                    <label for="priority" class="form-label fw-semibold">${translate('Priority')}</label>
+                    <input type="number" min="0" max="65535" step="1" class="form-control" id="priority" name="priority" value="${existingData.priority || 10}">
+                    <div class="form-text">0 - 65535</div>
+                </div>`;
+                        break;
+
+                    case 'CNAME':
+                    case 'ALIAS':
+                    case 'NS':
+                        html = `
+                <div class="col-12">
+                    <label for="target" class="form-label fw-semibold">${translate('Target')}</label>
+                    <input type="text" class="form-control" id="target" name="target" value="${existingData.target || ''}">
+                    <div class="form-text">${translate('E.g. www.example.com')}</div>
+                </div>`;
+                        break;
+
+                    case 'TXT':
+                        html = `
+                <div class="col-12">
+                    <label for="txt" class="form-label fw-semibold">${translate('Content')}</label>
+                    <textarea class="form-control" id="txt" name="txt" rows="6" required>${existingData.txt || ''}</textarea>
+                </div>`;
+                        break;
+
+                    case 'SRV':
+                        html = `
+                <div class="col-12 col-md-4">
+                    <label for="priority" class="form-label fw-semibold">${translate('Priority')}</label>
+                    <input type="number" min="0" max="65535" step="1" class="form-control" id="priority" name="priority" value="${existingData.priority || 65535}">
+                </div>
+                <div class="col-12 col-md-4">
+                    <label for="weight" class="form-label fw-semibold">${translate('Weight')}</label>
+                    <input type="number" min="0" max="65535" step="1" class="form-control" id="weight" name="weight" value="${existingData.weight || 0}">
+                </div>
+                <div class="col-12 col-md-4">
+                    <label for="port" class="form-label fw-semibold">${translate('Port')}</label>
+                    <input type="number" min="0" max="65535" step="1" class="form-control" id="port" name="port" value="${existingData.port || 1}">
+                </div>
+                <div class="col-12">
+                    <label for="target" class="form-label fw-semibold">${translate('Target')}</label>
+                    <textarea class="form-control" id="target" name="target" rows="3" required>${existingData.target || ''}</textarea>
+                    <div class="form-text">${translate('E.g. www.example.com')}</div>
+                </div>`;
+                        break;
+
+                    case 'CAA':
+                        html = `
+                <div class="col-12 col-md-4">
+                    <label for="flag" class="form-label fw-semibold">${translate('Flag')}</label>
+                    <input type="number" min="0" max="255" step="1" class="form-control" id="flag" name="flag" value="${existingData.flag || 0}">
+                </div>
+                <div class="col-12 col-md-4">
+                    <label for="tag" class="form-label fw-semibold">${translate('Tag')}</label>
+                    <select class="form-select" id="tag" name="tag">
+                        <option value="issue" ${existingData.tag === 'issue' ? 'selected' : ''}>issue</option>
+                        <option value="issuewild" ${existingData.tag === 'issuewild' ? 'selected' : ''}>issuewild</option>
+                        <option value="iodef" ${existingData.tag === 'iodef' ? 'selected' : ''}>iodef</option>
+                    </select>
+                </div>
+                <div class="col-12 col-md-4">
+                    <label for="value" class="form-label fw-semibold">${translate('Value')}</label>
+                    <input type="text" class="form-control" id="value" name="value" value="${existingData.value || ''}">
+                    <div class="form-text">${translate('E.g. "letsencrypt.org"')}</div>
+                </div>`;
+                        break;
+
+                    case 'PTR':
+                        html = `
+                <div class="col-12">
+                    <label for="ptrdname" class="form-label fw-semibold">${translate('PTR Target')}</label>
+                    <input type="text" class="form-control" id="ptrdname" name="ptrdname" value="${existingData.ptrdname || ''}">
+                    <div class="form-text">${translate('FQDN the IP should resolve to, e.g. host.example.com')}</div>
+                </div>`;
+                        break;
+
+                    default:
+                        html = `<div class="col-12"><div class="alert alert-secondary mb-0">${translate('No fields available for this record type.')}</div></div>`;
+                }
+
+                return html;
             }
 
             $dataTable.on('click', 'button.edit-btn', function (e) {
@@ -544,118 +674,94 @@
                 });
             });
 
-            function updateDynamicFields(recordType, existingData = {}) {
-                let html = '';
+            $('#reloadZone').on('click', function (event) {
+                event.preventDefault();
+                PUQajax('{{route('admin.api.dns_zone.reload.get',$uuid)}}', null, 3000, $(this), 'GET')
+                    .then(function (response) {
+                        loadFormData();
+                        $dataTable.ajax.reload(null, false);
+                    });
+            });
 
-                switch (recordType) {
-                    case 'A':
-                        html = `
-                <div class="col-12">
-                    <label for="ipv4" class="form-label fw-semibold">${translate('IPv4 address')}</label>
-                    <input type="text" class="form-control" id="ipv4" name="ipv4" value="${existingData.ipv4 || ''}">
-                    <div class="form-text">${translate('E.g. 192.168.0.1')}</div>
-                </div>`;
-                        break;
+            $('#exportBind').on('click', function (event) {
+                event.preventDefault();
 
-                    case 'AAAA':
-                        html = `
-                <div class="col-12">
-                    <label for="ipv6" class="form-label fw-semibold">${translate('IPv6 address')}</label>
-                    <input type="text" class="form-control" id="ipv6" name="ipv6" value="${existingData.ipv6 || ''}">
-                    <div class="form-text">${translate('E.g. 2001:0db8::7334')}</div>
-                </div>`;
-                        break;
+                PUQajax('{{route('admin.api.dns_zone.export.bind.get',$uuid)}}', null, 3000, $(this), 'GET', null)
+                    .then(function (response) {
+                        if (response.status === 'success' && response.data.file_content) {
+                            const byteCharacters = atob(response.data.file_content);
+                            const byteNumbers = new Array(byteCharacters.length);
+                            for (let i = 0; i < byteCharacters.length; i++) {
+                                byteNumbers[i] = byteCharacters.charCodeAt(i);
+                            }
+                            const byteArray = new Uint8Array(byteNumbers);
+                            const blob = new Blob([byteArray], {type: 'text/plain'});
 
-                    case 'MX':
-                        html = `
-                <div class="col-12 col-md-8">
-                    <label for="mailServer" class="form-label fw-semibold">${translate('Mail server')}</label>
-                    <input type="text" class="form-control" id="mailServer" name="mailServer" value="${existingData.mailServer || ''}">
-                    <div class="form-text">${translate('E.g. mx1.example.com')}</div>
-                </div>
-                <div class="col-12 col-md-4">
-                    <label for="priority" class="form-label fw-semibold">${translate('Priority')}</label>
-                    <input type="number" min="0" max="65535" step="1" class="form-control" id="priority" name="priority" value="${existingData.priority || 10}">
-                    <div class="form-text">0 - 65535</div>
-                </div>`;
-                        break;
+                            const link = document.createElement('a');
+                            link.href = URL.createObjectURL(blob);
+                            link.download = response.data.file_name || 'zonefile.zone';
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                        } else {
+                            alert('Error exporting zone file');
+                        }
+                    })
+                    .catch(function () {
+                        alert('Server error');
+                    });
+            });
 
-                    case 'CNAME':
-                    case 'ALIAS':
-                    case 'NS':
-                        html = `
-                <div class="col-12">
-                    <label for="target" class="form-label fw-semibold">${translate('Target')}</label>
-                    <input type="text" class="form-control" id="target" name="target" value="${existingData.target || ''}">
-                    <div class="form-text">${translate('E.g. www.example.com')}</div>
-                </div>`;
-                        break;
+            $('#exportJson').on('click', function (event) {
+                event.preventDefault();
 
-                    case 'TXT':
-                        html = `
-                <div class="col-12">
-                    <label for="txt" class="form-label fw-semibold">${translate('Content')}</label>
-                    <textarea class="form-control" id="txt" name="txt" rows="6" required>${existingData.txt || ''}</textarea>
-                </div>`;
-                        break;
+                PUQajax('{{route('admin.api.dns_zone.export.json.get',$uuid)}}', null, 3000, $(this), 'GET', null)
+                    .then(function (response) {
+                        if (response.status === 'success' && response.data) {
+                            const jsonString = JSON.stringify(response.data, null, 4);
+                            const blob = new Blob([jsonString], {type: 'application/json'});
+                            const link = document.createElement('a');
+                            link.href = URL.createObjectURL(blob);
+                            link.download = response.data.file_name || zoneName + '.json';
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                        } else {
+                            alert('Error exporting JSON');
+                        }
+                    })
+                    .catch(function () {
+                        alert('Server error');
+                    });
+            });
 
-                    case 'SRV':
-                        html = `
-                <div class="col-12 col-md-4">
-                    <label for="priority" class="form-label fw-semibold">${translate('Priority')}</label>
-                    <input type="number" min="0" max="65535" step="1" class="form-control" id="priority" name="priority" value="${existingData.priority || 65535}">
-                </div>
-                <div class="col-12 col-md-4">
-                    <label for="weight" class="form-label fw-semibold">${translate('Weight')}</label>
-                    <input type="number" min="0" max="65535" step="1" class="form-control" id="weight" name="weight" value="${existingData.weight || 0}">
-                </div>
-                <div class="col-12 col-md-4">
-                    <label for="port" class="form-label fw-semibold">${translate('Port')}</label>
-                    <input type="number" min="0" max="65535" step="1" class="form-control" id="port" name="port" value="${existingData.port || 1}">
-                </div>
-                <div class="col-12">
-                    <label for="target" class="form-label fw-semibold">${translate('Target')}</label>
-                    <textarea class="form-control" id="target" name="target" rows="3" required>${existingData.target || ''}</textarea>
-                    <div class="form-text">${translate('E.g. www.example.com')}</div>
-                </div>`;
-                        break;
+            $('#moveTo').on('click', function () {
+                var $modalTitle = $('#universalModal .modal-title');
+                var $modalBody = $('#universalModal .modal-body');
 
-                    case 'CAA':
-                        html = `
-                <div class="col-12 col-md-4">
-                    <label for="flag" class="form-label fw-semibold">${translate('Flag')}</label>
-                    <input type="number" min="0" max="255" step="1" class="form-control" id="flag" name="flag" value="${existingData.flag || 0}">
-                </div>
-                <div class="col-12 col-md-4">
-                    <label for="tag" class="form-label fw-semibold">${translate('Tag')}</label>
-                    <select class="form-select" id="tag" name="tag">
-                        <option value="issue" ${existingData.tag === 'issue' ? 'selected' : ''}>issue</option>
-                        <option value="issuewild" ${existingData.tag === 'issuewild' ? 'selected' : ''}>issuewild</option>
-                        <option value="iodef" ${existingData.tag === 'iodef' ? 'selected' : ''}>iodef</option>
-                    </select>
-                </div>
-                <div class="col-12 col-md-4">
-                    <label for="value" class="form-label fw-semibold">${translate('Value')}</label>
-                    <input type="text" class="form-control" id="value" name="value" value="${existingData.value || ''}">
-                    <div class="form-text">${translate('E.g. "letsencrypt.org"')}</div>
-                </div>`;
-                        break;
+                $('#universalModal .modal-dialog').removeClass('modal-lg');
+                $('#universalModal .modal-dialog').addClass('modal-md');
 
-                    case 'PTR':
-                        html = `
-                <div class="col-12">
-                    <label for="ptrdname" class="form-label fw-semibold">${translate('PTR Target')}</label>
-                    <input type="text" class="form-control" id="ptrdname" name="ptrdname" value="${existingData.ptrdname || ''}">
-                    <div class="form-text">${translate('FQDN the IP should resolve to, e.g. host.example.com')}</div>
-                </div>`;
-                        break;
+                $modalTitle.text(translate('Move to another server group'));
 
-                    default:
-                        html = `<div class="col-12"><div class="alert alert-secondary mb-0">${translate('No fields available for this record type.')}</div></div>`;
-                }
+                const formHtml = `
+<form id="moveToForm" class="mx-auto needs-validation" novalidate>
+    <div class="mb-3">
+        <label class="form-label" for="dns_server_group_uuid">${translate('DNS Server Group')}</label>
+        <select name="dns_server_group_uuid" id="dns_server_group_uuid" class="form-select">
+            <option value="">${translate('Select group')}</option>
+        </select>
+    </div>
+</form>
+`;
+                $modalBody.html(formHtml);
+                $('#universalModal').modal('show');
 
-                return html;
-            }
+                var $elementDnsServerGroup = $modalBody.find('[name="dns_server_group_uuid"]');
+                initializeSelect2($elementDnsServerGroup, '{{route('admin.api.dns_server_groups.select.get')}}', '', 'GET', 1000, {
+                    dropdownParent: $('#universalModal')
+                });
+            });
 
             $('#modalSaveButton').on('click', function (event) {
                 event.preventDefault();
@@ -683,66 +789,21 @@
                         });
                 }
 
+                if ($('#moveToForm').length) {
+                    var $form = $('#moveToForm');
+                    var formData = serializeForm($form);
+
+                    PUQajax('{{route('admin.api.dns_zone.move_to.put',$uuid)}}', formData, 500, $(this), 'PUT', $form)
+                        .then(function (response) {
+                            $('#universalModal').modal('hide');
+                            loadFormData();
+                            $dataTable.ajax.reload(null, false);
+                        });
+                }
+
             });
-
-            $('#reloadZone').on('click', function (event) {
-                event.preventDefault();
-                PUQajax('{{route('admin.api.dns_zone.reload.get',$uuid)}}', null, 3000, $(this), 'GET');
-            });
-
-            $('#exportBind').on('click', function (event) {
-                event.preventDefault();
-
-                PUQajax('{{route('admin.api.dns_zone.export.bind.get',$uuid)}}', null, 3000, $(this), 'GET', null)
-                    .then(function(response) {
-                        if(response.status === 'success' && response.data.file_content) {
-                            const byteCharacters = atob(response.data.file_content);
-                            const byteNumbers = new Array(byteCharacters.length);
-                            for (let i = 0; i < byteCharacters.length; i++) {
-                                byteNumbers[i] = byteCharacters.charCodeAt(i);
-                            }
-                            const byteArray = new Uint8Array(byteNumbers);
-                            const blob = new Blob([byteArray], {type: 'text/plain'});
-
-                            const link = document.createElement('a');
-                            link.href = URL.createObjectURL(blob);
-                            link.download = response.data.file_name || 'zonefile.zone';
-                            document.body.appendChild(link);
-                            link.click();
-                            document.body.removeChild(link);
-                        } else {
-                            alert('Error exporting zone file');
-                        }
-                    })
-                    .catch(function() {
-                        alert('Server error');
-                    });
-            });
-
-            $('#exportJson').on('click', function (event) {
-                event.preventDefault();
-
-                PUQajax('{{route('admin.api.dns_zone.export.json.get',$uuid)}}', null, 3000, $(this), 'GET', null)
-                    .then(function(response) {
-                        if(response.status === 'success' && response.data) {
-                            const jsonString = JSON.stringify(response.data, null, 4);
-                            const blob = new Blob([jsonString], {type: 'application/json'});
-                            const link = document.createElement('a');
-                            link.href = URL.createObjectURL(blob);
-                            link.download = response.data.file_name || zoneName+'.json';
-                            document.body.appendChild(link);
-                            link.click();
-                            document.body.removeChild(link);
-                        } else {
-                            alert('Error exporting JSON');
-                        }
-                    })
-                    .catch(function() {
-                        alert('Server error');
-                    });
-            });
-
 
         });
+
     </script>
 @endsection

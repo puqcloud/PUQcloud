@@ -209,9 +209,16 @@ class puqHestiaDNS extends DnsServer
                 $recordValue = $recordPriority . ' ' . $recordValue;
             }
             
-            // Handle SRV records - HestiaCP already includes priority in VALUE field
-            // SRV format in HestiaCP: "weight port target" (e.g., "0 587 mail.domain.com.")
-            // We don't need to modify SRV records as they're already in correct format
+            // Handle SRV records - HestiaCP stores priority separately in PRIORITY field
+            // VALUE field contains only "weight port target" (e.g., "0 587 mail.domain.com.")
+            // But buildRecordSRV() with reverse=true expects format: "priority weight port target"
+            // So we need to prepend priority to the content
+            if ($recordType === 'SRV' && $recordPriority !== null) {
+                // Check if priority is already in content (shouldn't be, but just in case)
+                if (!preg_match('/^\d+\s+\d+\s+\d+\s+/', $recordValue)) {
+                    $recordValue = $recordPriority . ' ' . $recordValue;
+                }
+            }
 
             $records[] = [
                 'name' => $recordName,
@@ -323,42 +330,7 @@ class puqHestiaDNS extends DnsServer
                 'ip' => $ip
             ]);
 
-            // Create default A record in panel first
-            $panelRecord = new \App\Models\DnsRecord();
-            $panelRecord->dns_zone_uuid = $model_zone->uuid;
-            $panelRecord->name = '@';
-            $panelRecord->type = 'A';
-            $panelRecord->content = $ip;
-            $panelRecord->ttl = 3600;
-            $panelRecord->description = 'Default A record for domain HestiaDNS module';
-            $panelRecord->save();
-
-            $this->logInfo('createZoneJob - Default A Record Created in Panel', [
-                'domain' => $model_zone->name,
-                'record_uuid' => $panelRecord->uuid
-            ]);
-
-            // Create default A record on HestiaCP
-            $defaultARecordResult = $client->addDnsRecord(
-                $model_zone->name,
-                '@',
-                'A',
-                $ip,
-                null,
-                null,
-                false,
-                3600
-            );
-
-            if ($defaultARecordResult['status'] === 'success') {
-                $this->logInfo('createZoneJob - Default A Record Created on HestiaCP', [
-                    'domain' => $model_zone->name
-                ]);
-            } else {
-                $this->logError('createZoneJob - Failed to Create Default A Record on HestiaCP', [
-                    'domain' => $model_zone->name
-                ], $defaultARecordResult);
-            }
+            $this->createDefaultARecord($model_zone, $client, $ip, 'createZoneJob');
         }
         
         // SECOND: Get all automatically created records from HestiaCP
@@ -546,42 +518,7 @@ class puqHestiaDNS extends DnsServer
                 'ip' => $ip
             ]);
 
-            // Create default A record in panel first
-            $panelRecord = new \App\Models\DnsRecord();
-            $panelRecord->dns_zone_uuid = $model_zone->uuid;
-            $panelRecord->name = '@';
-            $panelRecord->type = 'A';
-            $panelRecord->content = $ip;
-            $panelRecord->ttl = 3600;
-            $panelRecord->description = 'Default A record for domain HestiaDNS module';
-            $panelRecord->save();
-
-            $this->logInfo('reloadZoneJob - Default A Record Created in Panel', [
-                'domain' => $model_zone->name,
-                'record_uuid' => $panelRecord->uuid
-            ]);
-
-            // Create default A record on HestiaCP
-            $defaultARecordResult = $client->addDnsRecord(
-                $model_zone->name,
-                '@',
-                'A',
-                $ip,
-                null,
-                null,
-                false,
-                3600
-            );
-
-            if ($defaultARecordResult['status'] === 'success') {
-                $this->logInfo('reloadZoneJob - Default A Record Created on HestiaCP', [
-                    'domain' => $model_zone->name
-                ]);
-            } else {
-                $this->logError('reloadZoneJob - Failed to Create Default A Record on HestiaCP', [
-                    'domain' => $model_zone->name
-                ], $defaultARecordResult);
-            }
+            $this->createDefaultARecord($model_zone, $client, $ip, 'reloadZoneJob');
         }
         
         // SECOND: Get all automatically created records from HestiaCP
@@ -673,16 +610,29 @@ class puqHestiaDNS extends DnsServer
         // Now add all DNS records from our panel
         $recordsAdded = 0;
         $recordsFailed = 0;
+        $recordsSkipped = 0;
+        $failedRecords = [];
+        $skippedRecords = [];
         $skipFirstARecord = false;
         
         foreach ($model_zone->dnsRecords as $record) {
             // Skip first A record if we already created it before cleanup
+            // This ensures we always have at least one A record (HestiaCP requirement)
             if ($record->type === 'A' && $hasPanelARecord && !$skipFirstARecord) {
                 $skipFirstARecord = true;
+                $recordsSkipped++;
+                $skippedRecords[] = [
+                    'name' => $record->name,
+                    'type' => $record->type,
+                    'content' => $record->content,
+                    'reason' => 'Already created before cleanup to ensure at least one A record exists'
+                ];
                 $this->logInfo('reloadZoneJob - Skipping First A Record (Already Created)', [
                     'record_uuid' => $record->uuid,
                     'name' => $record->name,
-                    'type' => $record->type
+                    'type' => $record->type,
+                    'content' => $record->content,
+                    'reason' => 'Already created before cleanup to ensure at least one A record exists'
                 ]);
                 continue;
             }
@@ -690,7 +640,8 @@ class puqHestiaDNS extends DnsServer
             $this->logInfo('reloadZoneJob - Adding Panel Record', [
                 'record_uuid' => $record->uuid,
                 'name' => $record->name,
-                'type' => $record->type
+                'type' => $record->type,
+                'content' => $record->content
             ]);
             
             $recordResult = $this->addRecordToHestia($client, $model_zone, $record);
@@ -699,10 +650,23 @@ class puqHestiaDNS extends DnsServer
                 $recordsAdded++;
             } else {
                 $recordsFailed++;
+                $errorMessage = !empty($recordResult['errors']) 
+                    ? (is_array($recordResult['errors']) ? implode(', ', $recordResult['errors']) : $recordResult['errors'])
+                    : 'Unknown error';
+                
+                $failedRecords[] = [
+                    'name' => $record->name,
+                    'type' => $record->type,
+                    'content' => $record->content,
+                    'error' => $errorMessage
+                ];
+                
                 $this->logError('reloadZoneJob - Failed to Add Panel Record', [
                     'record_uuid' => $record->uuid,
                     'name' => $record->name,
-                    'type' => $record->type
+                    'type' => $record->type,
+                    'content' => $record->content,
+                    'error' => $errorMessage
                 ], $recordResult);
             }
         }
@@ -710,137 +674,28 @@ class puqHestiaDNS extends DnsServer
         $this->logInfo('reloadZoneJob - Completed', [
             'domain' => $model_zone->name,
             'records_added' => $recordsAdded,
-            'records_failed' => $recordsFailed
+            'records_failed' => $recordsFailed,
+            'records_skipped' => $recordsSkipped,
+            'failed_records' => $failedRecords,
+            'skipped_records' => $skippedRecords
         ]);
+
+        $message = "Successfully synced {$recordsAdded} DNS records to HestiaCP";
+        if ($recordsFailed > 0) {
+            $message .= ". Failed: {$recordsFailed}";
+        }
+        if ($recordsSkipped > 0) {
+            $message .= ". Skipped: {$recordsSkipped} (first A record was created before cleanup)";
+        }
 
         return [
             'status' => 'success',
             'synced' => $recordsAdded,
-            'message' => "Successfully synced {$recordsAdded} DNS records to HestiaCP"
-        ];
-    }
-
-    /**
-     * Sync DNS records from HestiaCP to local database
-     */
-    private function syncZoneRecords(DnsZone $model_zone): array
-    {
-        $this->logInfo('syncZoneRecords - Start', ['zone' => $model_zone->name], []);
-        
-        $client = new puqHestiaDnsClient($this->module_data);
-        
-        // Get records from HestiaCP
-        $result = $client->listDnsRecords($model_zone->name);
-        
-        if ($result['status'] === 'error') {
-            $this->logError('syncZoneRecords - Failed to Get Records from HestiaCP', [
-                'zone' => $model_zone->name
-            ], $result);
-            return $result;
-        }
-
-        $hestiaRecords = $result['data'] ?? [];
-        
-        $this->logInfo('syncZoneRecords - Retrieved Records', [
-            'zone' => $model_zone->name,
-            'count' => is_array($hestiaRecords) ? count($hestiaRecords) : 0,
-            'type' => gettype($hestiaRecords),
-            'sample_keys' => is_array($hestiaRecords) ? implode(', ', array_slice(array_keys($hestiaRecords), 0, 5)) : 'N/A'
-        ], []);
-
-        $synced = 0;
-        $errors = [];
-
-        foreach ($hestiaRecords as $id => $hestiaRecord) {
-            try {
-                // Skip SOA and NS records (managed by zone settings)
-                if (in_array($hestiaRecord['TYPE'], ['SOA', 'NS'])) {
-                    continue;
-                }
-
-                    $recordName = $hestiaRecord['RECORD'];
-                    $recordType = $hestiaRecord['TYPE'];
-                    $recordValue = $hestiaRecord['VALUE'];
-                    $recordTtl = (int)($hestiaRecord['TTL'] ?? 3600);
-                    $recordPriority = isset($hestiaRecord['PRIORITY']) && $hestiaRecord['PRIORITY'] !== '' ? (int)$hestiaRecord['PRIORITY'] : null;
-                    
-                    // Format content for MX and SRV records
-                    if (in_array($recordType, ['MX', 'SRV']) && $recordPriority !== null) {
-                        $recordValue = $recordPriority . ' ' . $recordValue;
-                    }
-
-                // Format record name (@ for zone apex)
-                if ($recordName === $model_zone->name || $recordName === '@') {
-                    $recordName = '@';
-                }
-
-                // Check if record exists in database
-                $existingRecord = $model_zone->dnsRecords()
-                    ->where('name', $recordName)
-                    ->where('type', $recordType)
-                    ->where('content', $recordValue)
-                    ->first();
-
-                if ($existingRecord) {
-                    // Update TTL if changed
-                    if ($existingRecord->ttl != $recordTtl) {
-                        $existingRecord->ttl = $recordTtl;
-                        $existingRecord->save();
-                        $this->logInfo('syncZoneRecords - Updated Record', [
-                            'zone' => $model_zone->name,
-                            'name' => $recordName,
-                            'type' => $recordType,
-                            'old_ttl' => $existingRecord->ttl,
-                            'new_ttl' => $recordTtl
-                        ], []);
-                    }
-                } else {
-                    // Create new record in database
-                    $newRecord = new DnsRecord();
-                    $newRecord->dns_zone_uuid = $model_zone->uuid;
-                    $newRecord->name = $recordName;
-                    $newRecord->type = $recordType;
-                    $newRecord->content = $recordValue;
-                    $newRecord->ttl = $recordTtl;
-                    $newRecord->description = 'Synced from HestiaCP';
-                    $newRecord->save();
-
-                    $this->logInfo('syncZoneRecords - Created Record', [
-                        'zone' => $model_zone->name,
-                        'name' => $recordName,
-                        'type' => $recordType,
-                        'value' => $recordValue
-                    ], []);
-                }
-
-                $synced++;
-            } catch (\Exception $e) {
-                $errors[] = "Failed to sync record {$hestiaRecord['RECORD']}: " . $e->getMessage();
-                $this->logError('syncZoneRecords - Record Sync Error', [
-                    'zone' => $model_zone->name,
-                    'record' => $hestiaRecord
-                ], ['error' => $e->getMessage()]);
-            }
-        }
-
-        $this->logInfo('syncZoneRecords - Completed', [
-            'zone' => $model_zone->name,
-            'synced' => $synced,
-            'errors' => count($errors)
-        ], []);
-
-        if (!empty($errors)) {
-            return [
-                'status' => 'error',
-                'errors' => $errors,
-                'synced' => $synced,
-            ];
-        }
-
-        return [
-            'status' => 'success',
-            'synced' => $synced,
-            'message' => "Successfully synced {$synced} DNS records from HestiaCP",
+            'failed' => $recordsFailed,
+            'skipped' => $recordsSkipped,
+            'failed_records' => $failedRecords,
+            'skipped_records' => $skippedRecords,
+            'message' => $message
         ];
     }
 
@@ -996,6 +851,33 @@ class puqHestiaDNS extends DnsServer
             'content' => $record->content
         ]);
         
+        // Validate record type - check if HestiaCP supports this type
+        $typeValidation = $this->validateRecordType($record->type);
+        if ($typeValidation['status'] === 'error') {
+            $this->logError('createRecordJob - Unsupported Record Type', [
+                'uuid' => $uuid,
+                'type' => $record->type,
+                'supported_types' => $this->getSupportedRecordTypes()
+            ], $typeValidation);
+            
+            // Add error comment to record instead of deleting it
+            $this->logInfo('createRecordJob - Adding Error Comment for Unsupported Record Type', [
+                'record_uuid' => $record->uuid,
+                'type' => $record->type,
+                'zone' => $record->dnsZone->name ?? 'unknown'
+            ], []);
+            
+            $errorMessages = !empty($typeValidation['errors']) ? $typeValidation['errors'] : ['Unsupported record type'];
+            $this->addErrorCommentToRecord($record, 'create', $errorMessages);
+            
+            // Return error instead of throwing exception - job should complete successfully
+            return [
+                'status' => 'error',
+                'errors' => $errorMessages,
+                'code' => $typeValidation['code'] ?? 422,
+            ];
+        }
+        
         $model_zone = $record->dnsZone;
         $this->logInfo('createRecordJob - Zone Info', [
             'zone_name' => $model_zone->name,
@@ -1007,6 +889,26 @@ class puqHestiaDNS extends DnsServer
         $result = $this->addRecordToHestia($client, $model_zone, $record);
         
         $this->logInfo('createRecordJob - Result', ['result' => $result], []);
+        
+        // If record creation failed on server, add error comment instead of deleting
+        if ($result['status'] === 'error') {
+            $this->logInfo('createRecordJob - Record Creation Failed on Server, Adding Error Comment', [
+                'record_uuid' => $record->uuid,
+                'name' => $record->name,
+                'type' => $record->type,
+                'errors' => $result['errors'] ?? []
+            ], []);
+            
+            $errorMessages = !empty($result['errors']) ? $result['errors'] : ['Record creation failed'];
+            $this->addErrorCommentToRecord($record, 'create', $errorMessages);
+            
+            // Return error instead of throwing exception - job should complete successfully
+            return [
+                'status' => 'error',
+                'errors' => $errorMessages,
+                'code' => $result['code'] ?? 500,
+            ];
+        }
         
         return $result;
     }
@@ -1061,26 +963,111 @@ class puqHestiaDNS extends DnsServer
             'old_content' => $old_content,
             'new_content' => $record->content
         ], []);
+        
+        // Validate record type - check if HestiaCP supports this type
+        $typeValidation = $this->validateRecordType($record->type);
+        if ($typeValidation['status'] === 'error') {
+            $this->logError('updateRecordJob - Unsupported Record Type', [
+                'uuid' => $uuid,
+                'type' => $record->type,
+                'supported_types' => $this->getSupportedRecordTypes()
+            ], $typeValidation);
+            
+            // Add error comment to record instead of deleting it
+            $this->logInfo('updateRecordJob - Adding Error Comment for Unsupported Record Type', [
+                'record_uuid' => $record->uuid,
+                'type' => $record->type,
+                'zone' => $record->dnsZone->name ?? 'unknown'
+            ], []);
+            
+            $errorMessages = !empty($typeValidation['errors']) ? $typeValidation['errors'] : ['Unsupported record type'];
+            $this->addErrorCommentToRecord($record, 'update', $errorMessages);
+            
+            // Return error instead of throwing exception - job should complete successfully
+            return [
+                'status' => 'error',
+                'errors' => $errorMessages,
+                'code' => $typeValidation['code'] ?? 422,
+            ];
+        }
 
         $model_zone = $record->dnsZone;
         $client = new puqHestiaDnsClient($this->module_data);
 
+        // Diagnostic: Get all records from HestiaCP before searching
+        // This helps diagnose format mismatches, especially for SRV records
+        if ($record->type === 'SRV') {
+            $diagnosticResult = $client->listDnsRecords($model_zone->name);
+            if ($diagnosticResult['status'] === 'success' && isset($diagnosticResult['data'])) {
+                $srvRecords = [];
+                foreach ($diagnosticResult['data'] as $id => $recordData) {
+                    if (($recordData['TYPE'] ?? '') === 'SRV') {
+                        $srvRecords[] = [
+                            'id' => $id,
+                            'record' => $recordData['RECORD'] ?? '',
+                            'type' => $recordData['TYPE'] ?? '',
+                            'value' => $recordData['VALUE'] ?? '',
+                            'priority' => $recordData['PRIORITY'] ?? '',
+                            'ttl' => $recordData['TTL'] ?? '',
+                            'suspended' => $recordData['SUSPENDED'] ?? '',
+                        ];
+                    }
+                }
+                $this->logInfo('updateRecordJob - Diagnostic: All SRV Records from HestiaCP', [
+                    'zone' => $model_zone->name,
+                    'searching_for_name' => $record->name,
+                    'searching_for_type' => $record->type,
+                    'searching_for_old_content' => $old_content,
+                    'total_srv_records' => count($srvRecords),
+                    'srv_records' => $srvRecords
+                ], []);
+            }
+        }
+
         // Find record by OLD content (before update)
-        $recordName = $this->formatRecordName($record->name);
-        $recordId = $this->findRecordIdByData($client, $model_zone->name, $record->name, $record->type, $old_content);
+        // Note: old_content comes from database and may contain quotes for TXT records
+        // findRecordIdByData will normalize it using normalizeContentForComparison
+        $this->logInfo('updateRecordJob - Searching for Record on HestiaCP', [
+            'zone' => $model_zone->name,
+            'name' => $record->name,
+            'type' => $record->type,
+            'old_content' => $old_content,
+            'new_content' => $record->content
+        ], []);
+        
+        $recordId = $this->findRecordIdByData($client, $model_zone, $record->name, $record->type, $old_content);
         
         if (!$recordId) {
-            $this->logInfo('updateRecordJob - Record Not Found on HestiaCP, Creating', [
+            // This is UPDATE operation - if record not found, it's an error
+            // We should NOT create new record during update!
+            $this->logError('updateRecordJob - Record Not Found on HestiaCP - Cannot Update', [
                 'zone' => $model_zone->name,
                 'name' => $record->name,
                 'type' => $record->type,
-                'old_content' => $old_content
+                'old_content' => $old_content,
+                'new_content' => $record->content,
+                'error' => 'Record to update not found on HestiaCP server. This is UPDATE operation, not CREATE.'
             ], []);
-            // Record doesn't exist, create it
-            return $this->addRecordToHestia($client, $model_zone, $record);
+            
+            // Add error comment to record instead of deleting it
+            $this->logInfo('updateRecordJob - Adding Error Comment (record not found on server)', [
+                'record_uuid' => $record->uuid,
+                'zone' => $model_zone->name
+            ], []);
+            
+            $errorMessages = ['Record to update not found on HestiaCP server. Record may have been deleted or content format mismatch.'];
+            $this->addErrorCommentToRecord($record, 'update', $errorMessages);
+            
+            // Return error instead of throwing exception - job should complete successfully
+            return [
+                'status' => 'error',
+                'errors' => $errorMessages,
+                'code' => 404,
+            ];
         }
 
-        // Check if this is the last A record scenario
+        // Check if this is the last A record (for informational purposes)
+        // Note: UPDATE operation should work for all records including last A record
         $isLastARecord = false;
         if ($record->type === 'A') {
             $allRecordsResult = $client->listDnsRecords($model_zone->name);
@@ -1095,97 +1082,52 @@ class puqHestiaDNS extends DnsServer
                     'zone' => $model_zone->name,
                     'total_a_records' => $aRecordCount,
                     'is_last_a_record' => $isLastARecord,
-                    'strategy' => $isLastARecord ? 'add_then_delete' : 'delete_then_add'
+                    'strategy' => 'update'
                 ], []);
             }
         }
 
-        if ($isLastARecord) {
-            // Strategy: ADD new record FIRST, then DELETE old
-            $this->logInfo('updateRecordJob - Using ADD→DELETE Strategy for Last A Record', [
-                'zone' => $model_zone->name,
-                'record_id' => $recordId,
+        // Use UPDATE strategy for all records
+        $this->logInfo('updateRecordJob - Using UPDATE Strategy', [
+            'zone' => $model_zone->name,
+            'record_id' => $recordId,
+            'name' => $record->name,
+            'type' => $record->type,
+            'old_content' => $old_content,
+            'new_content' => $record->content,
+            'is_last_a_record' => $isLastARecord
+        ], []);
+
+        // Update existing record using v-change-dns-record
+        $result = $this->updateRecordInHestia($client, $model_zone, $record, $recordId);
+        
+        // If record update failed on server, add error comment instead of deleting
+        if ($result['status'] === 'error') {
+            $this->logInfo('updateRecordJob - Record Update Failed on Server, Adding Error Comment', [
+                'record_uuid' => $record->uuid,
                 'name' => $record->name,
                 'type' => $record->type,
-                'old_content' => $old_content,
-                'new_content' => $record->content
-            ], []);
-
-            // Create new record first
-            $addResult = $this->addRecordToHestia($client, $model_zone, $record);
-            if ($addResult['status'] !== 'success') {
-                $this->logError('updateRecordJob - Failed to Add New Record (ADD→DELETE Strategy)', [
-                    'zone' => $model_zone->name,
-                    'name' => $record->name,
-                    'type' => $record->type,
-                    'new_content' => $record->content
-                ], $addResult);
-                return $addResult;
-            }
-
-            $this->logInfo('updateRecordJob - New Record Added, Now Deleting Old', [
-                'zone' => $model_zone->name,
-                'record_id' => $recordId,
-                'name' => $record->name,
-                'type' => $record->type,
-                'old_content' => $old_content
-            ], []);
-
-            // Now delete old record (it's no longer the last A record)
-            $deleteResult = $client->deleteDnsRecord($model_zone->name, $recordId, false);
-            if ($deleteResult['status'] !== 'success') {
-                $this->logError('updateRecordJob - Failed to Delete Old Record After Adding New', [
-                    'zone' => $model_zone->name,
-                    'record_id' => $recordId
-                ], $deleteResult);
-                // Don't return error - new record was created successfully
-            }
-
-            $this->logInfo('updateRecordJob - ADD→DELETE Strategy Completed', [
-                'zone' => $model_zone->name,
-                'add_result' => $addResult,
-                'delete_result' => $deleteResult
+                'errors' => $result['errors'] ?? []
             ], []);
             
-            return $addResult;
-        } else {
-            // Normal strategy: DELETE old, then ADD new
-            $this->logInfo('updateRecordJob - Using DELETE→ADD Strategy', [
-                'zone' => $model_zone->name,
-                'record_id' => $recordId,
-                'name' => $record->name,
-                'type' => $record->type,
-                'old_content' => $old_content,
-                'new_content' => $record->content
-            ], []);
-
-            // Delete old record first
-            $deleteResult = $client->deleteDnsRecord($model_zone->name, $recordId, false);
-            if ($deleteResult['status'] !== 'success') {
-                $this->logError('updateRecordJob - Failed to Delete Old Record (DELETE→ADD Strategy)', [
-                    'zone' => $model_zone->name,
-                    'record_id' => $recordId
-                ], $deleteResult);
-                return $deleteResult;
-            }
-
-            $this->logInfo('updateRecordJob - Old Record Deleted, Creating New', [
-                'zone' => $model_zone->name,
-                'name' => $record->name,
-                'type' => $record->type,
-                'new_content' => $record->content
-            ], []);
-
-            // Create new record with updated content
-            $result = $this->addRecordToHestia($client, $model_zone, $record);
+            $errorMessages = !empty($result['errors']) ? $result['errors'] : ['Record update failed'];
+            $this->addErrorCommentToRecord($record, 'update', $errorMessages);
             
-            $this->logInfo('updateRecordJob - DELETE→ADD Strategy Completed', [
-                'zone' => $model_zone->name,
-                'result' => $result
-            ], []);
-            
-            return $result;
+            // Return error instead of throwing exception - job should complete successfully
+            return [
+                'status' => 'error',
+                'errors' => $errorMessages,
+                'code' => $result['code'] ?? 500,
+            ];
         }
+        
+        $this->logInfo('updateRecordJob - UPDATE Strategy Completed', [
+            'zone' => $model_zone->name,
+            'record_id' => $recordId,
+            'result' => $result
+        ], []);
+        
+        return $result;
     }
 
     public function deleteRecord(string $zone_uuid, string $name, string $type, string $content): array
@@ -1242,17 +1184,18 @@ class puqHestiaDNS extends DnsServer
 
     public function deleteRecordJob(string $zone_uuid, string $name, string $type, string $content, int $ttl = 3600, string $description = ''): array
     {
-        $this->logInfo('deleteRecordJob - Start', [
+        $this->logInfo('Delete Record Job - Start', [
             'zone_uuid' => $zone_uuid,
             'name' => $name,
             'type' => $type,
+            'content' => $content,
             'ttl' => $ttl,
             'description' => $description
         ], []);
         
         $model_zone = DnsZone::where('uuid', $zone_uuid)->first();
         if (empty($model_zone)) {
-            $this->logError('deleteRecordJob - Zone Not Found', [
+            $this->logError('Delete Record Job - Zone Not Found', [
                 'zone_uuid' => $zone_uuid
             ], ['error' => 'Zone not found in database']);
             return [
@@ -1302,18 +1245,27 @@ class puqHestiaDNS extends DnsServer
         }
 
         // Find record by name, type and content
-        $recordId = $this->findRecordIdByData($client, $model_zone->name, $name, $type, $content);
+        $this->logInfo('Delete Record Job - Searching for Record on HestiaCP', [
+            'zone' => $model_zone->name,
+            'name' => $name,
+            'type' => $type,
+            'content' => $content
+        ], []);
+        
+        $recordId = $this->findRecordIdByData($client, $model_zone, $name, $type, $content);
         
         if (!$recordId) {
-            $this->logInfo('deleteRecordJob - Record Not Found on HestiaCP', [
+            $this->logInfo('Delete Record Job - Record Not Found on HestiaCP', [
                 'zone' => $model_zone->name,
                 'name' => $name,
-                'type' => $type
+                'type' => $type,
+                'content' => $content,
+                'note' => 'Record may already be deleted or name/content format mismatch'
             ], []);
             return ['status' => 'success']; // Record already deleted
         }
-
-        $this->logInfo('deleteRecordJob - Deleting Record from HestiaCP', [
+        
+        $this->logInfo('Delete Record Job - Record Found, Deleting from HestiaCP', [
             'zone' => $model_zone->name,
             'record_id' => $recordId,
             'name' => $name,
@@ -1322,11 +1274,12 @@ class puqHestiaDNS extends DnsServer
 
         $result = $client->deleteDnsRecord($model_zone->name, $recordId, false);
         
-        $this->logInfo('deleteRecordJob - Delete Result', [
+        $this->logInfo('Delete Record Job - Delete Result', [
             'zone' => $model_zone->name,
             'record_id' => $recordId,
-            'result' => $result
-        ], []);
+            'result_status' => $result['status'] ?? 'unknown',
+            'result_errors' => $result['errors'] ?? []
+        ], $result);
         
         // Handle specific HestiaCP errors
         if ($result['status'] === 'error' && isset($result['errors'])) {
@@ -1453,6 +1406,96 @@ class puqHestiaDNS extends DnsServer
     // Private helper methods ----------------------------------------------------------------------------------------------------
     
     /**
+     * Get list of DNS record types supported by HestiaCP
+     * Based on: https://hestiacp.com/docs/user-guide/dns
+     */
+    private function getSupportedRecordTypes(): array
+    {
+        return [
+            'A',
+            'AAAA',
+            'CAA',
+            'CNAME',
+            'DNSKEY',
+            'IPSECKEY',
+            'KEY',
+            'MX',
+            'NS',
+            'PTR',
+            'SPF',
+            'SRV',
+            'TLSA',
+            'TXT',
+        ];
+    }
+    
+    /**
+     * Validate if record type is supported by HestiaCP
+     */
+    private function validateRecordType(string $type): array
+    {
+        $type = strtoupper($type);
+        $supportedTypes = $this->getSupportedRecordTypes();
+        
+        if (!in_array($type, $supportedTypes)) {
+            return [
+                'status' => 'error',
+                'errors' => [
+                    "Record type '{$type}' is not supported by HestiaCP. Supported types: " . implode(', ', $supportedTypes)
+                ],
+                'code' => 422,
+            ];
+        }
+        
+        return ['status' => 'success'];
+    }
+    
+    /**
+     * Create default A record in panel and on HestiaCP
+     */
+    private function createDefaultARecord(DnsZone $model_zone, puqHestiaDnsClient $client, string $ip, string $logPrefix = ''): ?DnsRecord
+    {
+        // Create default A record in panel first
+        $panelRecord = new \App\Models\DnsRecord();
+        $panelRecord->dns_zone_uuid = $model_zone->uuid;
+        $panelRecord->name = '@';
+        $panelRecord->type = 'A';
+        $panelRecord->content = $ip;
+        $panelRecord->ttl = 30;
+        $panelRecord->description = 'Default A record for domain HestiaDNS module';
+        $panelRecord->save();
+
+        $this->logInfo($logPrefix . ' - Default A Record Created in Panel', [
+            'domain' => $model_zone->name,
+            'record_uuid' => $panelRecord->uuid
+        ]);
+
+        // Create default A record on HestiaCP
+        $defaultARecordResult = $client->addDnsRecord(
+            $model_zone->name,
+            $panelRecord->name,
+            $panelRecord->type,
+            $panelRecord->content,
+            null,
+            null,
+            false,
+            $panelRecord->ttl
+        );
+
+        if ($defaultARecordResult['status'] === 'success') {
+            $this->logInfo($logPrefix . ' - Default A Record Created on HestiaCP', [
+                'domain' => $model_zone->name
+            ]);
+        } else {
+            $this->logError($logPrefix . ' - Failed to Create Default A Record on HestiaCP', [
+                'domain' => $model_zone->name
+            ], $defaultARecordResult);
+        }
+
+        return $panelRecord;
+    }
+    
+    /**
      * Get default IP for zone (from first A record or fallback)
      */
     private function getZoneDefaultIp(DnsZone $model_zone): string
@@ -1478,6 +1521,51 @@ class puqHestiaDNS extends DnsServer
         }
         
         return trim($name);
+    }
+
+    /**
+     * Add error comment to record description instead of deleting it
+     */
+    private function addErrorCommentToRecord(DnsRecord $record, string $operation, array $errors = []): void
+    {
+        $serverAddress = $this->module_data['server'] ?? 'unknown';
+        
+        // Format error message in English
+        $errorDetails = !empty($errors) ? implode(', ', $errors) : 'Unknown error';
+        $errorMessage = sprintf(
+            'Record was not accepted by Hestia server. Server: %s. Operation: %s. Answer: %s',
+            $serverAddress,
+            $operation,
+            $errorDetails
+        );
+        
+        // Sanitize error message
+        $errorMessage = strip_tags($errorMessage);
+        
+        // Preserve existing description if present
+        $existingDescription = $record->description ?? '';
+        if (!empty($existingDescription)) {
+            $record->description = $existingDescription . ' | ' . $errorMessage;
+        } else {
+            $record->description = $errorMessage;
+        }
+        
+        // Save record
+        try {
+            $record->save();
+            $this->logInfo('addErrorCommentToRecord - Error Comment Added', [
+                'record_uuid' => $record->uuid,
+                'operation' => $operation,
+                'server' => $serverAddress,
+                'error_message' => $errorMessage
+            ], []);
+        } catch (\Throwable $e) {
+            $this->logError('addErrorCommentToRecord - Failed to Save Error Comment', [
+                'record_uuid' => $record->uuid,
+                'operation' => $operation,
+                'exception' => $e->getMessage()
+            ], []);
+        }
     }
 
     /**
@@ -1509,12 +1597,24 @@ class puqHestiaDNS extends DnsServer
         if ($data['type'] === 'MX') {
             $priority = isset($data['priority']) ? (int)$data['priority'] : 10;
             $recordValue = $data['mailServer'] ?? '';
+            // Ensure mailServer is FQDN (add trailing dot if not present)
+            if (!empty($recordValue) && !str_ends_with($recordValue, '.')) {
+                $recordValue .= '.';
+            }
         } elseif ($data['type'] === 'SRV') {
             $priority = isset($data['priority']) ? (int)$data['priority'] : 0;
-            // For SRV, HestiaCP expects: "weight port target"
+            // For SRV, HestiaCP expects: "priority weight port target" in VALUE
+            // Priority is also passed as separate parameter (required for SRV records in HestiaCP)
+            // HestiaCP's is_dns_fqnd() checks for minimum 3 dots in the entire VALUE string for SRV records
             $weight = isset($data['weight']) ? (int)$data['weight'] : 0;
             $port = isset($data['port']) ? (int)$data['port'] : 1;
             $target = $data['target'] ?? '';
+            // Ensure target is FQDN (add trailing dot if not present)
+            if (!empty($target) && !str_ends_with($target, '.')) {
+                $target .= '.';
+            }
+            // For SRV records, VALUE contains "???priority?? weight port target"
+            // Priority is also passed separately (both are required by HestiaCP)
             $recordValue = "$weight $port $target";
         } elseif ($data['type'] === 'TXT') {
             // For TXT records, use the parsed txt field
@@ -1549,42 +1649,623 @@ class puqHestiaDNS extends DnsServer
     }
 
     /**
-     * Find record ID in HestiaCP by record object
+     * Update record in HestiaCP
      */
-    private function findRecordIdInHestia(puqHestiaDnsClient $client, string $domain, DnsRecord $record): ?int
+    private function updateRecordInHestia(puqHestiaDnsClient $client, DnsZone $model_zone, DnsRecord $record, int $recordId): array
     {
-        $get_record_data = $record->dnsZone->getRecord($record->uuid, $record);
+        $this->logInfo('updateRecordInHestia - Start', [
+            'zone' => $model_zone->name,
+            'record_uuid' => $record->uuid,
+            'record_id' => $recordId
+        ]);
+        
+        $get_record_data = $model_zone->getRecord($record->uuid, $record);
         if ($get_record_data['status'] === 'error') {
-            return null;
+            $this->logError('updateRecordInHestia - Failed to Get Record Data', [
+                'zone' => $model_zone->name,
+                'record_uuid' => $record->uuid,
+                'record_id' => $recordId
+            ], $get_record_data);
+            return $get_record_data;
         }
 
         $data = $get_record_data['data'];
-        return $this->findRecordIdByData($client, $domain, $data['name'], $data['type'], $data['content']);
+        $recordName = $this->formatRecordName($data['name']);
+        
+        // Extract values based on record type
+        $recordValue = $data['content'];
+        $priority = null;
+
+        if ($data['type'] === 'MX') {
+            $priority = isset($data['priority']) ? (int)$data['priority'] : 10;
+            $recordValue = $data['mailServer'] ?? '';
+            // Ensure mailServer is FQDN (add trailing dot if not present)
+            if (!empty($recordValue) && !str_ends_with($recordValue, '.')) {
+                $recordValue .= '.';
+            }
+        } elseif ($data['type'] === 'SRV') {
+            $priority = isset($data['priority']) ? (int)$data['priority'] : 0;
+            // For SRV, HestiaCP expects: "weight port target" in VALUE
+            // Priority is also passed as separate parameter (required for SRV records in HestiaCP)
+            $weight = isset($data['weight']) ? (int)$data['weight'] : 0;
+            $port = isset($data['port']) ? (int)$data['port'] : 1;
+            $target = $data['target'] ?? '';
+            // Ensure target is FQDN (add trailing dot if not present)
+            if (!empty($target) && !str_ends_with($target, '.')) {
+                $target .= '.';
+            }
+            // For SRV records, VALUE contains "weight port target"
+            // Priority is also passed separately (both are required by HestiaCP)
+            $recordValue = "$weight $port $target";
+        } elseif ($data['type'] === 'TXT') {
+            // For TXT records, use the parsed txt field
+            $recordValue = $data['txt'] ?? $data['content'];
+        } elseif (isset($data['priority']) && $data['priority'] > 0) {
+            $priority = (int)$data['priority'];
+        }
+
+        $this->logInfo('updateRecordInHestia - Calling API', [
+            'domain' => $model_zone->name,
+            'record_id' => $recordId,
+            'record' => $recordName,
+            'type' => $data['type'],
+            'value' => $recordValue,
+            'priority' => $priority,
+            'ttl' => $data['ttl']
+        ]);
+
+        $result = $client->changeDnsRecord(
+            $model_zone->name,
+            $recordId,
+            $recordName,
+            $data['type'],
+            $recordValue,
+            $priority,
+            false,
+            $data['ttl']
+        );
+        
+        $this->logInfo('updateRecordInHestia - API Result', ['result' => $result], []);
+        
+        return $result;
     }
 
     /**
      * Find record ID in HestiaCP by data
      */
-    private function findRecordIdByData(puqHestiaDnsClient $client, string $domain, string $name, string $type, string $content): ?int
+    private function findRecordIdByData(puqHestiaDnsClient $client, DnsZone $model_zone, string $name, string $type, string $content): ?int
     {
+        $domain = $model_zone->name;
+        
+        $this->logInfo('Find Record ID - Start', [
+            'domain' => $domain,
+            'name' => $name,
+            'type' => $type,
+            'content' => $content
+        ], []);
+        
         $result = $client->listDnsRecords($domain);
         
+        // Log full response for SRV records debugging
+        if ($type === 'SRV') {
+            $this->logInfo('Find Record ID - Full listDnsRecords Response for SRV', [
+                'domain' => $domain,
+                'status' => $result['status'] ?? 'unknown',
+                'has_data' => isset($result['data']) && !empty($result['data']),
+                'data_count' => isset($result['data']) ? count($result['data']) : 0,
+                'full_response' => $result
+            ], []);
+        }
+        
         if ($result['status'] !== 'success' || empty($result['data'])) {
+            $this->logInfo('findRecordIdByData - No Records or Error', [
+                'domain' => $domain,
+                'status' => $result['status'] ?? 'unknown',
+                'has_data' => isset($result['data']) && !empty($result['data'])
+            ], []);
             return null;
         }
 
         $recordName = $this->formatRecordName($name);
         
+        // For root domain records, HestiaCP may return domain name instead of "@"
+        // So we need to check both "@" and domain name when searching for root records
+        // Also add original name for non-root records to handle special characters
+        $possibleRecordNames = [$recordName];
+        if ($recordName === '@') {
+            $possibleRecordNames[] = $domain;
+            $possibleRecordNames[] = rtrim($domain, '.');
+        } else {
+            // For non-root records, also check original name (before formatRecordName)
+            // This handles cases where formatRecordName might modify the name
+            $possibleRecordNames[] = $name;
+        }
+        
+        // Normalize content for comparison using DnsZone buildRecord methods
+        $normalizedContent = $this->normalizeContentForComparison($model_zone, $content, $type, null);
+        
+        // Log hex dump for SRV records to detect hidden characters
+        $hexDumpSearch = '';
+        if ($type === 'SRV') {
+            $hexDumpSearch = bin2hex($normalizedContent);
+        }
+        
+        $this->logInfo('Find Record ID - Search Criteria', [
+            'domain' => $domain,
+            'record_name' => $recordName,
+            'possible_record_names' => $possibleRecordNames,
+            'type' => $type,
+            'original_content' => $content,
+            'normalized_content' => $normalizedContent,
+            'normalized_content_hex' => $hexDumpSearch,
+            'normalized_content_length' => strlen($normalizedContent),
+            'total_records_to_check' => count($result['data'])
+        ], []);
+        
+        $checkedCount = 0;
+        $skippedByName = 0;
+        $skippedByType = 0;
+        
+        // Log all records for SRV type to debug
+        if ($type === 'SRV') {
+            $allRecords = [];
+            foreach ($result['data'] as $id => $recordData) {
+                $allRecords[] = [
+                    'id' => $id,
+                    'record' => $recordData['RECORD'] ?? '',
+                    'type' => $recordData['TYPE'] ?? '',
+                    'value' => $recordData['VALUE'] ?? '',
+                    'priority' => $recordData['PRIORITY'] ?? '',
+                ];
+            }
+            $this->logInfo('Find Record ID - All Records from HestiaCP', [
+                'search_type' => $type,
+                'search_name' => $name,
+                'all_records' => $allRecords,
+            ], []);
+        }
+        
         foreach ($result['data'] as $id => $recordData) {
-            if (
-                $recordData['RECORD'] === $recordName &&
-                $recordData['TYPE'] === $type &&
-                $recordData['VALUE'] === $content
-            ) {
+            $hestiaRecordName = $recordData['RECORD'] ?? '';
+            $hestiaType = $recordData['TYPE'] ?? '';
+            $hestiaValue = $recordData['VALUE'] ?? '';
+            $hestiaPriority = isset($recordData['PRIORITY']) && $recordData['PRIORITY'] !== '' ? (int)$recordData['PRIORITY'] : null;
+            
+            // Normalize HestiaCP record name (convert domain name to "@" for comparison)
+            $originalHestiaRecordName = $hestiaRecordName;
+            if ($hestiaRecordName === $domain || $hestiaRecordName === rtrim($domain, '.')) {
+                $hestiaRecordName = '@';
+            }
+            
+            // For non-root records, also check exact match (case-sensitive)
+            // HestiaCP may return the name exactly as stored, including underscores, dots, etc.
+            $nameMatches = in_array($hestiaRecordName, $possibleRecordNames);
+            
+            // Additional check: if name doesn't match normalized, try direct comparison
+            // This handles cases where record name has special characters like underscores
+            if (!$nameMatches) {
+                // Try direct comparison with original HestiaCP record name
+                if ($recordName === '@') {
+                    // For root records, check if HestiaCP record name matches domain
+                    $nameMatches = ($originalHestiaRecordName === $domain || $originalHestiaRecordName === rtrim($domain, '.'));
+                } else {
+                    // For non-root records, try all possible combinations
+                    $nameMatches = ($hestiaRecordName === $recordName 
+                        || $originalHestiaRecordName === $name 
+                        || $originalHestiaRecordName === $recordName
+                        || $hestiaRecordName === $name);
+                }
+            }
+            
+            if (!$nameMatches) {
+                $skippedByName++;
+                // Log only for SRV records to avoid spam
+                if ($type === 'SRV' || $hestiaType === 'SRV') {
+                    $this->logInfo('findRecordIdByData - Skipping Record (Name Mismatch)', [
+                        'id' => $id,
+                        'hestia_record_name' => $originalHestiaRecordName,
+                        'hestia_record_name_length' => strlen($originalHestiaRecordName),
+                        'normalized_hestia_record_name' => $hestiaRecordName,
+                        'search_record_name' => $recordName,
+                        'search_record_name_length' => strlen($recordName),
+                        'search_name' => $name,
+                        'search_name_length' => strlen($name),
+                        'search_possible_names' => $possibleRecordNames,
+                        'hestia_type' => $hestiaType,
+                        'search_type' => $type,
+                        'direct_match_hestia_normalized' => ($hestiaRecordName === $recordName),
+                        'direct_match_hestia_original' => ($originalHestiaRecordName === $name),
+                        'hestia_record_name_hex' => bin2hex($originalHestiaRecordName),
+                        'search_name_hex' => bin2hex($name)
+                    ], []);
+                }
+                continue;
+            }
+            
+            // Check if type matches
+            $typeMatches = ($hestiaType === $type);
+            if (!$typeMatches) {
+                $checkedCount++;
+                $skippedByType++;
+                $this->logInfo('findRecordIdByData - Name Matches But Type Mismatch', [
+                    'id' => $id,
+                    'hestia_record_name' => $originalHestiaRecordName,
+                    'normalized_hestia_record_name' => $hestiaRecordName,
+                    'hestia_type' => $hestiaType,
+                    'search_type' => $type,
+                    'hestia_value' => $hestiaValue,
+                    'hestia_priority' => $hestiaPriority
+                ], []);
+                continue;
+            }
+            
+            // Normalize and compare content using DnsZone buildRecord methods
+            // Log before normalization for SRV records
+            if ($type === 'SRV' || $hestiaType === 'SRV') {
+                $this->logInfo('Find Record ID - Before Normalization (SRV)', [
+                    'id' => $id,
+                    'hestia_value' => $hestiaValue,
+                    'hestia_priority' => $hestiaPriority,
+                    'hestia_priority_type' => gettype($hestiaPriority),
+                    'search_content' => $content,
+                    'search_normalized_content' => $normalizedContent
+                ], []);
+            }
+            
+            $normalizedHestiaValue = $this->normalizeContentForComparison($model_zone, $hestiaValue, $type, $hestiaPriority);
+            
+            $checkedCount++;
+            $contentMatches = ($normalizedContent === $normalizedHestiaValue);
+            
+            // Always log SRV records comparison in detail for debugging
+            if ($type === 'SRV' || $hestiaType === 'SRV') {
+                // Generate hex dump for both normalized strings
+                $hexDumpSearch = bin2hex($normalizedContent);
+                $hexDumpHestia = bin2hex($normalizedHestiaValue);
+                
+                // Compare character by character
+                $charComparison = [];
+                $maxLen = max(strlen($normalizedContent), strlen($normalizedHestiaValue));
+                for ($i = 0; $i < $maxLen; $i++) {
+                    $charSearch = $i < strlen($normalizedContent) ? $normalizedContent[$i] : '<EOF>';
+                    $charHestia = $i < strlen($normalizedHestiaValue) ? $normalizedHestiaValue[$i] : '<EOF>';
+                    if ($charSearch !== $charHestia) {
+                        $charComparison[] = [
+                            'position' => $i,
+                            'search_char' => $charSearch,
+                            'search_hex' => $i < strlen($normalizedContent) ? bin2hex($normalizedContent[$i]) : '',
+                            'hestia_char' => $charHestia,
+                            'hestia_hex' => $i < strlen($normalizedHestiaValue) ? bin2hex($normalizedHestiaValue[$i]) : ''
+                        ];
+                    }
+                }
+                
+                $this->logInfo('Find Record ID - SRV Comparison Details', [
+                    'id' => $id,
+                    'hestia_record_name' => $originalHestiaRecordName,
+                    'hestia_value' => $hestiaValue,
+                    'hestia_priority' => $hestiaPriority,
+                    'hestia_priority_type' => gettype($hestiaPriority),
+                    'normalized_hestia_value' => $normalizedHestiaValue,
+                    'normalized_hestia_value_hex' => $hexDumpHestia,
+                    'normalized_hestia_length' => strlen($normalizedHestiaValue),
+                    'search_normalized_content' => $normalizedContent,
+                    'search_normalized_content_hex' => $hexDumpSearch,
+                    'normalized_content_length' => strlen($normalizedContent),
+                    'content_matches' => $contentMatches,
+                    'match_exact' => $normalizedContent === $normalizedHestiaValue,
+                    'char_differences' => $charComparison,
+                    'first_10_chars_search' => substr($normalizedContent, 0, 10),
+                    'first_10_chars_hestia' => substr($normalizedHestiaValue, 0, 10),
+                ], []);
+            }
+            
+            // Log all MX, SRV and TXT records comparison in detail
+            if ($type === 'MX' || $hestiaType === 'MX') {
+                $this->logInfo('Find Record ID - Comparing MX Record', [
+                    'id' => $id,
+                    'hestia_record_name' => $originalHestiaRecordName,
+                    'normalized_hestia_record_name' => $hestiaRecordName,
+                    'hestia_type' => $hestiaType,
+                    'hestia_value' => $hestiaValue,
+                    'hestia_priority' => $hestiaPriority,
+                    'hestia_priority_type' => gettype($hestiaPriority),
+                    'normalized_hestia_value' => $normalizedHestiaValue,
+                    'search_normalized_content' => $normalizedContent,
+                    'content_matches' => $contentMatches,
+                    'search_name' => $name,
+                    'search_type' => $type
+                ], []);
+            }
+            
+            if ($type === 'SRV' || $hestiaType === 'SRV') {
+                $this->logInfo('Find Record ID - Comparing SRV Record', [
+                    'id' => $id,
+                    'hestia_record_name' => $originalHestiaRecordName,
+                    'normalized_hestia_record_name' => $hestiaRecordName,
+                    'hestia_type' => $hestiaType,
+                    'hestia_value' => $hestiaValue,
+                    'hestia_priority' => $hestiaPriority,
+                    'hestia_priority_type' => gettype($hestiaPriority),
+                    'normalized_hestia_value' => $normalizedHestiaValue,
+                    'search_normalized_content' => $normalizedContent,
+                    'content_matches' => $contentMatches,
+                    'search_name' => $name,
+                    'search_type' => $type
+                ], []);
+            }
+            
+            // Log records comparison in detail
+  
+            $this->logInfo('Find Record ID - Comparing Record', [
+                'id' => $id,
+                'hestia_record_name' => $originalHestiaRecordName,
+                'normalized_hestia_record_name' => $hestiaRecordName,
+                'hestia_type' => $hestiaType,
+                'hestia_value' => $hestiaValue,
+                'hestia_value_length' => strlen($hestiaValue),
+                'search_original_content' => $content,
+                'search_original_content_length' => strlen($content),
+                'normalized_hestia_value' => $normalizedHestiaValue,
+                'normalized_hestia_value_length' => strlen($normalizedHestiaValue),
+                'search_normalized_content' => $normalizedContent,
+                'search_normalized_content_length' => strlen($normalizedContent),
+                'content_matches' => $contentMatches,
+                'search_name' => $name,
+                'search_type' => $type
+            ], []);
+        
+            
+            if ($contentMatches) {
+                $this->logInfo('Find Record ID - Match Found', [
+                    'id' => $id,
+                    'domain' => $domain,
+                    'name' => $name,
+                    'type' => $type,
+                    'content' => $content
+                ], []);
                 return (int) $id;
             }
         }
 
+        // Log all SRV records found for debugging
+        $srvRecordsFound = [];
+        if ($type === 'SRV') {
+            foreach ($result['data'] as $id => $recordData) {
+                if (($recordData['TYPE'] ?? '') === 'SRV') {
+                    $srvRecordsFound[] = [
+                        'id' => $id,
+                        'record' => $recordData['RECORD'] ?? '',
+                        'value' => $recordData['VALUE'] ?? '',
+                        'priority' => $recordData['PRIORITY'] ?? '',
+                    ];
+                }
+            }
+        }
+        
+        // Fallback: Try to find by name+type only (for diagnostic purposes)
+        // This helps identify if there's a record with matching name and type but different content
+        $fallbackMatches = [];
+        foreach ($result['data'] as $id => $recordData) {
+            $hestiaRecordName = $recordData['RECORD'] ?? '';
+            $hestiaType = $recordData['TYPE'] ?? '';
+            
+            // Normalize HestiaCP record name
+            $normalizedHestiaName = $hestiaRecordName;
+            if ($hestiaRecordName === $domain || $hestiaRecordName === rtrim($domain, '.')) {
+                $normalizedHestiaName = '@';
+            }
+            
+            // Check if name and type match (but content might be different)
+            // Use the same logic as in main loop
+            $nameMatches = in_array($normalizedHestiaName, $possibleRecordNames);
+            if (!$nameMatches) {
+                if ($recordName === '@') {
+                    $nameMatches = ($hestiaRecordName === $domain || $hestiaRecordName === rtrim($domain, '.'));
+                } else {
+                    $nameMatches = ($normalizedHestiaName === $recordName 
+                        || $hestiaRecordName === $name 
+                        || $hestiaRecordName === $recordName
+                        || $normalizedHestiaName === $name);
+                }
+            }
+            
+            if ($nameMatches && $hestiaType === $type) {
+                // Try to normalize and compare content for fallback match
+                $hestiaValue = $recordData['VALUE'] ?? '';
+                $hestiaPriority = isset($recordData['PRIORITY']) && $recordData['PRIORITY'] !== '' ? (int)$recordData['PRIORITY'] : null;
+                $normalizedHestiaValue = $this->normalizeContentForComparison($model_zone, $hestiaValue, $type, $hestiaPriority);
+                
+                $fallbackMatches[] = [
+                    'id' => $id,
+                    'record' => $hestiaRecordName,
+                    'type' => $hestiaType,
+                    'value' => $hestiaValue,
+                    'priority' => $hestiaPriority,
+                    'normalized_value' => $normalizedHestiaValue,
+                    'search_normalized_content' => $normalizedContent,
+                    'content_matches' => ($normalizedContent === $normalizedHestiaValue),
+                    'note' => 'Found by name+type match'
+                ];
+            }
+        }
+        
+        // If we have exactly one fallback match, use it
+        // For records with same name+type (especially SRV), this is the same record
+        if (count($fallbackMatches) === 1) {
+            // Check if content matches
+            $contentMatches = isset($fallbackMatches[0]['content_matches']) && $fallbackMatches[0]['content_matches'];
+            
+            // For SRV records, if name+type match and only one record exists, use it even if content slightly differs
+            // This handles trailing dot and other minor format differences
+            if ($type === 'SRV' || $contentMatches) {
+                $this->logInfo('Find Record ID - Match Found via Fallback', [
+                    'domain' => $domain,
+                    'name' => $name,
+                    'type' => $type,
+                    'id' => $fallbackMatches[0]['id'],
+                    'content' => $content,
+                    'content_matches' => $contentMatches,
+                    'reason' => $contentMatches ? 'Content matches' : 'SRV record with unique name+type'
+                ], []);
+                return (int)$fallbackMatches[0]['id'];
+            }
+        }
+        
+        $this->logError('Find Record ID - No Match Found', [
+            'domain' => $domain,
+            'name' => $name,
+            'type' => $type,
+            'original_content' => $content,
+            'normalized_content' => $normalizedContent,
+            'records_checked' => $checkedCount,
+            'skipped_by_name' => $skippedByName,
+            'skipped_by_type' => $skippedByType,
+            'total_records' => count($result['data']),
+            'srv_records_found' => $srvRecordsFound,
+            'fallback_matches_by_name_type' => $fallbackMatches,
+            'fallback_matches_count' => count($fallbackMatches),
+            'error' => 'Record not found on HestiaCP. This may indicate content format mismatch or record was deleted.'
+        ], []);
+        
         return null;
+    }
+    
+    /**
+     * Normalize content for comparison using DnsZone buildRecord methods
+     * Uses DnsZone::buildRecordMX, buildRecordSRV, etc. with reverse=true to parse content
+     * Then reconstructs normalized content for comparison
+     */
+    private function normalizeContentForComparison(DnsZone $model_zone, string $content, string $type, ?int $hestiaPriority = null): string
+    {
+        $originalContent = $content;
+        $content = trim($content);
+        $type = strtoupper($type);
+        
+        // Use reflection to access private buildRecord methods
+        $methodName = 'buildRecord' . $type;
+        
+        if (!method_exists($model_zone, $methodName)) {
+            // For unsupported types, just remove trailing dot
+            return rtrim($content);
+        }
+        
+        try {
+            // Create temporary data array with content
+            $tempData = [
+                'type' => $type,
+                'content' => $content,
+                'name' => '@', // Dummy value, not used for parsing
+                'ttl' => 3600, // Dummy value, not used for parsing
+            ];
+            
+            // For MX records from HestiaCP, add priority if provided separately
+            if ($type === 'MX' && $hestiaPriority !== null && !preg_match('/^\d+\s+/', $content)) {
+                // Content doesn't have priority prefix, use provided priority
+                $tempData['content'] = $hestiaPriority . ' ' . $content;
+            }
+            
+            // For SRV records from HestiaCP, add priority if provided separately
+            // SRV format in HestiaCP VALUE: "weight port target" (without priority)
+            // Priority is stored separately in PRIORITY field
+            // When comparing with HestiaCP records, we need to add priority from PRIORITY field
+            // BUT: if content already has priority (starts with number), don't add it again
+            if ($type === 'SRV' && $hestiaPriority !== null) {
+                // Check if content already starts with priority (format: "priority weight port target")
+                // If it does, don't add priority again
+                if (!preg_match('/^\d+\s+\d+\s+\d+\s+/', $content)) {
+                    // Content doesn't have priority prefix, add it from PRIORITY field
+                    // HestiaCP always stores SRV VALUE without priority (format: "weight port target")
+                    // So we add priority from PRIORITY field when comparing
+                    // Format: "priority weight port target"
+                    $beforeAdd = $tempData['content'];
+                    $tempData['content'] = $hestiaPriority . ' ' . $content;
+                    $this->logInfo('normalizeContentForComparison - SRV Adding Priority', [
+                        'original_content' => $originalContent,
+                        'before_add' => $beforeAdd,
+                        'after_add' => $tempData['content'],
+                        'hestia_priority' => $hestiaPriority
+                    ], []);
+                } else {
+                    // Content already has priority, just log it
+                    $this->logInfo('normalizeContentForComparison - SRV Priority Already in Content', [
+                        'original_content' => $originalContent,
+                        'content' => $content,
+                        'hestia_priority' => $hestiaPriority,
+                        'note' => 'Priority already present in content, not adding from hestiaPriority'
+                    ], []);
+                }
+            }
+            
+            // Use reflection to call private method
+            $reflection = new \ReflectionClass($model_zone);
+            $method = $reflection->getMethod($methodName);
+            $method->setAccessible(true);
+            
+            // Call buildRecord with reverse=true to parse content into fields
+            $result = $method->invoke($model_zone, $tempData, true);
+            
+            if ($result['status'] !== 'success') {
+                // If parsing failed, fallback to simple normalization
+                return rtrim($content, '.');
+            }
+            
+            $parsedData = $result['data'];
+            
+            // Reconstruct normalized content from parsed fields
+            if ($type === 'MX') {
+                $priority = $parsedData['priority'] ?? ($hestiaPriority ?? 10);
+                $mailServer = $parsedData['mailServer'] ?? '';
+                return $priority . ' ' . rtrim($mailServer, '.');
+            } elseif ($type === 'SRV') {
+                // Use priority from parsed data, or from hestiaPriority if provided, or default 65535
+                // Convert to int to ensure consistent comparison
+                $priority = (int)($parsedData['priority'] ?? ($hestiaPriority ?? 65535));
+                $weight = (int)($parsedData['weight'] ?? 0);
+                $port = (int)($parsedData['port'] ?? 1);
+                $target = isset($parsedData['target']) ? rtrim($parsedData['target'], '.') : '';
+                
+                // Ensure consistent format: "priority weight port target" (no trailing dot on target)
+                // All fields are integers except target, target has no trailing dot
+                $normalized = $priority . ' ' . $weight . ' ' . $port . ' ' . $target;
+                
+                $this->logInfo('normalizeContentForComparison - SRV Normalized', [
+                    'original_content' => $originalContent,
+                    'parsed_priority' => $parsedData['priority'] ?? null,
+                    'parsed_weight' => $parsedData['weight'] ?? null,
+                    'parsed_port' => $parsedData['port'] ?? null,
+                    'parsed_target' => $parsedData['target'] ?? null,
+                    'hestia_priority' => $hestiaPriority,
+                    'final_priority' => $priority,
+                    'final_weight' => $weight,
+                    'final_port' => $port,
+                    'final_target' => $target,
+                    'normalized_result' => $normalized,
+                    'normalized_length' => strlen($normalized)
+                ], []);
+                return $normalized;
+            } elseif ($type === 'CNAME') {
+                return isset($parsedData['target']) ? rtrim($parsedData['target'], '.') : rtrim($content, '.');
+            } elseif ($type === 'TXT') {
+                // For TXT records, use the parsed txt field (without quotes and escaping)
+                // If txt field is not available, try to manually remove quotes and escaping
+                if (isset($parsedData['txt'])) {
+                    return $parsedData['txt'];
+                }
+                // Fallback: manually remove quotes and escaping
+                $normalized = trim($content);
+                $normalized = str_replace('" "', '', $normalized);
+                $normalized = preg_replace('/^"|"$|"\s+"|"\s*$/', '', $normalized);
+                $normalized = stripcslashes($normalized);
+                return $normalized;
+            } else {
+                // For other types (A, AAAA, etc.), use content as is or remove trailing dot
+                return isset($parsedData['content']) ? rtrim($parsedData['content'], '.') : rtrim($content, '.');
+            }
+            
+        } catch (\Throwable $e) {
+            // If anything goes wrong, fallback to simple normalization
+            return rtrim($content, '.');
+        }
     }
 }

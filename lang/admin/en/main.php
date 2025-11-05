@@ -677,4 +677,22 @@ return [
     'OCSP Checked At' => 'OCSP Checked At',
     'Days Remaining' => 'Days Remaining',
     'Renewed At' => 'Renewed At',
+
+    'Move To' => 'Move To',
+    '' => '',
+    '' => '',
+    '' => '',
+    '' => '',
+    '' => '',
+    '' => '',
+    '' => '',
+    '' => '',
+    '' => '',
+    '' => '',
+    '' => '',
+    '' => '',
+    '' => '',
+    '' => '',
+    '' => '',
+
 ];

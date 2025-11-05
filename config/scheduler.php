@@ -93,4 +93,10 @@ return [
         'cron' => '0 * * * *',
         'disable' => false,
     ],
+    [
+        'artisan' => 'SslManager:CheckExpiration',
+        'group' => 'SSL Manager',
+        'cron' => '* * * * *',
+        'disable' => false,
+    ],
 ];

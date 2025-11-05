@@ -63,9 +63,6 @@
                         <button type="button" class="dropdown-item force-status" data-type="status" data-value="expired">
                             Expired
                         </button>
-                        <button type="button" class="dropdown-item force-status" data-type="status" data-value="revoked">
-                            Revoked
-                        </button>
                         <button type="button" class="dropdown-item force-status" data-type="status" data-value="failed">
                             Failed
                         </button>
@@ -220,17 +217,6 @@
                                 <div class="col-12 col-sm-6 col-md-12 col-lg-6 col-xl-6">
                                     <label class="form-label"><i class="fa fa-redo-alt me-1"></i>{{ __('main.Renewed At') }}</label>
                                     <input type="text" class="form-control" readonly id="renewed_at">
-                                </div>
-                            </div>
-
-                            <div class="row g-3 mt-2">
-                                <div class="col-12 col-sm-6 col-md-12 col-lg-6 col-xl-6">
-                                    <label class="form-label"><i class="fa fa-info-circle me-1"></i>{{ __('main.OCSP Status') }}</label>
-                                    <input type="text" class="form-control" readonly id="ocsp_status">
-                                </div>
-                                <div class="col-12 col-sm-6 col-md-12 col-lg-6 col-xl-6">
-                                    <label class="form-label"><i class="fa fa-clock me-1"></i>{{ __('main.OCSP Checked At') }}</label>
-                                    <input type="text" class="form-control" readonly id="ocsp_checked_at">
                                 </div>
                             </div>
 
@@ -402,8 +388,6 @@
                         $('#expires_at').val(formatDateTime(data.expires_at));
                         $('#csr_valid_from').val(formatDateTime(data.csr_valid_from));
                         $('#renewed_at').val(formatDateTime(data.renewed_at));
-                        $('#ocsp_status').val(data.ocsp_status || (data.ocsp_checked ? 'Checked' : 'Not Checked'));
-                        $('#ocsp_checked_at').val(formatDateTime(data.ocsp_checked_at));
 
                         let issuerHtml = '';
                         if (data.issuer && typeof data.issuer === 'object') {

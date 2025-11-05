@@ -65,7 +65,7 @@ class puqAcmeClient
             $this->eab_kid = $ca_config['eab_kid'] ?? '';
 
             $this->eab_hmac_key = !empty($ca_config['eab_hmac_key'])
-                ? Crypt::decryptString($ca_config['eab_hmac_key'])
+                ? Crypt::decrypt($ca_config['eab_hmac_key'])
                 : '';
         }
 
@@ -73,7 +73,7 @@ class puqAcmeClient
         $this->email = $certificate_config['account_email'] ?? '';
 
         $account_key_pem = !empty($certificate_config['account_private_key'])
-            ? Crypt::decryptString($certificate_config['account_private_key'])
+            ? Crypt::decrypt($certificate_config['account_private_key'])
             : '';
 
         $this->account_id = $certificate_config['account_id'] ?? '';
@@ -556,6 +556,12 @@ class puqAcmeClient
         return $this->request($this->directory['newOrder'], $payload);
     }
 
+    public function getOrderStatus(): array
+    {
+        $url = $this->order_url;
+        return $this->request($url, '');
+    }
+
     /** ---------------- CHALLENGE DNS-01 ---------------- **/
     public function getAuthorization(array $authUrls): array
     {
@@ -774,7 +780,7 @@ class puqAcmeClient
     {
         return [
             'eab_kid' => $this->eab_kid ?? '',
-            'eab_hmac_key' => Crypt::encryptString($this->eab_hmac_key ?? ''),
+            'eab_hmac_key' => Crypt::encrypt($this->eab_hmac_key ?? ''),
         ];
     }
 

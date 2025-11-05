@@ -72,6 +72,11 @@
                         </div>
 
                         <div class="col-xs-12 col-sm-6 col-md-6 col-lg-2 col-xl-2 col-xxl-2 mb-3">
+                            <label for="ttl" class="form-label">TTL</label>
+                            <input type="number" class="form-control" id="ttl" name="ttl" min="30" step="1">
+                        </div>
+
+                        <div class="col-xs-12 col-sm-6 col-md-6 col-lg-2 col-xl-2 col-xxl-2 mb-3">
                             <label for="dns" class="form-label">{{__('Product.puqProxmox.Count')}}</label>
                             <input type="text" name="count" id="count" class="form-control" disabled>
                         </div>
@@ -137,6 +142,7 @@
                     .then(function (response) {
 
                         $("#name").val(response.data?.name);
+                        $("#ttl").val(response.data?.ttl);
                         $("#count").val(response.data?.count);
 
                         const dnsManager = response.data?.dns_manager;

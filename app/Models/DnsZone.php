@@ -352,6 +352,8 @@ class DnsZone extends Model
 
     public function reloadZone(): array
     {
+        $this->dnsRecords()->update(['description' => null]);
+
         return $this->runOnDnsServers(fn($dns_server) => $dns_server->reloadZone($this->uuid));
     }
 
@@ -359,6 +361,29 @@ class DnsZone extends Model
     {
         return $this->runOnDnsServers(fn($dns_server) => $dns_server->deleteZone($this->name));
     }
+
+    public function moveTo(string $dns_server_group_uuid): array
+    {
+        $dns_server_group = DnsServerGroup::query()->find($dns_server_group_uuid);
+        if (empty($dns_server_group)) {
+            return [
+                'status' => 'error',
+                'errors' => [__('error.DNS server group does not exist')],
+            ];
+        }
+
+        $delete_on_servers = $this->runOnDnsServers(fn($dns_server) => $dns_server->deleteZone($this->name));
+        if ($delete_on_servers['status'] === 'error') {
+            return $delete_on_servers;
+        }
+
+        $this->dns_server_group_uuid = $dns_server_group->uuid;
+        $this->save();
+        $this->refresh();
+
+        return $this->runOnDnsServers(fn($dns_server) => $dns_server->reloadZone($this->uuid));
+    }
+
 
     // record actions ------------------------------------------------------------
     public function getRecord($uuid, $record = null): array
@@ -468,7 +493,7 @@ class DnsZone extends Model
         $method = 'buildRecord'.$type;
 
         if (method_exists($this, $method)) {
-            $build_record = $this->{$method}($data,$revers);
+            $build_record = $this->{$method}($data, $revers);
         } else {
             return [
                 'status' => 'error',

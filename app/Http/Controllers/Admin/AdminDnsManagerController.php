@@ -800,6 +800,34 @@ class AdminDnsManagerController extends Controller
         ]);
     }
 
+    public function putDnsZoneMoveTo(Request $request, $uuid): JsonResponse
+    {
+
+        $model = DnsZone::find($uuid);
+
+        if (empty($model)) {
+            return response()->json([
+                'errors' => [__('error.Not found')],
+            ], 404);
+        }
+
+
+        $move_to = $model->moveTo($request->get('dns_server_group_uuid'));
+
+        if ($move_to['status'] === 'error') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => $move_to['error'],
+            ]);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => __('message.Updated successfully'),
+            'data' => $model,
+        ]);
+    }
+
     public function getDnsZone(Request $request, $uuid): JsonResponse
     {
         $model = DnsZone::find($uuid);

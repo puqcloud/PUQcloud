@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.0-beta.6] - 2025-11-05
+### Added
+- DNS Manager
+  -  Zone migration to other DNS server groups
+
+### Fixed
+- HestiaCP DNS module
+  - deleting records
+- ACME SSL Module
+    - ZeroSSL EAB 
+    - encrypting private keys
+---
+
 ## [1.0.0-beta.5] - 2025-11-02
 ### Added
 - SSL Manager

@@ -257,6 +257,9 @@ Route::put('dns_zone/{uuid}', [AdminDnsManagerController::class, 'putDnsZone'])-
 Route::delete('dns_zone/{uuid}', [AdminDnsManagerController::class, 'deleteDnsZone'])->name('dns_zone.delete')
     ->middleware('ApiPermission:dns-manager-dns-zones');
 
+Route::put('dns_zone/{uuid}/move_to', [AdminDnsManagerController::class, 'putDnsZoneMoveTo'])->name('dns_zone.move_to.put')
+    ->middleware('ApiPermission:dns-manager-dns-zones');
+
 Route::get('dns_zone/{uuid}/reload', [AdminDnsManagerController::class, 'getDnsZoneReload'])->name('dns_zone.reload.get')
     ->middleware('ApiPermission:dns-manager-dns-zones');
 

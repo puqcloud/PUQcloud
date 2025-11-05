@@ -18,7 +18,6 @@
 namespace Modules\Product\puqProxmox\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Models\DnsZone;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -212,10 +211,15 @@ class puqPmDnsZoneController extends Controller
                 'regex:/^(?!-)[A-Za-z0-9-]{1,63}(?<!-)(\.(?!-)[A-Za-z0-9-]{1,63}(?<!-))*\.?$/',
                 'unique:puq_pm_dns_zones,name,'.$uuid.',uuid',
             ],
+            'ttl' => 'required|integer|min:30|max:86400',
         ], [
             'name.required' => __('Product.puqProxmox.Name is required'),
             'name.regex' => __('Product.puqProxmox.Invalid zone format'),
             'name.unique' => __('Product.puqProxmox.Zone already exists'),
+            'ttl.required' => __('Product.puqProxmox.The DNS Record TTL field is required'),
+            'ttl.integer' => __('Product.puqProxmox.The DNS Record TTL must be an integer'),
+            'ttl.min' => __('Product.puqProxmox.The DNS Record TTL must be at least 30 seconds'),
+            'ttl.max' => __('Product.puqProxmox.The DNS Record TTL cannot exceed 86400 seconds'),
         ]);
 
         if ($validator->fails()) {
@@ -243,6 +247,8 @@ class puqPmDnsZoneController extends Controller
         }
 
         $model->name = $request->input('name');
+        $model->ttl = $request->input('ttl');
+
         $model->save();
 
         return response()->json([

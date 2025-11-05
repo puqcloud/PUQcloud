@@ -307,4 +307,8 @@ return [
     'Status must be draft' => 'Status must be draft',
     'Status must be active' => 'Status must be active',
     'Certificate does not need renewal' => 'Certificate does not need renewal',
+
+    'DNS server group does not exist' => 'DNS server group does not exist',
+
+
 ];
