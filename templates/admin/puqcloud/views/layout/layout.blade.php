@@ -79,6 +79,36 @@
         });
 
     });
+
+    $(function () {
+        setTimeout(function () {
+            var $container = $('.scrollbar-sidebar');
+            var $activeLi = $('.vertical-nav-menu li.mm-active').last();
+
+            if (!$container.length || !$activeLi.length) return;
+
+            $activeLi.parents('ul.mm-collapse').each(function () {
+                $(this).addClass('mm-show').css('height', 'auto');
+            });
+
+            var containerTop = $container.offset().top;
+            var activeTop = $activeLi.offset().top;
+            var desired = $container.scrollTop() + (activeTop - containerTop) - 10;
+            if (desired < 0) desired = 0;
+
+            var max = $container[0].scrollHeight - $container.outerHeight();
+            if (desired > max) desired = max;
+
+            $container.animate({ scrollTop: desired }, 300, function () {
+                try {
+                    if ($container.hasClass('ps') && typeof $container.perfectScrollbar === 'function') {
+                        $container.perfectScrollbar('update');
+                    }
+                } catch (e) {}
+            });
+        }, 200);
+    });
+
 </script>
 <!-- Universal Modal -->
 <div class="modal fade" id="universalModal" tabindex="-1" aria-labelledby="universalModalLabel">

@@ -61,7 +61,7 @@ class AdminGroupsController extends Controller
                     $urls = [];
 
                     if ($admin->hasPermission('groups-view')) {
-                        $urls['web_edit'] = route('admin.web.group', $group->uuid);
+                        $urls['edit'] = route('admin.web.group', $group->uuid);
                         $urls['get'] = route('admin.api.group.get', $group->uuid);
                     }
 

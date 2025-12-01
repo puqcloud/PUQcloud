@@ -143,7 +143,7 @@ class Invoice extends Model
     public function getCurrency(): Currency
     {
         $currency = Currency::where('code', $this->currency_code)->first();
-        if (! $currency) {
+        if (!$currency) {
             $currency = Currency::where('default', true)->first();
         }
 
@@ -202,19 +202,24 @@ class Invoice extends Model
 
     public function getPaidNetAmountAttribute(): string
     {
-        return number_format_custom($this->transactions->sum('amount_net'));
+        $amount = round($this->transactions->sum('amount_net'), 2, PHP_ROUND_HALF_UP);
+        return number_format_custom($amount, 2);
     }
 
     public function getPaidGrossAmountAttribute(): string
     {
-        return number_format_custom($this->transactions->sum('amount_gross'), 2);
+        $amount = round($this->transactions->sum('amount_gross'), 2, PHP_ROUND_HALF_UP);
+        return number_format_custom($amount, 2);
     }
 
-    public function getDueAmountAttribute()
+    public function getDueAmountAttribute(): string
     {
         $tmp = (float) $this->total - (float) $this->paid_gross_amount;
+        $amount = round($tmp, 2, PHP_ROUND_HALF_UP);
 
-        return max('0.00', number_format_custom($tmp));
+        $amount = max(0.00, $amount);
+
+        return number_format_custom($amount, 2);
     }
 
     public function client(): belongsTo
@@ -229,13 +234,13 @@ class Invoice extends Model
 
     public function fillHomeCompanyData(): void
     {
-        if (! $this->home_company_uuid) {
+        if (!$this->home_company_uuid) {
             return;
         }
 
         $homeCompany = HomeCompany::with('country', 'region')->find($this->home_company_uuid);
 
-        if (! $homeCompany) {
+        if (!$homeCompany) {
             return;
         }
 
@@ -274,13 +279,13 @@ class Invoice extends Model
 
     public function fillClientData(): void
     {
-        if (! $this->client_uuid) {
+        if (!$this->client_uuid) {
             return;
         }
 
         $client = Client::with('currency')->find($this->client_uuid);
 
-        if (! $client) {
+        if (!$client) {
             return;
         }
 
@@ -346,7 +351,7 @@ class Invoice extends Model
 
             $exists = $query->exists();
 
-            if (! $exists) {
+            if (!$exists) {
                 $homeCompany->{$config['next']} = 1;
             }
         }
@@ -356,13 +361,13 @@ class Invoice extends Model
 
     public function setNumber(): void
     {
-        if (! $this->home_company_uuid) {
+        if (!$this->home_company_uuid) {
             return;
         }
 
         $homeCompany = HomeCompany::find($this->home_company_uuid);
 
-        if (! $homeCompany) {
+        if (!$homeCompany) {
             return;
         }
 
@@ -414,28 +419,27 @@ class Invoice extends Model
     {
         $items = $this->invoiceItems;
 
-        $subtotal = $items->sum('amount');
+        $subtotal = round($items->sum('amount'), 2, PHP_ROUND_HALF_UP);
         $this->subtotal = $subtotal;
 
-        $taxedAmount = $items->where('taxed', true)->sum('amount');
-
-        $taxTotal = 0;
+        $taxedAmount = round($items->where('taxed', true)->sum('amount'), 2, PHP_ROUND_HALF_UP);
+        $taxTotal = 0.0;
 
         for ($i = 1; $i <= 3; $i++) {
             $rate = (float) $this->{'tax_'.$i};
             $name = $this->{'tax_'.$i.'_name'};
 
-            if (! empty($name)) {
-                $amount = number_format($taxedAmount * ($rate / 100), 2, '.', '');
+            if (!empty($name)) {
+                $amount = round($taxedAmount * ($rate / 100), 2, PHP_ROUND_HALF_UP);
                 $this->{'tax_'.$i.'_amount'} = $amount;
                 $taxTotal += $amount;
             } else {
-                $this->{'tax_'.$i.'_amount'} = 0;
+                $this->{'tax_'.$i.'_amount'} = 0.00;
             }
         }
 
-        $this->tax = $taxTotal;
-        $this->total = $subtotal + $taxTotal;
+        $this->tax = round($taxTotal, 2, PHP_ROUND_HALF_UP);
+        $this->total = round($subtotal + $this->tax, 2, PHP_ROUND_HALF_UP);
     }
 
     public function publish(): array
@@ -520,21 +524,23 @@ class Invoice extends Model
 
     public function makeRefund($params): array
     {
-        if ($params['amount'] <= 0) {
+        $amount = round((float) ($params['amount'] ?? 0), 2, PHP_ROUND_HALF_UP);
+
+        if ($amount <= 0) {
             return [
                 'status' => 'error',
                 'errors' => [__('error.The amount must be greater than 0')],
             ];
         }
 
-        if ($params['amount'] > $this->paid_net_amount) {
+        if ($amount > (float) $this->paid_net_amount) {
             return [
                 'status' => 'error',
                 'errors' => [__('error.The refund amount must not exceed the amount paid')],
             ];
         }
 
-        if ($params['amount'] > $this->total) {
+        if ($amount > (float) $this->total) {
             return [
                 'status' => 'error',
                 'errors' => [__('error.Amount must be less than or equal to Total')],
@@ -548,7 +554,11 @@ class Invoice extends Model
             ];
         }
 
-        $payment_gateway = $this->homeCompany->paymentGateways()->where('uuid', $params['payment_gateway_uuid'] ?? '')->first();
+        $payment_gateway = $this->homeCompany
+            ->paymentGateways()
+            ->where('uuid', $params['payment_gateway_uuid'] ?? '')
+            ->first();
+
         if (empty($payment_gateway)) {
             return [
                 'status' => 'error',
@@ -568,11 +578,14 @@ class Invoice extends Model
         try {
             DB::beginTransaction();
 
+            $fees = round((float) ($params['fees'] ?? 0.00), 2, PHP_ROUND_HALF_UP);
+            $gross = round($this->getGross($amount), 2, PHP_ROUND_HALF_UP);
+
             $this->createTransaction(
-                -(float) $params['amount'],
-                -$this->getGross($params['amount']),
-                -$params['fees'] ?? 0.00,
-                $params['transaction_id'] ?? '',
+                -$amount,
+                -$gross,
+                -$fees,
+                $params['transaction_id'],
                 $params['description'] ?? null,
                 'refund',
                 $payment_gateway->uuid,
@@ -588,25 +601,26 @@ class Invoice extends Model
             $newInvoice->type = 'credit_note';
             $newInvoice->status = 'refunded';
             $newInvoice->number = null;
-
             $newInvoice->save();
 
             $invoice_item = new InvoiceItem;
             $home_company = $newInvoice->homeCompany;
 
             $invoice_item->invoice_uuid = $newInvoice->uuid;
-
             $invoice_item->description = $home_company->refund_item_name;
+
             if ($home_company->refund_item_description) {
                 $invoice_item->description .= PHP_EOL.'*-'.$home_company->refund_item_description;
             }
-            $invoice_item->description = str_replace('{INVOICE_NUMBER}', $this->number, $invoice_item->description);
-            $invoice_item->description = str_replace('{YEAR}', date('Y'), $invoice_item->description);
-            $invoice_item->description = str_replace('{MONTH}', date('m'), $invoice_item->description);
-            $invoice_item->description = str_replace('{DAY}', date('d'), $invoice_item->description);
+
+            $invoice_item->description = str_replace(
+                ['{INVOICE_NUMBER}', '{YEAR}', '{MONTH}', '{DAY}'],
+                [$this->number, date('Y'), date('m'), date('d')],
+                $invoice_item->description
+            );
 
             $invoice_item->taxed = true;
-            $invoice_item->amount = -$params['amount'];
+            $invoice_item->amount = -$amount;
             $invoice_item->save();
 
             $newInvoice->calculateTotals();
@@ -617,6 +631,7 @@ class Invoice extends Model
             $newInvoice->refunded_date = now();
             $newInvoice->save();
             $newInvoice->refresh();
+
             logActivity(
                 'info',
                 'CreditNote:'.$newInvoice->uuid.' ('.$newInvoice->number.') created. Amount: '.$newInvoice->subtotal.' '.$this->client->currency->code,
@@ -652,8 +667,16 @@ class Invoice extends Model
         }
     }
 
-    protected function createTransaction(float $amount_net, float $amount_gross, float $fees, string $transaction_id, $note = null, $type = 'payment', $payment_gateway_uuid = null): void
-    {
+
+    protected function createTransaction(
+        float $amount_net,
+        float $amount_gross,
+        float $fees,
+        string $transaction_id,
+        $note = null,
+        $type = 'payment',
+        $payment_gateway_uuid = null
+    ): void {
         $description = "Invoice:{$this->uuid}";
 
         if ($note !== null) {
@@ -679,145 +702,167 @@ class Invoice extends Model
 
     private function getNet($netAmount, bool $returnBreakdown = false): float|array
     {
-        $netAmount = (float) $netAmount;
-        $taxPercent = 0;
+        $netAmount = round((float) $netAmount, 2, PHP_ROUND_HALF_UP);
+        $taxPercent = 0.0;
         $taxRates = [];
 
-        if (! empty($this->tax_1_name)) {
+        if (!empty($this->tax_1_name)) {
             $taxRates[$this->tax_1_name] = (float) $this->tax_1;
             $taxPercent += $taxRates[$this->tax_1_name];
         }
-        if (! empty($this->tax_2_name)) {
+        if (!empty($this->tax_2_name)) {
             $taxRates[$this->tax_2_name] = (float) $this->tax_2;
             $taxPercent += $taxRates[$this->tax_2_name];
         }
-        if (! empty($this->tax_3_name)) {
+        if (!empty($this->tax_3_name)) {
             $taxRates[$this->tax_3_name] = (float) $this->tax_3;
             $taxPercent += $taxRates[$this->tax_3_name];
         }
 
         $grossAmount = $netAmount;
         $netAmount = $taxPercent > 0 ? $grossAmount / (1 + $taxPercent / 100) : $grossAmount;
-        $taxAmount = $grossAmount - $netAmount;
+        $netAmount = round($netAmount, 2, PHP_ROUND_HALF_UP);
+        $taxAmount = round($grossAmount - $netAmount, 2, PHP_ROUND_HALF_UP);
 
         if ($returnBreakdown) {
             $taxes = [];
+
             foreach ($taxRates as $name => $rate) {
-                $taxes[$name] = number_format_custom($taxAmount * ($rate / $taxPercent));
+                $share = $taxPercent > 0 ? ($rate / $taxPercent) : 0;
+                $taxValue = round($taxAmount * $share, 2, PHP_ROUND_HALF_UP);
+                $taxes[$name] = number_format_custom($taxValue, 2);
             }
 
             return [
-                'gross' => number_format_custom($grossAmount),
-                'net' => number_format_custom($netAmount),
-                'tax' => number_format_custom($taxAmount),
+                'gross' => number_format_custom($grossAmount, 2),
+                'net'   => number_format_custom($netAmount, 2),
+                'tax'   => number_format_custom($taxAmount, 2),
                 'taxes' => $taxes,
             ];
         }
 
-        return number_format_custom($netAmount);
+        return round($netAmount, 2, PHP_ROUND_HALF_UP);
     }
 
     private function getGross($grossAmount, bool $returnBreakdown = false): float|array
     {
-        $grossAmount = (float) $grossAmount;
-        $taxPercent = 0;
+        $grossAmount = round((float) $grossAmount, 2, PHP_ROUND_HALF_UP);
+        $taxPercent = 0.0;
         $taxRates = [];
 
-        if (! empty($this->tax_1_name)) {
+        if (!empty($this->tax_1_name)) {
             $taxRates[$this->tax_1_name] = (float) $this->tax_1;
             $taxPercent += $taxRates[$this->tax_1_name];
         }
-        if (! empty($this->tax_2_name)) {
+        if (!empty($this->tax_2_name)) {
             $taxRates[$this->tax_2_name] = (float) $this->tax_2;
             $taxPercent += $taxRates[$this->tax_2_name];
         }
-        if (! empty($this->tax_3_name)) {
+        if (!empty($this->tax_3_name)) {
             $taxRates[$this->tax_3_name] = (float) $this->tax_3;
             $taxPercent += $taxRates[$this->tax_3_name];
         }
 
         $netAmount = $grossAmount;
-        $grossAmount = $taxPercent > 0 ? $netAmount * (1 + $taxPercent / 100) : $netAmount;
-        $taxAmount = $grossAmount - $netAmount;
+        $grossAmount = $taxPercent > 0
+            ? $netAmount * (1 + $taxPercent / 100)
+            : $netAmount;
+
+        $grossAmount = round($grossAmount, 2, PHP_ROUND_HALF_UP);
+        $taxAmount = round($grossAmount - $netAmount, 2, PHP_ROUND_HALF_UP);
 
         if ($returnBreakdown) {
             $taxes = [];
+
             foreach ($taxRates as $name => $rate) {
-                $taxes[$name] = number_format_custom($taxAmount * ($rate / $taxPercent));
+                $share = $taxPercent > 0 ? ($rate / $taxPercent) : 0;
+                $taxValue = round($taxAmount * $share, 2, PHP_ROUND_HALF_UP);
+                $taxes[$name] = number_format_custom($taxValue, 2);
             }
 
             return [
-                'net' => number_format_custom($netAmount),
-                'gross' => number_format_custom($grossAmount),
-                'tax' => number_format_custom($taxAmount),
+                'net'   => number_format_custom($netAmount, 2),
+                'gross' => number_format_custom($grossAmount, 2),
+                'tax'   => number_format_custom($taxAmount, 2),
                 'taxes' => $taxes,
             ];
         }
 
-        return number_format_custom($grossAmount);
+        return round($grossAmount, 2, PHP_ROUND_HALF_UP);
     }
 
     private function getTaxFromNet($netAmount, bool $returnBreakdown = false): float|array
     {
-        $netAmount = (float) $netAmount;
+        $netAmount = round((float) $netAmount, 2, PHP_ROUND_HALF_UP);
         $taxes = [];
 
-        if (! empty($this->tax_1_name)) {
-            $taxes[$this->tax_1_name] = $netAmount * ((float) $this->tax_1 / 100);
+        if (!empty($this->tax_1_name)) {
+            $taxes[$this->tax_1_name] = round(
+                $netAmount * ((float) $this->tax_1 / 100),
+                2,
+                PHP_ROUND_HALF_UP
+            );
         }
-        if (! empty($this->tax_2_name)) {
-            $taxes[$this->tax_2_name] = $netAmount * ((float) $this->tax_2 / 100);
+        if (!empty($this->tax_2_name)) {
+            $taxes[$this->tax_2_name] = round(
+                $netAmount * ((float) $this->tax_2 / 100),
+                2,
+                PHP_ROUND_HALF_UP
+            );
         }
-        if (! empty($this->tax_3_name)) {
-            $taxes[$this->tax_3_name] = $netAmount * ((float) $this->tax_3 / 100);
+        if (!empty($this->tax_3_name)) {
+            $taxes[$this->tax_3_name] = round(
+                $netAmount * ((float) $this->tax_3 / 100),
+                2,
+                PHP_ROUND_HALF_UP
+            );
         }
 
-        $total = array_sum($taxes);
+        $total = round(array_sum($taxes), 2, PHP_ROUND_HALF_UP);
 
         if ($returnBreakdown) {
-            $result = ['total' => number_format_custom($total)];
+            $result = ['total' => number_format_custom($total, 2)];
             foreach ($taxes as $name => $value) {
-                $result[$name] = number_format_custom($value);
+                $result[$name] = number_format_custom($value, 2);
             }
-
             return $result;
         }
 
-        return number_format_custom($total);
+        return round($total, 2, PHP_ROUND_HALF_UP);
     }
 
     private function getTaxFromGross($grossAmount, bool $returnBreakdown = false): float|array
     {
-        $grossAmount = (float) $grossAmount;
+        $grossAmount = round((float) $grossAmount, 2);
         $taxes = [];
-        $taxTotalPercent = 0;
+        $taxTotalPercent = 0.0;
 
-        if (! empty($this->tax_1_name)) {
+        if (!empty($this->tax_1_name)) {
             $taxTotalPercent += (float) $this->tax_1;
         }
-        if (! empty($this->tax_2_name)) {
+        if (!empty($this->tax_2_name)) {
             $taxTotalPercent += (float) $this->tax_2;
         }
-        if (! empty($this->tax_3_name)) {
+        if (!empty($this->tax_3_name)) {
             $taxTotalPercent += (float) $this->tax_3;
         }
 
-        if ($taxTotalPercent === 0) {
-            return $returnBreakdown ? ['total' => 0.0] : 0.0;
+        if ($taxTotalPercent === 0.0) {
+            return $returnBreakdown ? ['total' => 0.00] : 0.00;
         }
 
-        $netAmount = $grossAmount / (1 + $taxTotalPercent / 100);
-        $total = $grossAmount - $netAmount;
+        $netAmount = round($grossAmount / (1 + $taxTotalPercent / 100), 2);
+        $total = round($grossAmount - $netAmount, 2);
 
         if ($returnBreakdown) {
             $result = ['total' => number_format_custom($total)];
-            if (! empty($this->tax_1_name)) {
+            if (!empty($this->tax_1_name)) {
                 $result[$this->tax_1_name] = number_format_custom($total * ((float) $this->tax_1 / $taxTotalPercent));
             }
-            if (! empty($this->tax_2_name)) {
+            if (!empty($this->tax_2_name)) {
                 $result[$this->tax_2_name] = number_format_custom($total * ((float) $this->tax_2 / $taxTotalPercent));
             }
-            if (! empty($this->tax_3_name)) {
+            if (!empty($this->tax_3_name)) {
                 $result[$this->tax_3_name] = number_format_custom($total * ((float) $this->tax_3 / $taxTotalPercent));
             }
 
@@ -914,8 +959,9 @@ class Invoice extends Model
             return ['status' => 'error', 'errors' => [__('error.Amount must be less than or equal to Due Amount')]];
         }
 
-        $payment_gateway = $this->homeCompany->paymentGateways()->where('uuid', $params['payment_gateway_uuid'] ?? '')->first();
-        if (! $payment_gateway) {
+        $payment_gateway = $this->homeCompany->paymentGateways()->where('uuid',
+            $params['payment_gateway_uuid'] ?? '')->first();
+        if (!$payment_gateway) {
             return ['status' => 'error', 'errors' => [__('error.Payment Gateway is required')]];
         }
 

@@ -102,7 +102,7 @@ class AdminClientsController extends Controller
                     $admin_online = app('admin');
                     $urls = ['gravatar' => get_gravatar($client->owner_email, 100)];
                     if ($admin_online->hasPermission('clients-view')) {
-                        $urls['web_edit'] = route('admin.web.client.tab', [$client->uuid, 'summary']);
+                        $urls['edit'] = route('admin.web.client.tab', [$client->uuid, 'summary']);
                     }
 
                     return $urls;

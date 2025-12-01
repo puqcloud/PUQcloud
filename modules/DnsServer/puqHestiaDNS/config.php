@@ -3,7 +3,7 @@
 return [
     'name' => 'PUQ HestiaCP DNS',
     'description' => 'HestiaCP DNS integration for managing DNS zones and records',
-    'version' => '1.0.0',
+    'version' => '1.0.2',
     'author' => 'Dmytro Kravchenko',
     'email' => 'info@puqcloud.com',
     'website' => 'https://puqcloud.com/',

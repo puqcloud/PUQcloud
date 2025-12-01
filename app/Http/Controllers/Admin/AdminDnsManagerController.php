@@ -67,7 +67,7 @@ class AdminDnsManagerController extends Controller
                     $urls = [];
 
                     if ($admin->hasPermission('dns-manager-dns-server-groups')) {
-                        $urls['web_edit'] = route('admin.web.dns_server_group', $model->uuid);
+                        $urls['edit'] = route('admin.web.dns_server_group', $model->uuid);
                         $urls['delete'] = route('admin.api.dns_server_group.delete', $model->uuid);
                     }
 
@@ -323,7 +323,7 @@ class AdminDnsManagerController extends Controller
                     $urls = [];
 
                     if ($admin->hasPermission('dns-manager-dns-servers')) {
-                        $urls['web_edit'] = route('admin.web.dns_server', $model->uuid);
+                        $urls['edit'] = route('admin.web.dns_server', $model->uuid);
                         $urls['delete'] = route('admin.api.dns_server.delete', $model->uuid);
                     }
 
@@ -703,7 +703,7 @@ class AdminDnsManagerController extends Controller
                     $urls = [];
 
                     if ($admin->hasPermission('dns-manager-dns-zones')) {
-                        $urls['web_edit'] = route('admin.web.dns_zone', $model->uuid);
+                        $urls['edit'] = route('admin.web.dns_zone', $model->uuid);
                         $urls['delete'] = route('admin.api.dns_zone.delete', $model->uuid);
                     }
 

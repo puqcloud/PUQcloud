@@ -29,6 +29,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Modules\Product\puqProxmox\Models\PuqPmAppInstance;
+use Modules\Product\puqProxmox\Models\PuqPmAppPreset;
 use Modules\Product\puqProxmox\Models\PuqPmLxcInstance;
 use Modules\Product\puqProxmox\Models\PuqPmLxcOsTemplate;
 use Modules\Product\puqProxmox\Models\PuqPmLxcPreset;
@@ -36,7 +38,6 @@ use Modules\Product\puqProxmox\Models\PuqPmSshPublicKey;
 
 class puqProxmox extends Product
 {
-
     public string $log_level = 'debug'; // 'error', 'info', 'debug'
 
     public $product_data;
@@ -397,7 +398,6 @@ class puqProxmox extends Product
                     $table->uuid('puq_pm_dns_zone_uuid');
                     $table->foreign('puq_pm_dns_zone_uuid')->references('uuid')->on('puq_pm_dns_zones')->onDelete('restrict');
 
-
                     // Firewall
                     $table->boolean('firewall_enable')->default(true);
                     $table->boolean('firewall_dhcp')->default(false);
@@ -412,6 +412,17 @@ class puqProxmox extends Product
 
                     $table->boolean('firewall_ndp')->default(false);
                     $table->boolean('firewall_radv')->default(false);
+
+                    $table->boolean('ha-managed ')->default(false);
+                    $table->boolean('unprivileged')->default(true);
+                    $table->boolean('nesting')->default(true);
+                    $table->boolean('fuse')->default(false);
+                    $table->boolean('keyctl')->default(false);
+                    $table->boolean('mknod')->default(false);
+                    $table->boolean('mount_nfs')->default(false);
+                    $table->boolean('mount_cifs')->default(false);
+
+                    $table->longText('env')->nullable(); // json
 
                     $table->timestamps();
                 });
@@ -549,6 +560,8 @@ class puqProxmox extends Product
                     $table->string('firewall_policy_out')->nullable()->default('ACCEPT');
                     $table->longText('firewall_rules')->nullable(); // json
 
+                    $table->longText('env')->nullable(); // json
+
                     $table->timestamps();
                 });
             }
@@ -604,7 +617,7 @@ class puqProxmox extends Product
 
                     $table->uuid()->primary();
                     $table->string('name');
-                    $table->string('type');// local_private, global_private
+                    $table->string('type'); // local_private, global_private
 
                     $table->uuid('puq_pm_cluster_group_uuid')->nullable();
                     $table->foreign('puq_pm_cluster_group_uuid')->references('uuid')->on('puq_pm_cluster_groups')->onDelete('set null');
@@ -623,13 +636,94 @@ class puqProxmox extends Product
             // Fill in the settings ---------------------------------------------------------------------
             SettingService::set('Product.puqProxmox.global_private_network', '10.0.100.0/24');
 
+            if (!Schema::hasTable('puq_pm_scripts')) {
+                Schema::create('puq_pm_scripts', function (Blueprint $table) {
+
+                    $table->uuid()->primary();
+
+                    $table->string('type');
+
+                    $table->longText('script')->nullable();
+
+                    $table->string('model');
+                    $table->uuid('model_uuid');
+
+                    $table->timestamps();
+                });
+            }
+
+            if (!Schema::hasTable('puq_pm_script_logs')) {
+                Schema::create('puq_pm_script_logs', function (Blueprint $table) {
+
+                    $table->uuid()->primary();
+
+                    $table->uuid('puq_pm_script_uuid')->nullable();
+                    $table->foreign('puq_pm_script_uuid')->references('uuid')->on('puq_pm_scripts')->onDelete('cascade');
+
+                    $table->longText('input')->nullable();
+                    $table->longText('output')->nullable();
+
+                    $table->json('errors')->nullable();
+                    $table->string('status')->nullable();
+                    $table->integer('duration')->default(0);
+
+                    $table->string('model');
+                    $table->uuid('model_uuid');
+
+                    $table->timestamps();
+                });
+            }
             // APP --------------------------------------------------------------------------------------
+
+            if (!Schema::hasTable('puq_pm_load_balancers')) {
+                Schema::create('puq_pm_load_balancers', function (Blueprint $table) {
+
+                    $table->uuid()->primary();
+
+                    $table->string('name');
+                    $table->string('subdomain')->default('');
+                    $table->integer('dns_record_ttl')->default(30);
+                    $table->json('default_thresholds')->nullable();
+                    $table->string('strategy')->nullable();
+                    $table->uuid('puq_pm_cluster_group_uuid');
+                    $table->foreign('puq_pm_cluster_group_uuid')->references('uuid')->on('puq_pm_cluster_groups')->onDelete('restrict');
+
+                    $table->uuid('puq_pm_dns_zone_uuid');
+                    $table->foreign('puq_pm_dns_zone_uuid')->references('uuid')->on('puq_pm_dns_zones')->onDelete('restrict');
+
+                    $table->timestamps();
+                });
+            }
+
+            if (!Schema::hasTable('puq_pm_web_proxies')) {
+                Schema::create('puq_pm_web_proxies', function (Blueprint $table) {
+
+                    $table->uuid()->primary();
+
+                    $table->string('name');
+                    $table->boolean('disable')->default(true);
+                    $table->string('api_url')->nullable();
+                    $table->string('api_key')->nullable();
+                    $table->json('frontend_ips')->nullable();
+                    $table->json('last_check_data')->nullable();
+                    $table->json('thresholds')->nullable();
+
+                    $table->uuid('puq_pm_load_balancer_uuid');
+                    $table->foreign('puq_pm_load_balancer_uuid')->references('uuid')->on('puq_pm_load_balancers')->onDelete('restrict');
+
+                    $table->timestamps();
+                });
+            }
+
             if (!Schema::hasTable('puq_pm_app_presets')) {
                 Schema::create('puq_pm_app_presets', function (Blueprint $table) {
 
                     $table->uuid()->primary();
 
                     $table->string('name');
+                    $table->string('version')->nullable();
+                    $table->longText('description')->nullable();
+                    $table->json('env_variables')->nullable();
 
                     $table->uuid('puq_pm_lxc_preset_uuid');
                     $table->foreign('puq_pm_lxc_preset_uuid')->references('uuid')->on('puq_pm_lxc_presets')->onDelete('restrict');
@@ -640,6 +734,8 @@ class puqProxmox extends Product
                     $table->uuid('puq_pm_dns_zone_uuid');
                     $table->foreign('puq_pm_dns_zone_uuid')->references('uuid')->on('puq_pm_dns_zones')->onDelete('restrict');
 
+                    $table->uuid('certificate_authority_uuid');
+                    $table->foreign('certificate_authority_uuid')->references('uuid')->on('certificate_authorities')->onDelete('restrict');
 
                     $table->timestamps();
                 });
@@ -651,12 +747,35 @@ class puqProxmox extends Product
                     $table->uuid()->primary();
 
                     $table->string('name');
-                    $table->string('protocol')->default('http'); // https/http/udp/tcp
-                    $table->integer('port')->default(80);
-                    $table->string('subdomain')->default('');
+                    $table->string('subdomain')->nullable();
+
+                    $table->longText('server_custom_config_before')->nullable();
+                    $table->longText('server_custom_config')->nullable();
+                    $table->longText('server_custom_config_after')->nullable();
 
                     $table->uuid('puq_pm_app_preset_uuid');
                     $table->foreign('puq_pm_app_preset_uuid')->references('uuid')->on('puq_pm_app_presets')->onDelete('cascade');
+
+                    $table->timestamps();
+                });
+            }
+
+            if (!Schema::hasTable('puq_pm_app_endpoint_locations')) {
+                Schema::create('puq_pm_app_endpoint_locations', function (Blueprint $table) {
+
+                    $table->uuid()->primary();
+
+                    $table->string('path')->default('/');
+                    $table->bigInteger('show_to_client')->default(true);
+
+                    $table->string('proxy_protocol')->default('http'); // http or https
+                    $table->integer('proxy_port')->default('80');
+                    $table->string('proxy_path')->nullable();
+
+                    $table->longText('custom_config')->nullable();
+
+                    $table->uuid('puq_pm_app_endpoint_uuid');
+                    $table->foreign('puq_pm_app_endpoint_uuid')->references('uuid')->on('puq_pm_app_endpoints')->onDelete('cascade');
 
                     $table->timestamps();
                 });
@@ -667,6 +786,18 @@ class puqProxmox extends Product
 
                     $table->uuid()->primary();
 
+                    $table->json('env_variables')->nullable();
+
+                    $table->string('deploy_status')->nullable(); // pending|running|success|failed|canceled
+                    $table->integer('deploy_progress')->nullable();
+                    $table->dateTime('deploy_progress')->nullable();
+                    $table->dateTime('deploy_finished_at')->nullable();
+                    $table->longText('deploy_logs')->nullable();
+                    $table->string('deploy_current_step')->nullable();
+                    $table->string('deploy_error')->nullable();
+
+                    $table->json('disk_status')->nullable();
+
                     $table->uuid('puq_pm_lxc_instance_uuid');
                     $table->foreign('puq_pm_lxc_instance_uuid')->references('uuid')->on('puq_pm_lxc_instances')->onDelete('restrict');
 
@@ -676,70 +807,8 @@ class puqProxmox extends Product
                     $table->uuid('puq_pm_load_balancer_uuid');
                     $table->foreign('puq_pm_load_balancer_uuid')->references('uuid')->on('puq_pm_load_balancers')->onDelete('restrict');
 
-                    $table->timestamps();
-                });
-            }
-
-            if (!Schema::hasTable('puq_pm_load_balancers')) {
-                Schema::create('puq_pm_load_balancers', function (Blueprint $table) {
-
-                    $table->uuid()->primary();
-
-                    $table->string('name');
-                    $table->string('subdomain')->default('');
-
-                    $table->uuid('puq_pm_cluster_group_uuid');
-                    $table->foreign('puq_pm_cluster_group_uuid')->references('uuid')->on('puq_pm_cluster_groups')->onDelete('restrict');
-
                     $table->uuid('puq_pm_dns_zone_uuid');
                     $table->foreign('puq_pm_dns_zone_uuid')->references('uuid')->on('puq_pm_dns_zones')->onDelete('restrict');
-
-                    $table->timestamps();
-                });
-            }
-
-            if (!Schema::hasTable('puq_pm_web_proxys')) {
-                Schema::create('puq_pm_web_proxys', function (Blueprint $table) {
-
-                    $table->uuid()->primary();
-
-                    $table->string('name');
-
-                    $table->string('api_url');
-                    $table->string('api_key');
-                    $table->json('frontend_ips')->nullable();
-
-                    $table->uuid('puq_pm_load_balancer_uuid');
-                    $table->foreign('puq_pm_load_balancer_uuid')->references('uuid')->on('puq_pm_load_balancers')->onDelete('restrict');
-
-                    $table->timestamps();
-                });
-            }
-
-
-
-            if (!Schema::hasTable('puq_pm_scripts')) {
-                Schema::create('puq_pm_scripts', function (Blueprint $table) {
-
-                    $table->uuid()->primary();
-
-                    $table->string('type');
-
-                    $table->longText('script')->nullable();
-
-                    // LXC
-                    $table->uuid('puq_pm_lxc_os_template_uuid')->nullable();
-                    $table->foreign('puq_pm_lxc_os_template_uuid')->references('uuid')->on('puq_pm_lxc_os_templates')->onDelete('set null');
-
-                    // APP
-                    $table->uuid('puq_pm_app_endpoint_uuid')->nullable();
-                    $table->foreign('puq_pm_app_endpoint_uuid')->references('uuid')->on('puq_pm_app_endpoints')->onDelete('set null');
-
-                    $table->uuid('puq_pm_app_preset_uuid')->nullable();
-                    $table->foreign('puq_pm_app_preset_uuid')->references('uuid')->on('puq_pm_app_presets')->onDelete('set null');
-
-                    $table->uuid('puq_pm_load_balancer_uuid')->nullable();
-                    $table->foreign('puq_pm_load_balancer_uuid')->references('uuid')->on('puq_pm_load_balancers')->onDelete('set null');
 
                     $table->timestamps();
                 });
@@ -763,6 +832,16 @@ class puqProxmox extends Product
     {
         try {
             $tables = [
+                'puq_pm_app_instances',
+                'puq_pm_app_endpoint_locations',
+                'puq_pm_app_endpoints',
+                'puq_pm_app_presets',
+                'puq_pm_web_proxies',
+                'puq_pm_load_balancers',
+                'puq_pm_script_logs',
+                'puq_pm_scripts',
+                'puq_pm_client_private_networks',
+                'puq_pm_ssh_public_keys',
                 'puq_pm_lxc_instance_nets',
                 'puq_pm_lxc_instances',
                 'puq_pm_lxc_preset_x_lxc_os_templates',
@@ -814,30 +893,7 @@ class puqProxmox extends Product
 
     public function update(): string
     {
-
         $this->activate();
-
-        Schema::table('puq_pm_scripts', function (Blueprint $table) {
-            // APP
-            $table->uuid('puq_pm_app_endpoint_uuid')->nullable()->after('puq_pm_lxc_os_template_uuid');
-            $table->foreign('puq_pm_app_endpoint_uuid')
-                ->references('uuid')
-                ->on('puq_pm_app_endpoints')
-                ->onDelete('set null');
-
-            $table->uuid('puq_pm_app_preset_uuid')->nullable()->after('puq_pm_app_endpoint_uuid');
-            $table->foreign('puq_pm_app_preset_uuid')
-                ->references('uuid')
-                ->on('puq_pm_app_presets')
-                ->onDelete('set null');
-
-            $table->uuid('puq_pm_load_balancer_uuid')->nullable()->after('puq_pm_app_preset_uuid');
-            $table->foreign('puq_pm_load_balancer_uuid')
-                ->references('uuid')
-                ->on('puq_pm_load_balancers')
-                ->onDelete('set null');
-        });
-
 
         return 'success';
     }
@@ -916,11 +972,66 @@ class puqProxmox extends Product
             )->get();
             $data['public_network_product_attributes'] = $public_network_product_attributes;
 
-
             return $this->view('admin_area.product.lxc', $data);
         }
 
         if ($type == 'app') {
+            $puq_pm_app_preset_data = [];
+
+            if (!empty($this->product_data['puq_pm_app_preset_uuid'])) {
+                $puq_pm_app_preset = PuqPmAppPreset::find($this->product_data['puq_pm_app_preset_uuid']);
+                if ($puq_pm_app_preset) {
+                    $puq_pm_app_preset_data = [
+                        'id' => $puq_pm_app_preset->uuid,
+                        'text' => $puq_pm_app_preset->name,
+                    ];
+                }
+            }
+            $data['puq_pm_app_preset_data'] = json_encode($puq_pm_app_preset_data);
+            $data['puq_pm_app_preset'] = $puq_pm_app_preset ?? null;
+
+            //            $location_group = $product->productOptionGroups()
+            //                ->find($this->product_data['location_product_option_group_uuid'] ?? '');
+            //
+            //            $data['location_option_mapping'] = $location_group
+            //                ? $puq_pm_lxc_preset->getLocationOptionMappings($location_group)
+            //                : [];
+            //
+            //            $os_group = $product->productOptionGroups()
+            //                ->find($this->product_data['os_product_option_group_uuid'] ?? '');
+            //
+            //            $data['os_option_mapping'] = $os_group
+            //                ? $puq_pm_lxc_preset->getOsOptionMappings($os_group)
+            //                : [];
+            //
+            //            $cpu_product_attributes = $product->productAttributes()->where('product_attribute_group_uuid',
+            //                $this->product_data['cpu_product_attribute_group_uuid'] ?? '')->get();
+            //            $data['cpu_product_attributes'] = $cpu_product_attributes;
+            //
+            //            $memory_product_attributes = $product->productAttributes()->where(
+            //                'product_attribute_group_uuid',
+            //                $this->product_data['memory_product_attribute_group_uuid'] ?? ''
+            //            )->get();
+            //            $data['memory_product_attributes'] = $memory_product_attributes;
+            //
+            //            $rootfs_product_attributes = $product->productAttributes()->where(
+            //                'product_attribute_group_uuid',
+            //                $this->product_data['rootfs_product_attribute_group_uuid'] ?? ''
+            //            )->get();
+            //            $data['rootfs_product_attributes'] = $rootfs_product_attributes;
+            //
+            //            $mp_product_attributes = $product->productAttributes()->where(
+            //                'product_attribute_group_uuid',
+            //                $this->product_data['mp_product_attribute_group_uuid'] ?? ''
+            //            )->get();
+            //            $data['mp_product_attributes'] = $mp_product_attributes;
+            //
+            //            $public_network_product_attributes = $product->productAttributes()->where(
+            //                'product_attribute_group_uuid',
+            //                $this->product_data['public_network_product_attribute_group_uuid'] ?? ''
+            //            )->get();
+            //            $data['public_network_product_attributes'] = $public_network_product_attributes;
+
             return $this->view('admin_area.product.app', $data);
         }
 
@@ -959,13 +1070,19 @@ class puqProxmox extends Product
                 'rootfs_product_attribute_group_uuid' => $data['rootfs_product_attribute_group_uuid'] ?? null,
                 'mp_product_attribute_group_uuid' => $data['mp_product_attribute_group_uuid'] ?? null,
                 'public_network_product_attribute_group_uuid' => $data['public_network_product_attribute_group_uuid'] ?? null,
-
             ];
         }
 
         if ($type == 'app') {
             $this->product_data = [
                 'type' => 'app',
+                'puq_pm_app_preset_uuid' => $data['puq_pm_app_preset_uuid'] ?? null,
+
+                'location_product_option_group_uuid' => $data['location_product_option_group_uuid'] ?? null,
+                'cpu_cores_product_option_group_uuid' => $data['cpu_cores_product_option_group_uuid'] ?? null,
+                'memory_product_option_group_uuid' => $data['memory_product_option_group_uuid'] ?? null,
+                'mp_size_product_option_group_uuid' => $data['mp_size_product_option_group_uuid'] ?? null,
+                'backup_count_product_option_group_uuid' => $data['backup_count_product_option_group_uuid'] ?? null,
             ];
         }
 
@@ -1010,6 +1127,25 @@ class puqProxmox extends Product
             }
         }
 
+        if ($data['type'] == 'app') {
+            $validator = Validator::make($data, [
+                'puq_pm_app_preset_uuid' => 'required|exists:puq_pm_app_presets,uuid',
+                'location_product_option_group_uuid' => 'required',
+            ], [
+                'puq_pm_lxc_preset_uuid.required' => __('Product.puqProxmox.The LXC Preset field is required'),
+                'puq_pm_lxc_preset_uuid.exists' => __('Product.puqProxmox.Selected LXC Preset does not exist'),
+                'location_product_option_group_uuid.required' => __('Product.puqProxmox.The Location Option Group field is required'),
+            ]);
+
+            if ($validator->fails()) {
+                return [
+                    'status' => 'error',
+                    'message' => $validator->errors(),
+                    'code' => 422,
+                ];
+            }
+        }
+
         return [
             'status' => 'success',
             'data' => $this->getProductData($data),
@@ -1031,6 +1167,13 @@ class puqProxmox extends Product
             ];
         }
 
+        if ($type == 'app') {
+            $this->service_data = [
+                'root_password' => $data['root_password'] ?? '',
+                'backup_storage_name' => $data['backup_storage_name'] ?? '',
+            ];
+        }
+
         return $this->service_data;
     }
 
@@ -1047,7 +1190,8 @@ class puqProxmox extends Product
         $data['service'] = $service;
         $data['config'] = $this->config;
 
-        $type = $this->service_data['type'] ?? 'lxc';
+        $type = $this->product_data['type'] ?? 'lxc';
+
         if ($type == 'lxc') {
             $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $this->service_uuid)->first();
             if ($lxc_instance) {
@@ -1075,13 +1219,45 @@ class puqProxmox extends Product
 
             $data['backup_storages'] = [];
             if (!empty($lxc_instance->vmid)) {
-                $data['backup_storages'] = $lxc_instance->getAvailableBackupStorages() ?? []; //?????????????????????????? optional list all storages
+                $data['backup_storages'] = $lxc_instance->getAvailableBackupStorages() ?? []; // ?????????????????????????? optional list all storages
             }
 
             return $this->view('admin_area.service.lxc', $data);
         }
 
         if ($type == 'app') {
+            $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $this->service_uuid)->first();
+            if ($lxc_instance) {
+                $puq_pm_ssh_public_keys = PuqPmSshPublicKey::query()->where('client_uuid',
+                    $service->client_uuid)->get();
+            }
+
+            if (!$lxc_instance) {
+                return $this->view('admin_area.service.lxc_instance_not_found', []);
+            }
+
+            $data['lxc_instance'] = $lxc_instance;
+            $data['lxc_instance_status'] = $lxc_instance->getStatus();
+            $data['lxc_instance_info'] = $lxc_instance->getInfo();
+            $data['lxc_instance_location'] = $lxc_instance->getLocation();
+
+            $data['puq_pm_ssh_public_keys'] = $puq_pm_ssh_public_keys ?? [];
+
+            $data['root_password'] = $this->service_data['root_password'] ?? '';
+            $data['backup_storage_name'] = $this->service_data['backup_storage_name'] ?? '';
+
+            $data['backup_storages'] = [];
+            if (!empty($lxc_instance->vmid)) {
+                $data['backup_storages'] = $lxc_instance->getAvailableBackupStorages() ?? []; // ?????????????????????????? optional list all storages
+            }
+
+            $app_instance = PuqPmAppInstance::query()->where('puq_pm_lxc_instance_uuid', $lxc_instance->uuid)->first();
+
+            if ($app_instance) {
+                $data['app_instance'] = $app_instance;
+                $data['app_instance_info'] = $app_instance->getInfo();
+            }
+
             return $this->view('admin_area.service.app', $data);
         }
 
@@ -1094,19 +1270,30 @@ class puqProxmox extends Product
 
     public function saveServiceData(array $data = []): array
     {
-        $service = \App\Models\Service::find(request()->route('uuid'));
-        $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
-        if (!$lxc_instance) {
-            return [
-                'status' => 'success',
-                'data' => $this->getServiceData($data),
-                'code' => 200,
-            ];
-        }
 
-        $type = $this->service_data['type'] ?? 'lxc';
+        $type = $this->product_data['type'] ?? 'lxc';
+        $service = \App\Models\Service::find(request()->route('uuid'));
 
         if ($type == 'lxc') {
+
+            $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
+            if (!$lxc_instance) {
+                return [
+                    'status' => 'success',
+                    'data' => $this->getServiceData($data),
+                    'code' => 200,
+                ];
+            }
+
+            if ($lxc_instance) {
+                $backup_storages = $lxc_instance->getAvailableBackupStorages();
+                foreach ($backup_storages as $backup_storage) {
+                    if ($backup_storage->name == $data['backup_storage_name']) {
+                        $lxc_instance->setBackupStorageName($backup_storage);
+                        break;
+                    }
+                }
+            }
 
             $validator = Validator::make($data, [
                 'puq_pm_ssh_public_key_uuid' => ['nullable', 'string', 'exists:puq_pm_ssh_public_keys,uuid'],
@@ -1138,15 +1325,38 @@ class puqProxmox extends Product
             }
         }
 
+        if ($type == 'app') {
 
-        $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $this->service_uuid)->first();
-        if ($lxc_instance) {
+            $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
+            if (empty($lxc_instance)) {
+                return [
+                    'status' => 'success',
+                    'data' => $this->getServiceData($data),
+                    'code' => 200,
+                ];
+            }
+
             $backup_storages = $lxc_instance->getAvailableBackupStorages();
             foreach ($backup_storages as $backup_storage) {
                 if ($backup_storage->name == $data['backup_storage_name']) {
                     $lxc_instance->setBackupStorageName($backup_storage);
                     break;
                 }
+            }
+
+            $validator = Validator::make($data, [
+                'root_password' => ['required', 'string', 'min:8'],
+            ], [
+                'root_password.required' => __('Product.puqProxmox.Root password is required'),
+                'root_password.min' => __('Product.puqProxmox.Root password must be at least 8 characters'),
+            ]);
+
+            if ($validator->fails()) {
+                return [
+                    'status' => 'error',
+                    'message' => $validator->errors(),
+                    'code' => 422,
+                ];
             }
         }
 
@@ -1158,151 +1368,268 @@ class puqProxmox extends Product
 
     }
 
-    //--------------------------------------------------------------
+    // --------------------------------------------------------------
     public function create(): array
     {
+
+        $type = $this->product_data['type'] ?? 'lxc';
+
+
         $data = [
             'module' => $this,
             'method' => '',        // The method name that should be executed inside the job
             'callback' => 'createCallback',
             // Optional. The method name in the module that will be executed after the main method is finished.
             // Receives the result and jobId as parameters.
-            'tries' => 5,                   // Number of retry attempts if the job fails
+            'tries' => 1,                   // Number of retry attempts if the job fails
             'backoff' => 60,                // Delay in seconds between retries
-            'timeout' => 600,               // Max execution time for the job in seconds
+            'timeout' => 3600,               // Max execution time for the job in seconds
             'maxExceptions' => 1,           // Max number of unhandled exceptions before marking the job as failed
         ];
 
-        $type = $this->product_data['type'] ?? 'lxc';
-
         if ($type == 'lxc') {
+            $tags = [
+                'createLXC',
+            ];
             $data['method'] = 'createLxcJob';
+            $queue = 'LxcCreate';
         }
 
-        $tags = [
-            'create',
-        ];
+        if ($type == 'app') {
+            $tags = [
+                'createAPP',
+            ];
+            $data['method'] = 'createAppJob';
+            $queue = 'AppCreate';
+        }
 
         $service = Service::find($this->service_uuid);
         $service->setProvisionStatus('processing');
-        Task::add('ModuleJob', 'puqProxmox-Create', $data, $tags);
+        Task::add('ModuleJob', 'puqProxmox-'.$queue, $data, $tags);
 
         return ['status' => 'success'];
     }
 
     public function createLxcJob(): array
     {
-        $log_request = [
-            'step' => 'Load Service, Product, PuqPmLxcPreset, PuqPmLxcInstance',
-            'service_uuid' => $this->service_uuid,
-            'product_uuid' => $this->product_uuid,
-            'product_data' => $this->product_data,
-        ];
-
-        $log_response = [];
+        $steps = [];
 
         try {
+            // ---------------------------------------------------------
+            // STEP 1: Load Models
+            // ---------------------------------------------------------
+            $steps[] = ['step' => 'Load Models', 'status' => 'processing'];
+
             $product = \App\Models\Product::find($this->product_uuid);
-            $log_response['product'] = $product;
-
             $service = \App\Models\Service::find($this->service_uuid);
-            $log_response['service'] = $service;
 
-            $puq_pm_lxc_preset = PuqPmLxcPreset::find($this->product_data['puq_pm_lxc_preset_uuid']);
-            $log_response['puq_pm_lxc_preset'] = $puq_pm_lxc_preset;
+            $puq_pm_lxc_preset = PuqPmLxcPreset::find(
+                $this->product_data['puq_pm_lxc_preset_uuid']
+            );
 
-            $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
-            $log_response['lxc_instance'] = $puq_pm_lxc_preset;
+            $lxc_instance = PuqPmLxcInstance::query()
+                ->where('service_uuid', $service->uuid)
+                ->first();
 
-            $this->logDebug(__FUNCTION__, $log_request, $log_response);
+            $steps[] = [
+                'step' => 'Load Models',
+                'status' => 'success',
+                'data' => compact('product', 'service', 'puq_pm_lxc_preset', 'lxc_instance'),
+            ];
 
-            if (!empty($lxc_instance['vmid'])) {
+            // ---------------------------------------------------------
+            // STEP 2: Check if LXC exists
+            // ---------------------------------------------------------
+            $steps[] = ['step' => 'Check LXC exists', 'status' => 'processing'];
+
+            if (!empty($lxc_instance) && !empty($lxc_instance->vmid)) {
+
+                $steps[] = [
+                    'step' => 'Check LXC exists',
+                    'status' => 'error',
+                    'errors' => 'LXC already exist',
+                ];
+
+                $this->logError(__FUNCTION__, 'LXC already exist');
+                $this->logDebug(__FUNCTION__, ['steps' => $steps]);
+
                 return [
                     'status' => 'error',
                     'errors' => ['LXC already exist'],
                 ];
             }
 
+            $steps[] = ['step' => 'Check LXC exists', 'status' => 'success'];
+
+            // ---------------------------------------------------------
+            // STEP 3: Create LXC Instance (if missing)
+            // ---------------------------------------------------------
             if (empty($lxc_instance)) {
-                $create_lxc_instance = $puq_pm_lxc_preset->createLxcInstance($service, $this->product_data);
+                $steps[] = ['step' => 'Create LXC Instance', 'status' => 'processing'];
 
-                $log_response['create_lxc_instance'] = $create_lxc_instance;
-                $log_request['step'] = 'Create LXC Instance';
-                $this->logDebug(__FUNCTION__, $log_request, $log_response);
+                $create_lxc_instance = $puq_pm_lxc_preset->createLxcInstance(
+                    $service,
+                    $this->product_data
+                );
 
-                if ($create_lxc_instance['status'] == 'error') {
+                if ($create_lxc_instance['status'] === 'error') {
+                    $steps[] = [
+                        'step' => 'Create LXC Instance',
+                        'status' => 'error',
+                        'errors' => $create_lxc_instance['errors'],
+                    ];
+
+                    $this->logError(__FUNCTION__, $create_lxc_instance['errors']);
+                    $this->logDebug(__FUNCTION__, ['steps' => $steps]);
+
                     return [
                         'status' => 'error',
                         'errors' => $create_lxc_instance['errors'],
                     ];
                 }
+
                 $lxc_instance = $create_lxc_instance['data'];
+
+                $steps[] = [
+                    'step' => 'Create LXC Instance',
+                    'status' => 'success',
+                    'data' => $lxc_instance,
+                ];
             }
+
+            // ---------------------------------------------------------
+            // STEP 4: FDNS + RDNS
+            // ---------------------------------------------------------
+            $steps[] = ['step' => 'Update FDNS & RDNS', 'status' => 'processing'];
 
             $lxc_instance->updateFDNS();
             $lxc_instance->updateRDNS();
 
-            $create_lxc = $lxc_instance->createLxc();
-            $log_response['create_lxc'] = $create_lxc;
-            $log_request['step'] = 'Create LXC';
-            $this->logDebug(__FUNCTION__, $log_request, $log_response);
+            $steps[] = ['step' => 'Update FDNS & RDNS', 'status' => 'success'];
 
-            if ($create_lxc['status'] == 'error') {
+            // ---------------------------------------------------------
+            // STEP 5: Create LXC
+            // ---------------------------------------------------------
+            $steps[] = ['step' => 'Create LXC', 'status' => 'processing'];
+
+            $create_lxc = $lxc_instance->createLxc();
+
+            if ($create_lxc['status'] === 'error') {
+                $steps[] = [
+                    'step' => 'Create LXC',
+                    'status' => 'error',
+                    'errors' => $create_lxc['errors'],
+                ];
+
+                $this->logError(__FUNCTION__, $create_lxc['errors']);
+                $this->logDebug(__FUNCTION__, ['steps' => $steps]);
+
                 return $create_lxc;
             }
 
+            $steps[] = ['step' => 'Create LXC', 'status' => 'success'];
+
+            // ---------------------------------------------------------
+            // STEP 6: Cluster Sync
+            // ---------------------------------------------------------
+            $steps[] = ['step' => 'Cluster Sync', 'status' => 'processing'];
+
             $puq_pm_cluster = $lxc_instance->puqPmCluster;
             $lxc_instance->refresh();
-            $crete_task = $puq_pm_cluster->waitForTask($lxc_instance->creating_upid, 100, 5);
-
-            $log_response['crete_task'] = $crete_task;
-            $log_request['step'] = 'Create LXC Wait Task';
-            $this->logDebug(__FUNCTION__, $log_request, $log_response);
-
-            if ($crete_task['status'] == 'error') {
-                return $crete_task;
-            }
-
             $puq_pm_cluster->getClusterResources(true);
 
-            $start = $lxc_instance->start();
+            $steps[] = ['step' => 'Cluster Sync', 'status' => 'success'];
+
+            // ---------------------------------------------------------
+            // STEP 7: Post Install Script
+            // ---------------------------------------------------------
+            $steps[] = ['step' => 'Post Install Script', 'status' => 'processing'];
 
             sleep(10);
 
             $post_install = $lxc_instance->postInstallLxc();
-            $log_response['post_install'] = $post_install;
-            $log_request['step'] = 'Post Install Script';
-            $this->logDebug(__FUNCTION__, $log_request, $log_response);
 
-            if ($post_install['status'] == 'error') {
+            if ($post_install['status'] === 'error') {
+                $steps[] = [
+                    'step' => 'Post Install Script',
+                    'status' => 'error',
+                    'errors' => $post_install['errors'],
+                ];
+
+                $this->logError(__FUNCTION__, $post_install['errors']);
+                $this->logDebug(__FUNCTION__, ['steps' => $steps]);
+
                 return $post_install;
             }
 
-            sleep(10);
+            $steps[] = ['step' => 'Post Install Script', 'status' => 'success'];
 
+            // ---------------------------------------------------------
+            // STEP 8: Sync Again
+            // ---------------------------------------------------------
+            $steps[] = ['step' => 'Sync After Post Install', 'status' => 'processing'];
+
+            sleep(10);
             $puq_pm_cluster->getClusterResources(true);
 
-            $log_response['lxc_status'] = $lxc_instance->getStatus();
-            $log_request['step'] = 'Get LXC Status';
-            $this->logDebug(__FUNCTION__, $log_request, $log_response);
+            $steps[] = ['step' => 'Sync After Post Install', 'status' => 'success'];
+
+            // ---------------------------------------------------------
+            // STEP 9: Get LXC Status
+            // ---------------------------------------------------------
+            $steps[] = ['step' => 'Get LXC Status', 'status' => 'processing'];
+
+            $status = $lxc_instance->getStatus();
+
+            $steps[] = [
+                'step' => 'Get LXC Status',
+                'status' => 'success',
+                'data' => $status,
+            ];
+
+            // ---------------------------------------------------------
+            // STEP 10: Set Firewall Options
+            // ---------------------------------------------------------
+            $steps[] = ['step' => 'Set Firewall Options', 'status' => 'processing'];
 
             $set_firewall_options = $lxc_instance->setFirewallOptions();
 
-            $log_response['set_firewall_options'] = $set_firewall_options;
-            $log_request['step'] = 'Set Firewall Options';
-            $this->logDebug(__FUNCTION__, $log_request, $log_response);
+            if ($set_firewall_options['status'] === 'error') {
+                $steps[] = [
+                    'step' => 'Set Firewall Options',
+                    'status' => 'error',
+                    'errors' => $set_firewall_options['errors'],
+                ];
 
-            if ($set_firewall_options['status'] == 'error') {
+                $this->logError(__FUNCTION__, $set_firewall_options['errors']);
+                $this->logDebug(__FUNCTION__, ['steps' => $steps]);
+
                 return $set_firewall_options;
             }
 
-            return [
-                'status' => 'success',
-            ];
+            $steps[] = ['step' => 'Set Firewall Options', 'status' => 'success'];
+
+            // ---------------------------------------------------------
+            // SUCCESS
+            // ---------------------------------------------------------
+            $steps[] = ['step' => 'Finish', 'status' => 'success'];
+
+            $this->logInfo(__FUNCTION__, 'LXC created successfully');
+            $this->logDebug(__FUNCTION__, ['steps' => $steps]);
+
+            return ['status' => 'success'];
+
         } catch (\Throwable $e) {
-            $this->logError(__FUNCTION__, '', $e->getMessage());
-            $this->logDebug(__FUNCTION__,
-                ['step' => 'exception', 'trace' => $e->getTraceAsString(), 'message' => $e->getMessage()]);
+
+            $steps[] = [
+                'step' => 'Exception thrown',
+                'status' => 'error',
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ];
+
+            $this->logError(__FUNCTION__, $e->getMessage());
+            $this->logDebug(__FUNCTION__, ['steps' => $steps]);
 
             return [
                 'status' => 'error',
@@ -1312,7 +1639,350 @@ class puqProxmox extends Product
         }
     }
 
-    //--------------------------------------------------------------
+    public function createAppJob(): array
+    {
+        $steps = [];
+
+        try {
+            // ---------------------------------------------------------
+            // STEP 1: Load Models
+            // ---------------------------------------------------------
+            $steps[] = ['step' => 'Load Models', 'status' => 'processing'];
+
+            $product = \App\Models\Product::find($this->product_uuid);
+            $service = \App\Models\Service::find($this->service_uuid);
+            $puq_pm_app_preset = PuqPmAppPreset::find($this->product_data['puq_pm_app_preset_uuid']);
+            $puq_pm_lxc_preset = PuqPmLxcPreset::find($puq_pm_app_preset->puq_pm_lxc_preset_uuid);
+
+            $lxc_instance = PuqPmLxcInstance::query()
+                ->where('service_uuid', $service->uuid)
+                ->first();
+
+            if (!empty($lxc_instance)) {
+                $steps[] = [
+                    'step' => 'Check LXC exists',
+                    'status' => 'error',
+                    'errors' => 'LXC already exist',
+                ];
+
+                $this->logError(__FUNCTION__, 'LXC already exist');
+                $this->logDebug(__FUNCTION__, ['steps' => $steps]);
+
+                return ['status' => 'error', 'errors' => ['LXC already exist']];
+            }
+
+            $steps[] = ['step' => 'Load Models', 'status' => 'success'];
+
+            // ---------------------------------------------------------
+            // STEP 2: Create LXC Instance
+            // ---------------------------------------------------------
+            $steps[] = ['step' => 'Create LXC Instance', 'status' => 'processing'];
+
+            $extra_product_options = [
+                'os_template_uuid' => $puq_pm_app_preset->puq_pm_lxc_os_template_uuid,
+                'ipv4_public_network' => true,
+            ];
+
+            $create_lxc_instance = $puq_pm_lxc_preset->createLxcInstance(
+                $service,
+                $this->product_data,
+                $extra_product_options
+            );
+
+            if ($create_lxc_instance['status'] === 'error') {
+                $steps[] = [
+                    'step' => 'Create LXC Instance', 'status' => 'error', 'errors' => $create_lxc_instance['errors'],
+                ];
+                $this->logError(__FUNCTION__, $create_lxc_instance['errors']);
+                $this->logDebug(__FUNCTION__, ['steps' => $steps]);
+
+                return $create_lxc_instance;
+            }
+
+            $lxc_instance = $create_lxc_instance['data'];
+            $steps[] = ['step' => 'Create LXC Instance', 'status' => 'success'];
+
+            // ---------------------------------------------------------
+            // STEP 3: Create APP Instance
+            // ---------------------------------------------------------
+            $steps[] = ['step' => 'Create APP Instance', 'status' => 'processing'];
+
+            $create_app_instance = $puq_pm_app_preset->createAppInstance($lxc_instance);
+            if ($create_app_instance['status'] === 'error') {
+                $steps[] = [
+                    'step' => 'Create APP Instance', 'status' => 'error', 'errors' => $create_app_instance['errors'],
+                ];
+                $this->logError(__FUNCTION__, $create_app_instance['errors']);
+                $this->logDebug(__FUNCTION__, ['steps' => $steps]);
+
+                return $create_app_instance;
+            }
+
+            $app_instance = $create_app_instance['data'];
+
+            // ------------------- Initialize deploy fields -------------------
+            $app_instance->setDeployStatus('running');
+            $app_instance->setDeployStarted();
+            $app_instance->setDeployProgress(0);
+            $app_instance->appendDeployLog('Deploy job started');
+
+            $steps[] = ['step' => 'Create APP Instance', 'status' => 'success'];
+            $app_instance->appendDeployLog("Step 'Create APP Instance' finished - success");
+            $app_instance->setDeployProgress(5);
+
+            // ---------------------------------------------------------
+            // Helper to run steps
+            // ---------------------------------------------------------
+            $runStep = function ($stepName, $callback, $progressStep) use ($app_instance, &$steps) {
+                $steps[] = ['step' => $stepName, 'status' => 'processing'];
+                $app_instance->setDeployStep($stepName);
+                $app_instance->appendDeployLog("Start step: $stepName");
+
+                $result = $callback();
+
+                if ($result['status'] === 'error') {
+                    $steps[] = ['step' => $stepName, 'status' => 'error', 'errors' => $result['errors']];
+                    $app_instance->setDeployError(implode('; ', $result['errors'] ?? []));
+                    $app_instance->appendDeployLog("Finish step: $stepName - error: ".implode('; ',
+                            $result['errors'] ?? []));
+                    $app_instance->setDeployStatus('failed');
+                    $app_instance->setDeployFinished();
+                } else {
+                    $steps[] = ['step' => $stepName, 'status' => 'success'];
+                    $app_instance->appendDeployLog("Finish step: $stepName - success");
+                    $app_instance->setDeployProgress($progressStep);
+                }
+
+                return $result;
+            };
+
+            // ---------------------------------------------------------
+            // STEP 4: SSL Certificates
+            // ---------------------------------------------------------
+            $ssl_certificates = $runStep('Create SSL Certificates', fn() => $app_instance->createSslCertificates(), 10);
+            if ($ssl_certificates['status'] === 'error') {
+                return $ssl_certificates;
+            }
+
+            // ---------------------------------------------------------
+            // STEP 5: DNS Records
+            // ---------------------------------------------------------
+            $dns_records = $runStep('Create DNS Records', fn() => $app_instance->createDnsRecords(), 20);
+            if ($dns_records['status'] === 'error') {
+                return $dns_records;
+            }
+
+            // ---------------------------------------------------------
+            // STEP 6: Create LXC
+            // ---------------------------------------------------------
+            $note = 'app_instance_uuid: '.$app_instance->uuid;
+            $create_lxc = $runStep('Create LXC', fn() => $lxc_instance->createLxc($note), 30);
+            if ($create_lxc['status'] === 'error') {
+                return $create_lxc;
+            }
+
+            // ---------------------------------------------------------
+            // STEP 7: Cluster Sync
+            // ---------------------------------------------------------
+            $cluster_sync = $runStep('Cluster Sync', function () use ($lxc_instance, $app_instance) {
+                $puq_pm_cluster = $lxc_instance->puqPmCluster;
+                $lxc_instance->refresh();
+                $lxc_instance->fresh();
+                $app_instance->refresh();
+                $app_instance->fresh();
+                $puq_pm_cluster->getClusterResources(true);
+
+                return ['status' => 'success'];
+            }, 40);
+            if ($cluster_sync['status'] === 'error') {
+                return $cluster_sync;
+            }
+
+            // ---------------------------------------------------------
+            // STEP 8: Post Install
+            // ---------------------------------------------------------
+            $post_install = $runStep('Post Install Script', fn() => $lxc_instance->postInstallLxc(), 50);
+            if ($post_install['status'] === 'error') {
+                return $post_install;
+            }
+
+            // ---------------------------------------------------------
+            // STEP 9: Firewall
+            // ---------------------------------------------------------
+            $firewall = $runStep('Set Firewall Options', fn() => $lxc_instance->setFirewallOptions(), 60);
+            if ($firewall['status'] === 'error') {
+                return $firewall;
+            }
+
+            // ---------------------------------------------------------
+            // STEP 10: Docker Composer
+            // ---------------------------------------------------------
+            $docker_composer = $runStep('Put Docker Composer', fn() => $app_instance->putDockerComposer(), 70);
+            if ($docker_composer['status'] === 'error') {
+                return $docker_composer;
+            }
+
+            // ---------------------------------------------------------
+            // STEP 11: Environment Variables
+            // ---------------------------------------------------------
+            $env_vars = $runStep('Put Environment Variables', fn() => $app_instance->putEnvironmentVariables(), 80);
+            if ($env_vars['status'] === 'error') {
+                return $env_vars;
+            }
+
+            // ---------------------------------------------------------
+            // STEP 12: Install Script
+            // ---------------------------------------------------------
+            $install_script = $runStep('Run Install Script', fn() => $app_instance->runInstallScript(), 90);
+            if ($install_script['status'] === 'error') {
+                return $install_script;
+            }
+
+            // ---------------------------------------------------------
+            // STEP 13: WEB Proxy Deploy
+            // ---------------------------------------------------------
+            $web_proxy = $runStep('WEB Proxy Deploy', fn() => $app_instance->webProxyDeploy(), 100);
+            if ($web_proxy['status'] === 'error') {
+                return $web_proxy;
+            }
+
+            // ---------------------------------------------------------
+            // Finish
+            // ---------------------------------------------------------
+            $app_instance->setDeployStep('Finish');
+            $app_instance->appendDeployLog('Deploy job finished successfully');
+            $app_instance->setDeployStatus('success');
+            $app_instance->setDeployFinished();
+
+            $steps[] = ['step' => 'Finish', 'status' => 'success'];
+
+            $this->logInfo(__FUNCTION__, 'App created successfully');
+            $this->logDebug(__FUNCTION__, ['steps' => $steps]);
+
+            return ['status' => 'success'];
+
+        } catch (\Throwable $e) {
+
+            if (isset($app_instance)) {
+                $app_instance->setDeployError($e->getMessage());
+                $app_instance->appendDeployLog('Exception: '.$e->getMessage());
+                $app_instance->setDeployStatus('failed');
+                $app_instance->setDeployFinished();
+            }
+
+            $steps[] = [
+                'step' => 'Exception thrown',
+                'status' => 'error',
+                'errors' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ];
+
+            $this->logError(__FUNCTION__, $e->getMessage());
+            $this->logDebug(__FUNCTION__, ['steps' => $steps]);
+
+            return [
+                'status' => 'error',
+                'errors' => [$e->getMessage()],
+                'trace' => $e->getTraceAsString(),
+            ];
+        }
+    }
+
+    // --------------------------------------------------------------
+    public function retry_deploy(): array
+    {
+        $retry_deploy = ['status' => 'error', 'errors' => ['Type is not selected']];
+        $type = $this->product_data['type'] ?? 'lxc';
+
+        if ($type == 'lxc') {
+            $retry_deploy = $this->retry_deployLxcJob();
+        }
+
+        if ($type == 'app') {
+            $retry_deploy = $this->retry_deployAppJob();
+        }
+
+        return $retry_deploy;
+    }
+
+    public function retry_deployLxcJob(): array
+    {
+        try {
+            $service = \App\Models\Service::find($this->service_uuid);
+            $lxc_instance = PuqPmLxcInstance::query()
+                ->where('service_uuid', $service->uuid)
+                ->first();
+
+            if (!empty($lxc_instance) and !empty($lxc_instance->vmid)) {
+                $lxc_instance->deleteAllBackups();
+                $lxc_instance->deleteLxc();
+            }
+
+            if (!empty($lxc_instance)) {
+                $lxc_instance->deleteDNS();
+                $lxc_instance->puqPmLxcInstanceNets()->delete();
+                $lxc_instance->delete();
+            }
+
+            return $this->create();
+
+        } catch (\Throwable $e) {
+            $this->logError('Cancellation', '', $e->getMessage());
+
+            $status = [
+                'status' => 'error',
+                'errors' => [$e->getMessage()],
+                'trace' => $e->getTraceAsString(),
+            ];
+
+            return $status;
+        }
+    }
+
+    public function retry_deployAppJob(): array
+    {
+        try {
+            $service = \App\Models\Service::find($this->service_uuid);
+            $lxc_instance = PuqPmLxcInstance::query()
+                ->where('service_uuid', $service->uuid)
+                ->first();
+
+            if (!empty($lxc_instance) and !empty($lxc_instance->vmid)) {
+                $lxc_instance->deleteAllBackups();
+                $lxc_instance->deleteLxc();
+            }
+
+            if (!empty($lxc_instance)) {
+
+                $app_instances = PuqPmAppInstance::query()->where('puq_pm_lxc_instance_uuid',
+                    $lxc_instance->uuid)->get();
+                foreach ($app_instances as $app_instance) {
+                    $app_instance->deleteDnsRecords();
+                    $app_instance->removeResourceConfig();
+                    $app_instance->deleteScriptLogs();
+                    $app_instance->delete();
+                }
+
+                $lxc_instance->puqPmLxcInstanceNets()->delete();
+                $lxc_instance->delete();
+            }
+
+            return $this->create();
+
+        } catch (\Throwable $e) {
+            $this->logError('Cancellation', '', $e->getMessage());
+
+            $status = [
+                'status' => 'error',
+                'errors' => [$e->getMessage()],
+                'trace' => $e->getTraceAsString(),
+            ];
+
+            return $status;
+        }
+    }
+
+    // --------------------------------------------------------------
     public function suspend(): array
     {
         $suspend = ['status' => 'error', 'errors' => ['Type is not selected']];
@@ -1368,7 +2038,7 @@ class puqProxmox extends Product
         }
     }
 
-    //--------------------------------------------------------------
+    // --------------------------------------------------------------
     public function unsuspend(): array
     {
         $unsuspend = ['status' => 'error', 'errors' => ['Type is not selected']];
@@ -1421,7 +2091,7 @@ class puqProxmox extends Product
         }
     }
 
-    //--------------------------------------------------------------
+    // --------------------------------------------------------------
     public function termination(): array
     {
 
@@ -1430,6 +2100,10 @@ class puqProxmox extends Product
 
         if ($type == 'lxc') {
             $termination = $this->terminationLxcJob();
+        }
+
+        if ($type == 'app') {
+            $termination = $this->terminationAppJob();
         }
 
         return $termination;
@@ -1482,7 +2156,62 @@ class puqProxmox extends Product
         }
     }
 
-    //--------------------------------------------------------------
+    public function terminationAppJob(): array
+    {
+        try {
+            $service = \App\Models\Service::find($this->service_uuid);
+            $lxc_instance = PuqPmLxcInstance::query()
+                ->where('service_uuid', $service->uuid)
+                ->first();
+
+            if (empty($lxc_instance) or empty($lxc_instance->vmid)) {
+                $status = ['status' => 'error', 'errors' => ['LXC is not ready']];
+                $this->terminationCallback($status);
+
+                return $status;
+            }
+
+            $lxc_instance->deleteAllBackups();
+            $delete_lxc = $lxc_instance->deleteLxc();
+
+            if ($delete_lxc['status'] == 'error') {
+                $this->terminationCallback($delete_lxc);
+
+                return $delete_lxc;
+            }
+
+            $lxc_instance->puqPmLxcInstanceNets()->delete();
+
+            $app_instances = PuqPmAppInstance::query()->where('puq_pm_lxc_instance_uuid', $lxc_instance->uuid)->get();
+            foreach ($app_instances as $app_instance) {
+                $app_instance->deleteDnsRecords();
+                $app_instance->removeResourceConfig();
+                $app_instance->deleteScriptLogs();
+                $app_instance->delete();
+            }
+
+            $lxc_instance->delete();
+
+            $service->setProvisionStatus('terminated');
+
+            $status = ['status' => 'success'];
+            $this->terminationCallback($status);
+
+            return $status;
+        } catch (\Throwable $e) {
+            $status = [
+                'status' => 'error',
+                'errors' => [$e->getMessage()],
+                'trace' => $e->getTraceAsString(),
+            ];
+            $this->logError('Termination', '', $e->getMessage());
+            $this->terminationCallback($status);
+
+            return $status;
+        }
+    }
+
+    // --------------------------------------------------------------
     public function cancellation(): array
     {
         $termination = ['status' => 'error', 'errors' => ['Type is not selected']];
@@ -1490,6 +2219,10 @@ class puqProxmox extends Product
 
         if ($type == 'lxc') {
             $termination = $this->cancellationLxcJob();
+        }
+
+        if ($type == 'app') {
+            $termination = $this->cancellationAppJob();
         }
 
         return $termination;
@@ -1534,7 +2267,55 @@ class puqProxmox extends Product
         }
     }
 
-    //--------------------------------------------------------------
+    public function cancellationAppJob(): array
+    {
+        try {
+            $service = \App\Models\Service::find($this->service_uuid);
+            $lxc_instance = PuqPmLxcInstance::query()
+                ->where('service_uuid', $service->uuid)
+                ->first();
+
+            if (!empty($lxc_instance) and !empty($lxc_instance->vmid)) {
+                $lxc_instance->deleteAllBackups();
+                $lxc_instance->deleteLxc();
+            }
+
+            if (!empty($lxc_instance)) {
+
+                $app_instances = PuqPmAppInstance::query()->where('puq_pm_lxc_instance_uuid',
+                    $lxc_instance->uuid)->get();
+                foreach ($app_instances as $app_instance) {
+                    $app_instance->deleteDnsRecords();
+                    $app_instance->removeResourceConfig();
+                    $app_instance->deleteScriptLogs();
+                    $app_instance->delete();
+                }
+
+                $lxc_instance->puqPmLxcInstanceNets()->delete();
+                $lxc_instance->delete();
+            }
+
+            $service->setProvisionStatus('cancellated');
+            $status = ['status' => 'success'];
+            $this->cancellationCallback($status);
+
+            return $status;
+
+        } catch (\Throwable $e) {
+            $this->logError('Cancellation', '', $e->getMessage());
+
+            $status = [
+                'status' => 'error',
+                'errors' => [$e->getMessage()],
+                'trace' => $e->getTraceAsString(),
+            ];
+            $this->cancellationCallback($status);
+
+            return $status;
+        }
+    }
+
+    // --------------------------------------------------------------
     public function change_package(): array
     {
 
@@ -1554,6 +2335,10 @@ class puqProxmox extends Product
 
         if ($type == 'lxc') {
             $data['method'] = 'change_packageLxcJob';
+        }
+
+        if ($type == 'app') {
+            $data['method'] = 'change_packageAppJob';
         }
 
         $tags = [
@@ -1590,7 +2375,39 @@ class puqProxmox extends Product
         return $rescale;
     }
 
-    //------------------------------------------------------------------------------------------------------------------------
+    public function change_packageAppJob(): array
+    {
+        // -----------------------------------------------------------------------------
+        $service_lxc_app = $this->getLxcAppInstances();
+        if ($service_lxc_app['status'] == 'error') {
+            return $service_lxc_app;
+        }
+
+        $service = $service_lxc_app['data']['service'];
+        $lxc_instance = $service_lxc_app['data']['lxc_instance'];
+        $app_instance = $service_lxc_app['data']['app_instance'];
+        // -----------------------------------------------------------------------------
+
+        $service->setProvisionStatus('change_package');
+
+        $extra_product_options = [
+            'ipv4_public_network' => true,
+        ];
+
+        $rescale = $lxc_instance->rescaleNow($extra_product_options);
+
+        if ($rescale['status'] == 'error') {
+            return $rescale;
+        }
+
+        $web_proxy = $app_instance->webProxyDeploy();
+        sleep(5);
+        $app_instance->getDiskStatus(true);
+
+        return $rescale;
+    }
+
+    // ------------------------------------------------------------------------------------------------------------------------
     public function adminPermissions(): array
     {
         return [
@@ -1598,6 +2415,11 @@ class puqProxmox extends Product
                 'name' => 'Configuration',
                 'key' => 'configuration',
                 'description' => 'Configuration',
+            ],
+            [
+                'name' => 'Operator',
+                'key' => 'operator',
+                'description' => 'operator',
             ],
         ];
     }
@@ -1659,6 +2481,20 @@ class puqProxmox extends Product
                 'active_links' => ['dns_zones', 'dns_zone'],
                 'permission' => 'configuration',
             ],
+
+            [
+                'title' => 'Load Balancers',
+                'link' => 'load_balancers',
+                'active_links' => ['load_balancers', 'load_balancer.tab'],
+                'permission' => 'configuration',
+            ],
+            [
+                'title' => 'App Presets',
+                'link' => 'app_presets',
+                'active_links' => ['app_presets', 'app_preset.tab'],
+                'permission' => 'configuration',
+            ],
+
             [
                 'title' => 'SSH Public Keys',
                 'link' => 'ssh_public_keys',
@@ -1814,6 +2650,38 @@ class puqProxmox extends Product
                 'controller' => 'puqPmDnsZoneController@dnsZone',
             ],
 
+            // Load Balancers
+            [
+                'method' => 'get',
+                'uri' => 'load_balancers',
+                'permission' => 'configuration',
+                'name' => 'load_balancers',
+                'controller' => 'puqPmLoadBalancerController@loadBalancers',
+            ],
+            [
+                'method' => 'get',
+                'uri' => 'load_balancer/{uuid}/{tab}',
+                'permission' => 'configuration',
+                'name' => 'load_balancer.tab',
+                'controller' => 'puqPmLoadBalancerController@loadBalancerTab',
+            ],
+
+            // App Preset
+            [
+                'method' => 'get',
+                'uri' => 'app_presets',
+                'permission' => 'configuration',
+                'name' => 'app_presets',
+                'controller' => 'puqPmAppPresetController@appPresets',
+            ],
+            [
+                'method' => 'get',
+                'uri' => 'app_preset/{uuid}/{tab}',
+                'permission' => 'configuration',
+                'name' => 'app_preset.tab',
+                'controller' => 'puqPmAppPresetController@appPresetTab',
+            ],
+
             // SSH Public Keys
             [
                 'method' => 'get',
@@ -1926,7 +2794,6 @@ class puqProxmox extends Product
                 'name' => 'cluster.vncwebproxy_test_connection.get',
                 'controller' => 'puqPmClusterController@getClusterVncwebproxyTestConnection',
             ],
-
 
             // Cluster Sync
             [
@@ -2562,6 +3429,340 @@ class puqProxmox extends Product
                 'controller' => 'puqPmSshPublicKeyController@deleteSshPublicKey',
             ],
 
+            // Load Balancers
+            [
+                'method' => 'get',
+                'uri' => 'load_balancers',
+                'permission' => 'configuration',
+                'name' => 'load_balancers.get',
+                'controller' => 'puqPmLoadBalancerController@getLoadBalancers',
+            ],
+            [
+                'method' => 'post',
+                'uri' => 'load_balancer',
+                'permission' => 'configuration',
+                'name' => 'load_balancer.post',
+                'controller' => 'puqPmLoadBalancerController@postLoadBalancer',
+            ],
+            [
+                'method' => 'delete',
+                'uri' => 'load_balancer/{uuid}',
+                'permission' => 'configuration',
+                'name' => 'load_balancer.delete',
+                'controller' => 'puqPmLoadBalancerController@deleteLoadBalancer',
+            ],
+            [
+                'method' => 'get',
+                'uri' => 'load_balancer/{uuid}',
+                'permission' => 'configuration',
+                'name' => 'load_balancer.get',
+                'controller' => 'puqPmLoadBalancerController@getLoadBalancer',
+            ],
+            [
+                'method' => 'put',
+                'uri' => 'load_balancer/{uuid}',
+                'permission' => 'configuration',
+                'name' => 'load_balancer.put',
+                'controller' => 'puqPmLoadBalancerController@putLoadBalancer',
+            ],
+            [
+                'method' => 'get',
+                'uri' => 'load_balancer/{uuid}/web_proxies',
+                'permission' => 'configuration',
+                'name' => 'load_balancer.web_proxies.get',
+                'controller' => 'puqPmLoadBalancerController@getLoadBalancerWebProxies',
+            ],
+            [
+                'method' => 'get',
+                'uri' => 'load_balancer/{uuid}/script/{type}',
+                'permission' => 'configuration',
+                'name' => 'load_balancer.script.get',
+                'controller' => 'puqPmLoadBalancerController@getLoadBalancerScript',
+            ],
+            [
+                'method' => 'put',
+                'uri' => 'load_balancer/{uuid}/script/{type}',
+                'permission' => 'configuration',
+                'name' => 'load_balancer.script.put',
+                'controller' => 'puqPmLoadBalancerController@putLoadBalancerScript',
+            ],
+            [
+                'method' => 'put',
+                'uri' => 'load_balancer/{uuid}/default_script/{type}',
+                'permission' => 'configuration',
+                'name' => 'load_balancer.default_script.put',
+                'controller' => 'puqPmLoadBalancerController@putLoadBalancerDefaultScript',
+            ],
+
+            [
+                'method' => 'put',
+                'uri' => 'load_balancer/{uuid}/deploy/config/{type}',
+                'permission' => 'configuration',
+                'name' => 'load_balancer.deploy.config.put',
+                'controller' => 'puqPmLoadBalancerController@putLoadBalancerDeployConfig',
+            ],
+
+            [
+                'method' => 'put',
+                'uri' => 'load_balancer/{uuid}/deploy_all',
+                'permission' => 'configuration',
+                'name' => 'load_balancer.deploy_all.put',
+                'controller' => 'puqPmLoadBalancerController@putLoadBalancerDeployAll',
+            ],
+
+            [
+                'method' => 'get',
+                'uri' => 'load_balancer/{uuid}/status/web_proxies',
+                'permission' => 'configuration',
+                'name' => 'load_balancer.status.web_proxies.get',
+                'controller' => 'puqPmLoadBalancerController@getLoadBalancerStatusWebProxies',
+            ],
+            [
+                'method' => 'put',
+                'uri' => 'load_balancer/{uuid}/rebalance',
+                'permission' => 'configuration',
+                'name' => 'load_balancer.rebalance.put',
+                'controller' => 'puqPmLoadBalancerController@putLoadBalancerRebalance',
+            ],
+            [
+                'method' => 'get',
+                'uri' => 'web_proxy/{uuid}',
+                'permission' => 'configuration',
+                'name' => 'web_proxy.get',
+                'controller' => 'puqPmLoadBalancerController@getWebProxy',
+            ],
+            [
+                'method' => 'post',
+                'uri' => 'web_proxy',
+                'permission' => 'configuration',
+                'name' => 'web_proxy.post',
+                'controller' => 'puqPmLoadBalancerController@postWebProxy',
+            ],
+            [
+                'method' => 'put',
+                'uri' => 'web_proxy/{uuid}',
+                'permission' => 'configuration',
+                'name' => 'web_proxy.put',
+                'controller' => 'puqPmLoadBalancerController@putWebProxy',
+            ],
+            [
+                'method' => 'delete',
+                'uri' => 'web_proxy/{uuid}',
+                'permission' => 'configuration',
+                'name' => 'web_proxy.delete',
+                'controller' => 'puqPmLoadBalancerController@deleteWebProxy',
+            ],
+
+            [
+                'method' => 'get',
+                'uri' => 'web_proxy/{uuid}/system/status',
+                'permission' => 'configuration',
+                'name' => 'web_proxy.system.status.get',
+                'controller' => 'puqPmLoadBalancerController@getWebProxySystemStatus',
+            ],
+
+            // App Presets
+            [
+                'method' => 'get',
+                'uri' => 'app_presets',
+                'permission' => 'configuration',
+                'name' => 'app_presets.get',
+                'controller' => 'puqPmAppPresetController@getAppPresets',
+            ],
+            [
+                'method' => 'post',
+                'uri' => 'app_preset',
+                'permission' => 'configuration',
+                'name' => 'app_preset.post',
+                'controller' => 'puqPmAppPresetController@postAppPreset',
+            ],
+            [
+                'method' => 'delete',
+                'uri' => 'app_preset/{uuid}',
+                'permission' => 'configuration',
+                'name' => 'app_preset.delete',
+                'controller' => 'puqPmAppPresetController@deleteAppPreset',
+            ],
+
+            [
+                'method' => 'get',
+                'uri' => 'app_preset/{uuid}',
+                'permission' => 'configuration',
+                'name' => 'app_preset.get',
+                'controller' => 'puqPmAppPresetController@getAppPreset',
+            ],
+            [
+                'method' => 'put',
+                'uri' => 'app_preset/{uuid}',
+                'permission' => 'configuration',
+                'name' => 'app_preset.put',
+                'controller' => 'puqPmAppPresetController@putAppPreset',
+            ],
+
+            [
+                'method' => 'get',
+                'uri' => 'app_preset/{uuid}/custom_page',
+                'permission' => 'configuration',
+                'name' => 'app_preset.custom_page.get',
+                'controller' => 'puqPmAppPresetController@getAppPresetCustomPage',
+            ],
+            [
+                'method' => 'put',
+                'uri' => 'app_preset/{uuid}/custom_page',
+                'permission' => 'configuration',
+                'name' => 'app_preset.custom_page.put',
+                'controller' => 'puqPmAppPresetController@putAppPresetCustomPage',
+            ],
+
+
+            [
+                'method' => 'get',
+                'uri' => 'app_preset/{uuid}/app_endpoints',
+                'permission' => 'configuration',
+                'name' => 'app_preset.app_endpoints.get',
+                'controller' => 'puqPmAppPresetController@getAppPresetAppEndpoints',
+            ],
+            [
+                'method' => 'get',
+                'uri' => 'app_preset/{uuid}/script/{type}',
+                'permission' => 'configuration',
+                'name' => 'app_preset.script.get',
+                'controller' => 'puqPmAppPresetController@getAppPresetScript',
+            ],
+            [
+                'method' => 'put',
+                'uri' => 'app_preset/{uuid}/script/{type}',
+                'permission' => 'configuration',
+                'name' => 'app_preset.script.put',
+                'controller' => 'puqPmAppPresetController@putAppPresetScript',
+            ],
+            [
+                'method' => 'get',
+                'uri' => 'app_presets/select',
+                'permission' => 'configuration',
+                'name' => 'app_presets.select.get',
+                'controller' => 'puqPmAppPresetController@getAppPresetsSelect',
+            ],
+
+            [
+                'method' => 'get',
+                'uri' => 'app_preset/{uuid}/export/json',
+                'permission' => 'configuration',
+                'name' => 'app_preset.export.json.get',
+                'controller' => 'puqPmAppPresetController@getAppPresetExportJson',
+            ],
+            [
+                'method' => 'post',
+                'uri' => 'app_preset/{uuid}/export/json',
+                'permission' => 'configuration',
+                'name' => 'app_preset.import.json.post',
+                'controller' => 'puqPmAppPresetController@postAppPresetImportJson',
+            ],
+
+            [
+                'method' => 'get',
+                'uri' => 'app_endpoint/{uuid}',
+                'permission' => 'configuration',
+                'name' => 'app_endpoint.get',
+                'controller' => 'puqPmAppPresetController@getAppEndpoint',
+            ],
+            [
+                'method' => 'post',
+                'uri' => 'app_endpoint',
+                'permission' => 'configuration',
+                'name' => 'app_endpoint.post',
+                'controller' => 'puqPmAppPresetController@postAppEndpoint',
+            ],
+            [
+                'method' => 'put',
+                'uri' => 'app_endpoint/{uuid}',
+                'permission' => 'configuration',
+                'name' => 'app_endpoint.put',
+                'controller' => 'puqPmAppPresetController@putAppEndpoint',
+            ],
+            [
+                'method' => 'delete',
+                'uri' => 'app_endpoint/{uuid}',
+                'permission' => 'configuration',
+                'name' => 'app_endpoint.delete',
+                'controller' => 'puqPmAppPresetController@deleteAppEndpoint',
+            ],
+
+            [
+                'method' => 'get',
+                'uri' => 'app_endpoint/{uuid}/app_endpoint_locations',
+                'permission' => 'configuration',
+                'name' => 'app_endpoint.app_endpoint_locations.get',
+                'controller' => 'puqPmAppPresetController@getAppEndpointAppEndpointLocations',
+            ],
+
+            [
+                'method' => 'get',
+                'uri' => 'app_endpoint_location/{uuid}',
+                'permission' => 'configuration',
+                'name' => 'app_endpoint_location.get',
+                'controller' => 'puqPmAppPresetController@getAppEndpointLocation',
+            ],
+            [
+                'method' => 'post',
+                'uri' => 'app_endpoint_location',
+                'permission' => 'configuration',
+                'name' => 'app_endpoint_location.post',
+                'controller' => 'puqPmAppPresetController@postAppEndpointLocation',
+            ],
+            [
+                'method' => 'put',
+                'uri' => 'app_endpoint_location/{uuid}',
+                'permission' => 'configuration',
+                'name' => 'app_endpoint_location.put',
+                'controller' => 'puqPmAppPresetController@putAppEndpointLocation',
+            ],
+            [
+                'method' => 'delete',
+                'uri' => 'app_endpoint_location/{uuid}',
+                'permission' => 'configuration',
+                'name' => 'app_endpoint_location.delete',
+                'controller' => 'puqPmAppPresetController@deleteAppEndpointLocation',
+            ],
+
+            // APP Instance
+            [
+                'method' => 'put',
+                'uri' => 'puq_pm_app_instance/{uuid}/web_proxy_config',
+                'permission' => 'operator',
+                'name' => 'puq_pm_app_instance.web_proxy_config.put',
+                'controller' => 'puqPmAppInstanceController@putLoadWebProxyConfig',
+            ],
+            [
+                'method' => 'put',
+                'uri' => 'puq_pm_app_instance/{uuid}/dns_records',
+                'permission' => 'operator',
+                'name' => 'puq_pm_app_instance.dns_records.put',
+                'controller' => 'puqPmAppInstanceController@putDnsRecords',
+            ],
+            [
+                'method' => 'put',
+                'uri' => 'puq_pm_app_instance/{uuid}/retry_deploy',
+                'permission' => 'operator',
+                'name' => 'puq_pm_app_instance.retry_deploy.put',
+                'controller' => 'puqPmAppInstanceController@putRetryDeploy',
+            ],
+
+            [
+                'method' => 'get',
+                'uri' => 'puq_pm_app_instance/{uuid}/deploy_status',
+                'permission' => 'operator',
+                'name' => 'puq_pm_app_instance.deploy_status.get',
+                'controller' => 'puqPmAppInstanceController@getDeployStatus',
+            ],
+            [
+                'method' => 'get',
+                'uri' => 'puq_pm_app_instance/{uuid}/script_log/{log_uuid}',
+                'permission' => 'operator',
+                'name' => 'puq_pm_app_instance.script_log.get',
+                'controller' => 'puqPmAppInstanceController@getScriptLog',
+            ],
+
             // Client Private Networks
             [
                 'method' => 'get',
@@ -2600,6 +3801,14 @@ class puqProxmox extends Product
                 'name' => 'settings.put',
                 'controller' => 'puqPmController@putSettings',
             ],
+
+            [
+                'method' => 'get',
+                'uri' => 'certificate_authorities/select',
+                'permission' => 'configuration',
+                'name' => 'certificate_authorities.select.get',
+                'controller' => 'puqPmController@getCertificateAuthoritiesSelect',
+            ],
         ];
     }
 
@@ -2612,7 +3821,17 @@ class puqProxmox extends Product
                 'disable' => false,
             ],
             [
+                'artisan' => 'SyncApp',
+                'cron' => '* * * * *',
+                'disable' => false,
+            ],
+            [
                 'artisan' => 'MakeBackups',
+                'cron' => '* * * * *',
+                'disable' => false,
+            ],
+            [
+                'artisan' => 'LoadBalancerRebalance',
                 'cron' => '* * * * *',
                 'disable' => false,
             ],
@@ -2622,12 +3841,25 @@ class puqProxmox extends Product
     public function queues(): array
     {
         return [
-            'Create' => [
+            'LxcCreate' => [
                 'connection' => 'redis',
-                'queue' => ['Create'],
+                'queue' => ['LxcCreate'],
                 'balance' => 'auto',
                 'autoScalingStrategy' => 'time',
-                'maxProcesses' => 1,
+                'maxProcesses' => 10,
+                'maxTime' => 0,
+                'maxJobs' => 0,
+                'memory' => 128,
+                'tries' => 1,
+                'timeout' => 3600,
+                'nice' => 0,
+            ],
+            'AppCreate' => [
+                'connection' => 'redis',
+                'queue' => ['AppCreate'],
+                'balance' => 'auto',
+                'autoScalingStrategy' => 'time',
+                'maxProcesses' => 10,
                 'maxTime' => 0,
                 'maxJobs' => 0,
                 'memory' => 128,
@@ -2661,13 +3893,39 @@ class puqProxmox extends Product
                 'timeout' => 3600,
                 'nice' => 0,
             ],
+            'LoadBalancer' => [
+                'connection' => 'redis',
+                'queue' => ['LoadBalancer'],
+                'balance' => 'auto',
+                'autoScalingStrategy' => 'time',
+                'maxProcesses' => 10,
+                'maxTime' => 0,
+                'maxJobs' => 0,
+                'memory' => 128,
+                'tries' => 10,
+                'timeout' => 3600,
+                'nice' => 0,
+            ],
+
+            'AppSync' => [
+                'connection' => 'redis',
+                'queue' => ['AppSync'],
+                'balance' => 'auto',
+                'autoScalingStrategy' => 'time',
+                'maxProcesses' => 10,
+                'maxTime' => 0,
+                'maxJobs' => 0,
+                'memory' => 128,
+                'tries' => 10,
+                'timeout' => 3600,
+                'nice' => 0,
+            ],
         ];
     }
 
     public function getClientAreaMenuConfig(): array
     {
         $service = \App\Models\Service::find($this->service_uuid);
-
 
         $type = $this->product_data['type'] ?? 'lxc';
         if ($type == 'lxc') {
@@ -2694,7 +3952,6 @@ class puqProxmox extends Product
                 ],
             ];
 
-            //if ......
             $menu['backups'] = [
                 'name' => __('Product.puqProxmox.Backups'),
                 'template' => 'client_area.lxc.backups',
@@ -2710,11 +3967,6 @@ class puqProxmox extends Product
                 'template' => 'client_area.lxc.firewall',
             ];
 
-//            $menu['addition_disk'] = [
-//                'name' => __('Product.puqProxmox.Addition Disk'),
-//                'template' => 'client_area.lxc.addition_disk',
-//            ];
-
             $menu['rebuild'] = [
                 'name' => __('Product.puqProxmox.Rebuild'),
                 'template' => 'client_area.lxc.rebuild',
@@ -2728,9 +3980,48 @@ class puqProxmox extends Product
             return $menu;
         }
 
+        if ($type == 'app') {
+
+            $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
+            $app_instance = PuqPmAppInstance::query()->where('puq_pm_lxc_instance_uuid', $lxc_instance?->uuid)->first();
+
+            $deploy_status = $app_instance?->getDeployStatus();
+
+            if (empty($lxc_instance) or empty($app_instance) or empty($deploy_status) or $deploy_status['status'] != 'success') {
+                return [
+                    'general' => [
+                        'name' => __('Product.puqProxmox.General'),
+                        'template' => 'client_area.app.deployment',
+                    ],
+                ];
+            }
+
+            $menu = [
+                'general' => [
+                    'name' => __('Product.puqProxmox.General'),
+                    'template' => 'client_area.app.general',
+                ],
+                'graphs' => [
+                    'name' => __('Product.puqProxmox.Graphs'),
+                    'template' => 'client_area.app.graphs',
+                ],
+            ];
+
+            $menu['backups'] = [
+                'name' => __('Product.puqProxmox.Backups'),
+                'template' => 'client_area.app.backups',
+            ];
+
+            $menu['rescale'] = [
+                'name' => __('Product.puqProxmox.Rescale'),
+                'template' => 'client_area.app.rescale',
+            ];
+
+            return $menu;
+        }
+
         return [];
     }
-
 
     // LXC General ------------------------------------------------------------------------------
     public function variables_general(): array
@@ -2747,6 +4038,13 @@ class puqProxmox extends Product
 
     public function controllerClient_getLxcInfo(Request $request): JsonResponse
     {
+        if ($this->product_data['type'] != 'lxc') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => [__('Product.puqProxmox.LXC not found')],
+            ], 412);
+        }
+
         $service = \App\Models\Service::find($this->service_uuid);
         $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
 
@@ -2762,6 +4060,13 @@ class puqProxmox extends Product
 
     public function controllerClient_getLxcLocation(Request $request): JsonResponse
     {
+        if ($this->product_data['type'] != 'lxc') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => [__('Product.puqProxmox.LXC not found')],
+            ], 412);
+        }
+
         $service = \App\Models\Service::find($this->service_uuid);
         $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
 
@@ -2777,11 +4082,19 @@ class puqProxmox extends Product
 
     public function controllerClient_getLxcStatus(Request $request): JsonResponse
     {
+        if ($this->product_data['type'] != 'lxc') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => [__('Product.puqProxmox.LXC not found')],
+            ], 412);
+        }
+
         $service = \App\Models\Service::find($this->service_uuid);
         $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
 
         if ($lxc_instance) {
             $status = $lxc_instance->getStatus();
+            unset($status['node']);
         }
 
         return response()->json([
@@ -2792,6 +4105,13 @@ class puqProxmox extends Product
 
     public function controllerClient_getLxcStart(Request $request): JsonResponse
     {
+        if ($this->product_data['type'] != 'lxc') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => [__('Product.puqProxmox.LXC not found')],
+            ], 412);
+        }
+
         $service = \App\Models\Service::find($this->service_uuid);
         $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
 
@@ -2836,6 +4156,13 @@ class puqProxmox extends Product
 
     public function controllerClient_getLxcStop(Request $request): JsonResponse
     {
+        if ($this->product_data['type'] != 'lxc') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => [__('Product.puqProxmox.LXC not found')],
+            ], 412);
+        }
+
         $service = \App\Models\Service::find($this->service_uuid);
         $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
 
@@ -2871,6 +4198,13 @@ class puqProxmox extends Product
 
     public function controllerClient_getLxcConsole(Request $request): JsonResponse
     {
+        if ($this->product_data['type'] != 'lxc') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => [__('Product.puqProxmox.LXC not found')],
+            ], 412);
+        }
+
         $service = \App\Models\Service::find($this->service_uuid);
         $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
 
@@ -2906,8 +4240,14 @@ class puqProxmox extends Product
 
     public function controllerClient_getUsernamePassword(Request $request): JsonResponse
     {
-        $service = \App\Models\Service::find($this->service_uuid);
+        if ($this->product_data['type'] != 'lxc') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => [__('Product.puqProxmox.LXC not found')],
+            ], 412);
+        }
 
+        $service = \App\Models\Service::find($this->service_uuid);
         $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
 
         if (!$lxc_instance) {
@@ -2936,9 +4276,16 @@ class puqProxmox extends Product
 
     public function controllerClient_getLxcResetPasswords(Request $request): JsonResponse
     {
-        $service = \App\Models\Service::find($this->service_uuid);
+        if ($this->product_data['type'] != 'lxc') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => [__('Product.puqProxmox.LXC not found')],
+            ], 412);
+        }
 
+        $service = \App\Models\Service::find($this->service_uuid);
         $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
+
         if (!$lxc_instance) {
             return response()->json([
                 'status' => 'error',
@@ -2968,7 +4315,6 @@ class puqProxmox extends Product
         ], 200);
     }
 
-
     // LXC Graphs -------------------------------------------------------------------------------
     public function variables_graphs(): array
     {
@@ -2984,6 +4330,13 @@ class puqProxmox extends Product
 
     public function controllerClient_getLxcRrdData(Request $request): JsonResponse
     {
+        if ($this->product_data['type'] != 'lxc') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => [__('Product.puqProxmox.LXC not found')],
+            ], 412);
+        }
+
         $timeframe = $request->input('timeframe') ?? 'hour';
         $service = \App\Models\Service::find($this->service_uuid);
         $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
@@ -2996,7 +4349,6 @@ class puqProxmox extends Product
             'data' => $data['data'] ?? [],
         ]);
     }
-
 
     // LXC Backups -------------------------------------------------------------------------------
     public function variables_backups(): array
@@ -3013,6 +4365,13 @@ class puqProxmox extends Product
 
     public function controllerClient_getLxcBackupSchedule(Request $request): JsonResponse
     {
+        if ($this->product_data['type'] != 'lxc') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => [__('Product.puqProxmox.LXC not found')],
+            ], 412);
+        }
+
         $service = \App\Models\Service::find($this->service_uuid);
 
         $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
@@ -3033,6 +4392,13 @@ class puqProxmox extends Product
 
     public function controllerClient_postLxcBackupSchedule(Request $request): JsonResponse
     {
+        if ($this->product_data['type'] != 'lxc') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => [__('Product.puqProxmox.LXC not found')],
+            ], 412);
+        }
+
         $service = \App\Models\Service::find($this->service_uuid);
 
         $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
@@ -3069,6 +4435,13 @@ class puqProxmox extends Product
 
     public function controllerClient_getLxcBackups(Request $request): JsonResponse
     {
+        if ($this->product_data['type'] != 'lxc') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => [__('Product.puqProxmox.LXC not found')],
+            ], 412);
+        }
+
         $service = \App\Models\Service::find($this->service_uuid);
 
         $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
@@ -3112,6 +4485,13 @@ class puqProxmox extends Product
 
     public function controllerClient_postLxcBackupDelete(Request $request): JsonResponse
     {
+        if ($this->product_data['type'] != 'lxc') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => [__('Product.puqProxmox.LXC not found')],
+            ], 412);
+        }
+
         $service = \App\Models\Service::find($this->service_uuid);
 
         $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
@@ -3139,6 +4519,13 @@ class puqProxmox extends Product
 
     public function controllerClient_getLxcBackupsInfo(Request $request): JsonResponse
     {
+        if ($this->product_data['type'] != 'lxc') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => [__('Product.puqProxmox.LXC not found')],
+            ], 412);
+        }
+
         $service = \App\Models\Service::find($this->service_uuid);
 
         $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
@@ -3166,6 +4553,12 @@ class puqProxmox extends Product
 
     public function controllerClient_postLxcBackupNow(Request $request): JsonResponse
     {
+        if ($this->product_data['type'] != 'lxc') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => [__('Product.puqProxmox.LXC not found')],
+            ], 412);
+        }
 
         $validator = Validator::make($request->all(), [
             'note' => ['required', 'string', 'max:250', 'regex:/^[A-Za-z0-9\s\-_]+$/'],
@@ -3225,6 +4618,13 @@ class puqProxmox extends Product
 
     public function controllerClient_postLxcBackupRestore(Request $request): JsonResponse
     {
+        if ($this->product_data['type'] != 'lxc') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => [__('Product.puqProxmox.LXC not found')],
+            ], 412);
+        }
+
         $service = \App\Models\Service::find($this->service_uuid);
 
         $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
@@ -3259,7 +4659,6 @@ class puqProxmox extends Product
         ], 200);
     }
 
-
     // LXC Networks --------------------------------------------------------------------------------
     public function variables_networks(): array
     {
@@ -3275,6 +4674,13 @@ class puqProxmox extends Product
 
     public function controllerClient_getPublicNetworks(Request $request): JsonResponse
     {
+        if ($this->product_data['type'] != 'lxc') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => [__('Product.puqProxmox.LXC not found')],
+            ], 412);
+        }
+
         $service = \App\Models\Service::find($this->service_uuid);
 
         $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
@@ -3295,6 +4701,13 @@ class puqProxmox extends Product
 
     public function controllerClient_getPrivateNetworks(Request $request): JsonResponse
     {
+        if ($this->product_data['type'] != 'lxc') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => [__('Product.puqProxmox.LXC not found')],
+            ], 412);
+        }
+
         $service = \App\Models\Service::find($this->service_uuid);
 
         $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
@@ -3315,6 +4728,13 @@ class puqProxmox extends Product
 
     public function controllerClient_postLxcPublicNetworks(Request $request): JsonResponse
     {
+        if ($this->product_data['type'] != 'lxc') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => [__('Product.puqProxmox.LXC not found')],
+            ], 412);
+        }
+
         $validator = Validator::make($request->all(), [
             'ipv4_rdns' => [
                 'nullable',
@@ -3361,8 +4781,7 @@ class puqProxmox extends Product
         ], 200);
     }
 
-
-    // Firewall -------------------------------------------------------------------------------------
+    // LXC Firewall -------------------------------------------------------------------------------------
     public function variables_firewall(): array
     {
         $data['module_type'] = $this->module_type;
@@ -3377,6 +4796,13 @@ class puqProxmox extends Product
 
     public function controllerClient_getLxcFirewallPolicies(Request $request): JsonResponse
     {
+        if ($this->product_data['type'] != 'lxc') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => [__('Product.puqProxmox.LXC not found')],
+            ], 412);
+        }
+
         $service = \App\Models\Service::find($this->service_uuid);
 
         $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
@@ -3397,6 +4823,12 @@ class puqProxmox extends Product
 
     public function controllerClient_postLxcFirewallPolicies(Request $request): JsonResponse
     {
+        if ($this->product_data['type'] != 'lxc') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => [__('Product.puqProxmox.LXC not found')],
+            ], 412);
+        }
 
         $validator = Validator::make($request->all(), [
             'policy_in' => ['required', 'string', 'in:ACCEPT,REJECT,DROP'],
@@ -3434,7 +4866,6 @@ class puqProxmox extends Product
             ], 412);
         }
 
-
         return response()->json([
             'status' => 'success',
             'message' => __('Product.puqProxmox.Successfully'),
@@ -3443,6 +4874,13 @@ class puqProxmox extends Product
 
     public function controllerClient_getLxcFirewallRules(Request $request): JsonResponse
     {
+        if ($this->product_data['type'] != 'lxc') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => [__('Product.puqProxmox.LXC not found')],
+            ], 412);
+        }
+
         $service = \App\Models\Service::find($this->service_uuid);
 
         $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
@@ -3491,6 +4929,13 @@ class puqProxmox extends Product
 
     public function controllerClient_postLxcFirewallRuleUpdateOrder(Request $request): JsonResponse
     {
+        if ($this->product_data['type'] != 'lxc') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => [__('Product.puqProxmox.LXC not found')],
+            ], 412);
+        }
+
         $service = \App\Models\Service::find($this->service_uuid);
 
         $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
@@ -3522,6 +4967,13 @@ class puqProxmox extends Product
 
     public function controllerClient_postLxcFirewallRuleDelete(Request $request): JsonResponse
     {
+        if ($this->product_data['type'] != 'lxc') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => [__('Product.puqProxmox.LXC not found')],
+            ], 412);
+        }
+
         $service = \App\Models\Service::find($this->service_uuid);
 
         $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
@@ -3552,6 +5004,13 @@ class puqProxmox extends Product
 
     public function controllerClient_postLxcFirewallRuleCreate(Request $request): JsonResponse
     {
+        if ($this->product_data['type'] != 'lxc') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => [__('Product.puqProxmox.LXC not found')],
+            ], 412);
+        }
+
         $validator = Validator::make($request->all(), [
             'action' => ['required', 'string', 'in:ACCEPT,REJECT,DROP'],
             'type' => ['required', 'string', 'in:in,out'],
@@ -3657,8 +5116,7 @@ class puqProxmox extends Product
         ], 200);
     }
 
-
-    // Rebuild --------------------------------------------------------------------------------------
+    // LXC Rebuild --------------------------------------------------------------------------------------
     public function variables_rebuild(): array
     {
         $data['module_type'] = $this->module_type;
@@ -3673,6 +5131,13 @@ class puqProxmox extends Product
 
     public function controllerClient_getLxcRebuildInfo(Request $request): JsonResponse
     {
+        if ($this->product_data['type'] != 'lxc') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => [__('Product.puqProxmox.LXC not found')],
+            ], 412);
+        }
+
         $client = app('client');
         $currency = $client->currency;
         $service = \App\Models\Service::find($this->service_uuid);
@@ -3752,6 +5217,12 @@ class puqProxmox extends Product
 
     public function controllerClient_postLxcRebuildNow(Request $request): JsonResponse
     {
+        if ($this->product_data['type'] != 'lxc') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => [__('Product.puqProxmox.LXC not found')],
+            ], 412);
+        }
 
         if ($request->input('protect') != 'REINSTALL') {
             return response()->json([
@@ -3825,8 +5296,7 @@ class puqProxmox extends Product
         ], 200);
     }
 
-
-    // Rescale ------------------------------------------------------------------------------------------
+    // LXC Rescale ------------------------------------------------------------------------------------------
     public function variables_rescale(): array
     {
         $data['module_type'] = $this->module_type;
@@ -3841,6 +5311,12 @@ class puqProxmox extends Product
 
     public function controllerClient_getLxcRescaleOptions(Request $request): JsonResponse
     {
+        if ($this->product_data['type'] != 'lxc') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => [__('Product.puqProxmox.LXC not found')],
+            ], 412);
+        }
 
         $service = \App\Models\Service::find($this->service_uuid);
         $product = $service->product;
@@ -3922,6 +5398,12 @@ class puqProxmox extends Product
 
     public function controllerClient_getLxcRescaleCalculateSummary(Request $request): JsonResponse
     {
+        if ($this->product_data['type'] != 'lxc') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => [__('Product.puqProxmox.LXC not found')],
+            ], 412);
+        }
 
         $service = \App\Models\Service::find($this->service_uuid);
         $product = $service->product;
@@ -3932,7 +5414,6 @@ class puqProxmox extends Product
                 'errors' => [__('Product.puqProxmox.LXC not yet ready')],
             ], 412);
         }
-
 
         $service_price = $service->price;
         $currency = $service_price->currency;
@@ -3950,15 +5431,18 @@ class puqProxmox extends Product
 
             if ($product_option_group_uuid == $this->product_data['os_product_option_group_uuid']) {
                 $total_new_price += (float) $current_price_base;
+
                 continue;
             }
             if ($product_option_group_uuid == $this->product_data['location_product_option_group_uuid']) {
                 $total_new_price += (float) $current_price_base;
+
                 continue;
             }
 
             if ($new_product_option_uuid == $u_d_o['current']->uuid) {
                 $total_new_price += (float) $current_price_base;
+
                 continue;
             }
 
@@ -4016,6 +5500,13 @@ class puqProxmox extends Product
 
     public function controllerClient_postLxcRescale(Request $request): JsonResponse
     {
+        if ($this->product_data['type'] != 'lxc') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => [__('Product.puqProxmox.LXC not found')],
+            ], 412);
+        }
+
         $service = \App\Models\Service::find($this->service_uuid);
         $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
         if (!$lxc_instance) {
@@ -4087,4 +5578,704 @@ class puqProxmox extends Product
         ], 200);
     }
 
+    // APP Deploy ------------------------------------------------------------------------------------------
+    public function controllerClient_getAppDeployStatus(Request $request): JsonResponse
+    {
+        $status = [
+            'status' => 'pending',
+            'progress' => 0,
+        ];
+
+        // -----------------------------------------------------------------------------
+        $service_lxc_app = $this->getLxcAppInstances();
+        if ($service_lxc_app['status'] == 'error') {
+            return response()->json([
+                'status' => 'success',
+                'data' => $status ?? [],
+            ]);
+        }
+
+        $service = $service_lxc_app['data']['service'];
+        $lxc_instance = $service_lxc_app['data']['lxc_instance'];
+        $app_instance = $service_lxc_app['data']['app_instance'];
+        // -----------------------------------------------------------------------------
+
+        if ($app_instance) {
+            $deploy_status = $app_instance->getDeployStatus();
+            $status['status'] = $deploy_status['status'];
+            $status['progress'] = $deploy_status['progress'];
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $status ?? [],
+        ]);
+    }
+
+    // APP General ------------------------------------------------------------------------------
+    public function controllerClient_getAppInfo(Request $request): JsonResponse
+    {
+        // -----------------------------------------------------------------------------
+        $service_lxc_app = $this->getLxcAppInstances();
+        if ($service_lxc_app['status'] == 'error') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => $service_lxc_app['errors'],
+            ], $service_lxc_app['code'] ?? 500);
+        }
+
+        $service = $service_lxc_app['data']['service'];
+        $lxc_instance = $service_lxc_app['data']['lxc_instance'];
+        $app_instance = $service_lxc_app['data']['app_instance'];
+        // -----------------------------------------------------------------------------
+
+        $data = $app_instance->getAppInfoClientArea();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $data ?? [],
+        ]);
+    }
+
+    public function controllerClient_getAppControl(Request $request): JsonResponse
+    {
+        // -----------------------------------------------------------------------------
+        $service_lxc_app = $this->getLxcAppInstances();
+        if ($service_lxc_app['status'] == 'error') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => $service_lxc_app['errors'],
+            ], $service_lxc_app['code'] ?? 500);
+        }
+
+        $service = $service_lxc_app['data']['service'];
+        $lxc_instance = $service_lxc_app['data']['lxc_instance'];
+        $app_instance = $service_lxc_app['data']['app_instance'];
+        // -----------------------------------------------------------------------------
+
+        $data = $app_instance->getAppControlClientArea();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $data ?? [],
+        ]);
+    }
+
+    public function controllerClient_getAppCustomPage(Request $request): JsonResponse
+    {
+        // -----------------------------------------------------------------------------
+        $service_lxc_app = $this->getLxcAppInstances();
+        if ($service_lxc_app['status'] == 'error') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => $service_lxc_app['errors'],
+            ], $service_lxc_app['code'] ?? 500);
+        }
+
+        $service = $service_lxc_app['data']['service'];
+        $lxc_instance = $service_lxc_app['data']['lxc_instance'];
+        $app_instance = $service_lxc_app['data']['app_instance'];
+
+        // -----------------------------------------------------------------------------
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $app_instance->puqPmAppPreset->custom_page,
+        ]);
+    }
+
+    // APP Graphs -------------------------------------------------------------------------------
+    public function controllerClient_getAppRrdData(Request $request): JsonResponse
+    {
+        // -----------------------------------------------------------------------------
+        $service_lxc_app = $this->getLxcAppInstances();
+        if ($service_lxc_app['status'] == 'error') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => $service_lxc_app['errors'],
+            ], $service_lxc_app['code'] ?? 500);
+        }
+
+        $service = $service_lxc_app['data']['service'];
+        $lxc_instance = $service_lxc_app['data']['lxc_instance'];
+        $app_instance = $service_lxc_app['data']['app_instance'];
+        // -----------------------------------------------------------------------------
+
+        $timeframe = $request->input('timeframe') ?? 'hour';
+        if ($lxc_instance) {
+            $data = $lxc_instance->getRrdData($timeframe);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $data['data'] ?? [],
+        ]);
+    }
+
+    // LXC Backups -------------------------------------------------------------------------------
+    public function controllerClient_getAppBackupSchedule(Request $request): JsonResponse
+    {
+        // -----------------------------------------------------------------------------
+        $service_lxc_app = $this->getLxcAppInstances();
+        if ($service_lxc_app['status'] == 'error') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => $service_lxc_app['errors'],
+            ], $service_lxc_app['code'] ?? 500);
+        }
+
+        $service = $service_lxc_app['data']['service'];
+        $lxc_instance = $service_lxc_app['data']['lxc_instance'];
+        $app_instance = $service_lxc_app['data']['app_instance'];
+        // -----------------------------------------------------------------------------
+
+        $backup_schedule = $lxc_instance->getBackupSchedule();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $backup_schedule,
+        ], 200);
+    }
+
+    public function controllerClient_postAppBackupSchedule(Request $request): JsonResponse
+    {
+        // -----------------------------------------------------------------------------
+        $service_lxc_app = $this->getLxcAppInstances();
+        if ($service_lxc_app['status'] == 'error') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => $service_lxc_app['errors'],
+            ], $service_lxc_app['code'] ?? 500);
+        }
+
+        $service = $service_lxc_app['data']['service'];
+        $lxc_instance = $service_lxc_app['data']['lxc_instance'];
+        $app_instance = $service_lxc_app['data']['app_instance'];
+        // -----------------------------------------------------------------------------
+
+        $days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+        $schedule = [];
+
+        foreach ($days as $day) {
+            $time = $request->input("{$day}_time", '00:00');
+            if (!preg_match('/^(2[0-3]|[01]?[0-9]):([0-5][0-9])$/', $time)) {
+                $time = '00:00';
+            }
+
+            $schedule[$day] = [
+                'enable' => $request->input("{$day}_enabled") == 'yes' ? true : false,
+                'time' => $time,
+            ];
+        }
+
+        $lxc_instance->backup_schedule = $schedule;
+        $lxc_instance->save();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => __('Product.puqProxmox.Successfully'),
+        ], 200);
+    }
+
+    public function controllerClient_getAppBackups(Request $request): JsonResponse
+    {
+        // -----------------------------------------------------------------------------
+        $service_lxc_app = $this->getLxcAppInstances();
+        if ($service_lxc_app['status'] == 'error') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => $service_lxc_app['errors'],
+            ], $service_lxc_app['code'] ?? 500);
+        }
+
+        $service = $service_lxc_app['data']['service'];
+        $lxc_instance = $service_lxc_app['data']['lxc_instance'];
+        $app_instance = $service_lxc_app['data']['app_instance'];
+        // -----------------------------------------------------------------------------
+
+        $backups_raw = $lxc_instance->getBackups();
+        if ($backups_raw['status'] == 'error') {
+            return response()->json([
+                'status' => 'success',
+                'data' => ['original' => []],
+            ], 200);
+        }
+        $backups = [];
+        foreach ($backups_raw['data'] as $backup_raw) {
+            $backups[$backup_raw['ctime']] = [
+                'note' => $backup_raw['notes'],
+                'date' => $backup_raw['ctime'],
+                'size' => $backup_raw['size'],
+                'urls' => [
+                    'restore' => route('client.api.cloud.service.module.post',
+                        ['uuid' => $this->service_uuid, 'method' => 'postAppBackupRestore']),
+                    'delete' => route('client.api.cloud.service.module.post',
+                        ['uuid' => $this->service_uuid, 'method' => 'postAppBackupDelete']),
+                ],
+            ];
+        }
+
+        krsort($backups);
+        $data['original']['data'] = array_values($backups);
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $data,
+        ], 200);
+    }
+
+    public function controllerClient_postAppBackupDelete(Request $request): JsonResponse
+    {
+        // -----------------------------------------------------------------------------
+        $service_lxc_app = $this->getLxcAppInstances();
+        if ($service_lxc_app['status'] == 'error') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => $service_lxc_app['errors'],
+            ], $service_lxc_app['code'] ?? 500);
+        }
+
+        $service = $service_lxc_app['data']['service'];
+        $lxc_instance = $service_lxc_app['data']['lxc_instance'];
+        $app_instance = $service_lxc_app['data']['app_instance'];
+        // -----------------------------------------------------------------------------
+
+        $delete = $lxc_instance->deleteFile((int) $request->input('date'), (int) $request->input('size'));
+
+        if ($delete['status'] == 'error') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => $delete['errors'],
+            ], 412);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => __('Product.puqProxmox.Successfully'),
+        ], 200);
+    }
+
+    public function controllerClient_getAppBackupsInfo(Request $request): JsonResponse
+    {
+        // -----------------------------------------------------------------------------
+        $service_lxc_app = $this->getLxcAppInstances();
+        if ($service_lxc_app['status'] == 'error') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => $service_lxc_app['errors'],
+            ], $service_lxc_app['code'] ?? 500);
+        }
+
+        $service = $service_lxc_app['data']['service'];
+        $lxc_instance = $service_lxc_app['data']['lxc_instance'];
+        $app_instance = $service_lxc_app['data']['app_instance'];
+        // -----------------------------------------------------------------------------
+
+        $status = $lxc_instance->getStatus();
+        $backups_raw = $lxc_instance->getBackups();
+
+        $info = [
+            'max_backups' => $lxc_instance->backup_count,
+            'used_backups' => count($backups_raw['data'] ?? []),
+            'status' => $status['status'],
+        ];
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $info,
+        ], 200);
+    }
+
+    public function controllerClient_postAppBackupNow(Request $request): JsonResponse
+    {
+        // -----------------------------------------------------------------------------
+        $service_lxc_app = $this->getLxcAppInstances();
+        if ($service_lxc_app['status'] == 'error') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => $service_lxc_app['errors'],
+            ], $service_lxc_app['code'] ?? 500);
+        }
+
+        $service = $service_lxc_app['data']['service'];
+        $lxc_instance = $service_lxc_app['data']['lxc_instance'];
+        $app_instance = $service_lxc_app['data']['app_instance'];
+        // -----------------------------------------------------------------------------
+
+        $validator = Validator::make($request->all(), [
+            'note' => ['required', 'string', 'max:250', 'regex:/^[A-Za-z0-9\s\-_]+$/'],
+        ], [
+            'note.required' => __('Product.puqProxmox.The Note field is required'),
+            'note.regex' => __('Product.puqProxmox.Note can only contain English letters and numbers'),
+            'note.max' => __('Product.puqProxmox.Note cannot exceed 250 characters'),
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => $validator->errors(),
+            ], 422);
+        }
+
+        $status = $lxc_instance->getStatus();
+
+        if ($status['status'] != 'running' && $status['status'] != 'stopped') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => [__('Product.puqProxmox.LXC status should be running or stopped')],
+            ], 412);
+        }
+
+        $backups_raw = $lxc_instance->getBackups();
+        if ($lxc_instance->backup_count <= count($backups_raw['data'] ?? [])) {
+            return response()->json([
+                'status' => 'error',
+                'errors' => [__('Product.puqProxmox.Max backups reached')],
+            ], 412);
+        }
+
+        $backup_now = $lxc_instance->backupNow($request->input('note'));
+
+        if ($backup_now['status'] == 'error') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => $backup_now['errors'],
+            ], 412);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => __('Product.puqProxmox.Successfully'),
+        ], 200);
+    }
+
+    public function controllerClient_postAppBackupRestore(Request $request): JsonResponse
+    {
+        // -----------------------------------------------------------------------------
+        $service_lxc_app = $this->getLxcAppInstances();
+        if ($service_lxc_app['status'] == 'error') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => $service_lxc_app['errors'],
+            ], $service_lxc_app['code'] ?? 500);
+        }
+
+        $service = $service_lxc_app['data']['service'];
+        $lxc_instance = $service_lxc_app['data']['lxc_instance'];
+        $app_instance = $service_lxc_app['data']['app_instance'];
+        // -----------------------------------------------------------------------------
+
+        $status = $lxc_instance->getStatus();
+
+        if ($status['status'] != 'stopped') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => [__('Product.puqProxmox.LXC status should be stopped')],
+            ], 412);
+        }
+
+        $restore = $lxc_instance->restoreBackup((int) $request->input('date'), (int) $request->input('size'));
+
+        if ($restore['status'] == 'error') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => $restore['errors'],
+            ], 412);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => __('Product.puqProxmox.Successfully'),
+        ], 200);
+    }
+
+    // LXC Rescale ------------------------------------------------------------------------------------------
+    public function controllerClient_getAppRescaleOptions(Request $request): JsonResponse
+    {
+        // -----------------------------------------------------------------------------
+        $service_lxc_app = $this->getLxcAppInstances();
+        if ($service_lxc_app['status'] == 'error') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => $service_lxc_app['errors'],
+            ], $service_lxc_app['code'] ?? 500);
+        }
+
+        $service = $service_lxc_app['data']['service'];
+        $lxc_instance = $service_lxc_app['data']['lxc_instance'];
+        $app_instance = $service_lxc_app['data']['app_instance'];
+        // -----------------------------------------------------------------------------
+
+        $service_price = $service->price;
+        $currency = $service_price->currency;
+
+        $options = [];
+
+        foreach ($service->getUpdateDowngradeProductOptions() as $u_d_o) {
+
+            if ($u_d_o['product_option_group']->uuid == $this->product_data['location_product_option_group_uuid']) {
+                continue;
+            }
+
+            $current = [
+                'name' => $u_d_o['current']->name,
+                'uuid' => $u_d_o['current']->uuid,
+                'order' => $u_d_o['current']->order,
+                'price' => $u_d_o['current']->price['base'] ?? 0.00,
+            ];
+
+            $product_option_group = [
+                'name' => $u_d_o['product_option_group']->name,
+                'uuid' => $u_d_o['product_option_group']->uuid,
+            ];
+
+            $up = [];
+
+            foreach ($u_d_o['up'] as $o_up) {
+                $up[] = [
+                    'name' => $o_up->name,
+                    'uuid' => $o_up->uuid,
+                    'order' => $o_up->order,
+                    'price' => $o_up->price['base'] ?? 0.00,
+                ];
+            }
+
+            $down = [];
+
+            foreach ($u_d_o['down'] as $o_down) {
+                $down[] = [
+                    'name' => $o_down->name,
+                    'uuid' => $o_down->uuid,
+                    'order' => $o_down->order,
+                    'price' => $o_down->price['base'] ?? 0.00,
+                ];
+            }
+
+            $tmp = [
+                'currency_code' => $currency->code,
+                'currency_prefix' => $currency->prefix,
+                'currency_suffix' => $currency->suffix,
+                'product_option_group' => $product_option_group,
+                'current' => $current,
+                'up' => $up,
+                'down' => $down,
+            ];
+
+            $options[] = $tmp;
+
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $options,
+        ], 200);
+    }
+
+    public function controllerClient_getAppRescaleCalculateSummary(Request $request): JsonResponse
+    {
+        // -----------------------------------------------------------------------------
+        $service_lxc_app = $this->getLxcAppInstances();
+        if ($service_lxc_app['status'] == 'error') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => $service_lxc_app['errors'],
+            ], $service_lxc_app['code'] ?? 500);
+        }
+
+        $service = $service_lxc_app['data']['service'];
+        $lxc_instance = $service_lxc_app['data']['lxc_instance'];
+        $app_instance = $service_lxc_app['data']['app_instance'];
+        // -----------------------------------------------------------------------------
+
+        $service_price = $service->price;
+        $currency = $service_price->currency;
+        $options = [];
+        $switch_fee = 0;
+        $period = $service_price->period;
+        $total_old_price = (float) $service_price->base;
+        $total_new_price = (float) $service_price->base;
+
+        foreach ($service->getUpdateDowngradeProductOptions() as $u_d_o) {
+            $product_option_group_uuid = $u_d_o['product_option_group']->uuid;
+            $new_product_option_uuid = $request->input($product_option_group_uuid);
+            $current_price_base = $u_d_o['current']->price['base'] ?? 0.00;
+            $total_old_price += (float) $current_price_base;
+
+            if ($product_option_group_uuid == $this->product_data['location_product_option_group_uuid']) {
+                $total_new_price += (float) $current_price_base;
+
+                continue;
+            }
+
+            if ($new_product_option_uuid == $u_d_o['current']->uuid) {
+                $total_new_price += (float) $current_price_base;
+
+                continue;
+            }
+
+            $label = '';
+            $price = 0.00;
+
+            foreach ($u_d_o['up'] as $o_up) {
+                if ($o_up->uuid == $new_product_option_uuid) {
+                    $switch_fee += $o_up->price['switch_up'] ?? 0;
+                    $label = $o_up->name;
+                    $price = $currency->prefix.' '.number_format($o_up->price['base'] ?? 0, 2).' '.$currency->suffix;
+                    $new_price_base = $o_up->price['base'] ?? 0;
+                    $total_new_price += (float) $new_price_base;
+                }
+            }
+
+            foreach ($u_d_o['down'] as $o_down) {
+                if ($o_down->uuid == $new_product_option_uuid) {
+                    $switch_fee += $o_down->price['switch_down'] ?? 0;
+                    $label = $o_down->name;
+                    $price = $currency->prefix.' '.number_format($o_down->price['base'] ?? 0, 2).' '.$currency->suffix;
+                    $new_price_base = $o_down->price['base'] ?? 0;
+                    $total_new_price += (float) $new_price_base;
+                }
+            }
+
+            $options[] = [
+                'group_lable' => $u_d_o['product_option_group']->name,
+                'old' => [
+                    'label' => $u_d_o['current']->name,
+                    'price' => $currency->prefix.' '.number_format($current_price_base, 2).' '.$currency->suffix,
+                ],
+                'new' => [
+                    'label' => $label,
+                    'price' => $price,
+                ],
+
+            ];
+
+        }
+
+        $data = [
+            'switch_fee' => $currency->prefix.' '.number_format($switch_fee, 2).' '.$currency->suffix,
+            'old_price' => $currency->prefix.' '.number_format($total_old_price, 2).' '.$currency->suffix,
+            'new_price' => $currency->prefix.' '.number_format($total_new_price, 2).' '.$currency->suffix,
+            'period' => __('main.'.$period),
+            'options' => $options,
+        ];
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $data,
+        ], 200);
+    }
+
+    public function controllerClient_postAppRescale(Request $request): JsonResponse
+    {
+        // -----------------------------------------------------------------------------
+        $service_lxc_app = $this->getLxcAppInstances();
+        if ($service_lxc_app['status'] == 'error') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => $service_lxc_app['errors'],
+            ], $service_lxc_app['code'] ?? 500);
+        }
+
+        $service = $service_lxc_app['data']['service'];
+        $lxc_instance = $service_lxc_app['data']['lxc_instance'];
+        $app_instance = $service_lxc_app['data']['app_instance'];
+        // -----------------------------------------------------------------------------
+
+        $options = [];
+
+        foreach ($service->getUpdateDowngradeProductOptions() as $u_d_o) {
+
+            $product_option_group_uuid = $u_d_o['product_option_group']->uuid;
+            $new_product_option_uuid = $request->input($product_option_group_uuid);
+
+            if ($product_option_group_uuid == $this->product_data['location_product_option_group_uuid']) {
+                continue;
+            }
+
+            if ($new_product_option_uuid == $u_d_o['current']->uuid) {
+                continue;
+            }
+
+            foreach ($u_d_o['up'] as $o_up) {
+                if ($o_up->uuid == $new_product_option_uuid) {
+                    $options[$product_option_group_uuid] = $new_product_option_uuid;
+                }
+            }
+
+            foreach ($u_d_o['down'] as $o_down) {
+                if ($o_down->uuid == $new_product_option_uuid) {
+                    $options[$product_option_group_uuid] = $new_product_option_uuid;
+                }
+            }
+        }
+
+        if (empty($options)) {
+            return response()->json([
+                'status' => 'error',
+                'errors' => [__('Product.puqProxmox.No update options selected')],
+            ], 412);
+        }
+
+        $update = $service->setUpdateDowngradeProductOptions($options);
+
+        if ($update['status'] == 'error') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => $update['errors'],
+            ], $update['code'] ?? 500);
+        }
+
+        $change_package = $this->change_package();
+
+        if ($change_package['status'] == 'error') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => $change_package['errors'],
+            ], $change_package['code'] ?? 500);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => __('Product.puqProxmox.Successfully'),
+        ], 200);
+    }
+
+
+    private function getLxcAppInstances(): array
+    {
+
+        if ($this->product_data['type'] !== 'app') {
+            return [
+                'status' => 'error',
+                'errors' => [__('Product.puqProxmox.APP not found')],
+                'code' => 412,
+            ];
+        }
+
+        $service = \App\Models\Service::find($this->service_uuid);
+
+        $lxc_instance = PuqPmLxcInstance::query()
+            ->where('service_uuid', $service->uuid)
+            ->first();
+
+        $app_instance = PuqPmAppInstance::query()
+            ->where('puq_pm_lxc_instance_uuid', $lxc_instance?->uuid)
+            ->first();
+
+        if (empty($lxc_instance) || empty($app_instance)) {
+            return [
+                'status' => 'error',
+                'errors' => [__('Product.puqProxmox.APP not found')],
+                'code' => 412,
+            ];
+        }
+
+        return [
+            'status' => 'success',
+            'data' => [
+                'service' => $service,
+                'lxc_instance' => $lxc_instance,
+                'app_instance' => $app_instance,
+            ],
+        ];
+    }
 }

@@ -20,14 +20,12 @@ namespace App\Console\Commands;
 use App\Services\TranslationService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\App;
-use phpseclib3\Net\SSH2;
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
+use Modules\Product\puqProxmox\Models\PuqPmScript;
 
 class DevTest extends Command
 {
     protected $signature = 'Dev:test';
-    protected $description = 'Count non-empty lines in files inside specified folders';
+    protected $description = 'some console command';
 
     public function __construct()
     {
@@ -38,86 +36,8 @@ class DevTest extends Command
 
     public function handle()
     {
-        $folders = [
-            base_path('app'),
-            base_path('database'),
-            base_path('modules'),
-            base_path('lang'),
-            base_path('routes'),
-            base_path('templates'),
-        ];
-
-        $results = [];
-
-        foreach ($folders as $folder) {
-            if (!is_dir($folder)) {
-                $this->warn("Folder not found: $folder");
-
-                continue;
-            }
-            $this->scanDirectory($folder, $results);
-        }
-
-        $this->line(str_pad('File Path', 80) . ' | Lines');
-        $this->line(str_repeat('-', 90));
-
-        $totalFiles = count($results);
-        $totalLines = 0;
-
-        foreach ($results as $item) {
-            $totalLines += $item['lines'];
-            $this->line(str_pad($item['path'], 80) . ' | ' . $item['lines']);
-        }
-
-        $this->line(str_repeat('-', 90));
-        $this->info("Total files: $totalFiles");
-        $this->info("Total non-empty lines: $totalLines");
-
-        return 0;
+//        $sss = PuqPmScript::query()->select('uuid', 'model', 'model_uuid')->where('model_uuid','587cfdcc-9cbf-44ca-87e2-ac543f737eb0')->get();
+//        print_r($sss->toArray());
     }
 
-    protected function scanDirectory(string $path, array &$results)
-    {
-        $extensions = ['php', 'js', 'ts', 'vue', 'blade.php', 'css', 'scss'];
-
-        $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path));
-
-        foreach ($iterator as $file) {
-            if ($file->isDir()) {
-                continue;
-            }
-
-            $ext = $file->getExtension();
-
-            $filename = $file->getFilename();
-            if ($filename === 'blade.php' || str_ends_with($filename, '.blade.php')) {
-                $ext = 'blade.php';
-            }
-
-            if (!in_array($ext, $extensions)) {
-                continue;
-            }
-
-            $fullPath = $file->getPathname();
-            $lines = $this->countNonEmptyLines($fullPath);
-
-            $results[] = [
-                'path' => $fullPath,
-                'lines' => $lines,
-            ];
-        }
-    }
-
-    protected function countNonEmptyLines(string $file): int
-    {
-        $lines = file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-        $count = 0;
-        foreach ($lines as $line) {
-            if (trim($line) !== '') {
-                $count++;
-            }
-        }
-
-        return $count;
-    }
 }

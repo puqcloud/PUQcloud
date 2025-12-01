@@ -91,13 +91,22 @@
                     data: null,
                     name: "domain",
                     render: function(data, type, row) {
+
+                        let main = row.domain;
+
+                        if (row.wildcard === true) {
+                            main = "*." + row.domain;
+                        }
+
                         let aliasesHtml = '';
                         if (row.aliases && row.aliases.length) {
-                            aliasesHtml = '<br><small class="text-muted">' +
+                            aliasesHtml =
+                                '<br><small class="text-muted">' +
                                 row.aliases.join('<br>') +
                                 '</small>';
                         }
-                        return `<strong>${row.domain}</strong>${aliasesHtml}`;
+
+                        return `<strong>${main}</strong>${aliasesHtml}`;
                     }
                 },
                 {
@@ -176,7 +185,7 @@
                     orderable: false,
                     render: function (data, type, row) {
                         var btn = '';
-                        if (row.urls.web_edit) btn += renderEditLink(row.urls.web_edit);
+                        if (row.urls.edit) btn += renderEditLink(row.urls.edit);
                         if (row.urls.delete) btn += renderDeleteButton(row.urls.delete);
                         return btn;
                     }

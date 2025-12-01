@@ -70,7 +70,7 @@ class AdminProductsController extends Controller
                     return $product->name;
                 })
                 ->addColumn('urls', function ($product) {
-                    $urls['web_edit'] = route('admin.web.product.tab', ['uuid' => $product->uuid, 'tab' => 'general']);
+                    $urls['edit'] = route('admin.web.product.tab', ['uuid' => $product->uuid, 'tab' => 'general']);
                     $urls['delete'] = route('admin.api.product.delete', $product->uuid);
 
                     return $urls;
@@ -471,7 +471,10 @@ class AdminProductsController extends Controller
                     }
                 })
                 ->addColumn('currency', function ($price) {
-                    return $price->currency->code;
+                    return $price->currency->code ?? '';
+                })
+                ->addColumn('default', function ($price) {
+                    return $price->currency->default ?? false;
                 })
                 ->addColumn('urls', function ($price) use ($uuid) {
                     $urls['edit'] = route('admin.api.product.price.get', ['uuid' => $uuid, 'p_uuid' => $price->uuid]);
@@ -560,7 +563,7 @@ class AdminProductsController extends Controller
                     return $product_attribute->productAttributeGroup->name;
                 })
                 ->addColumn('urls', function ($product_attribute) use ($uuid) {
-                    $urls['web_edit'] = route('admin.web.product_attribute_group.tab',
+                    $urls['edit'] = route('admin.web.product_attribute_group.tab',
                         ['uuid' => $uuid, 'tab' => 'attributes', 'edit' => $product_attribute->uuid]);
                     $urls['delete'] = route('admin.api.product.product_attribute.delete',
                         ['uuid' => $uuid, 'pa_uuid' => $product_attribute->uuid]);
@@ -714,7 +717,7 @@ class AdminProductsController extends Controller
                     return $product_option_group->productOptions->count();
                 })
                 ->addColumn('urls', function ($product_option_group) use ($uuid) {
-                    $urls['web_edit'] = route('admin.web.product_option_group.tab',
+                    $urls['edit'] = route('admin.web.product_option_group.tab',
                         ['uuid' => $product_option_group->uuid, 'tab' => 'general']);
                     $urls['delete'] = route('admin.api.product.product_option_group.delete',
                         ['uuid' => $uuid, 'pog_uuid' => $product_option_group->uuid]);
@@ -965,7 +968,7 @@ class AdminProductsController extends Controller
                     return $product_group->products->count();
                 })
                 ->addColumn('urls', function ($product_group) {
-                    $urls['web_edit'] = route('admin.web.product_group.tab',
+                    $urls['edit'] = route('admin.web.product_group.tab',
                         ['uuid' => $product_group->uuid, 'tab' => 'general']);
                     $urls['delete'] = route('admin.api.product_group.delete', $product_group->uuid);
 
@@ -1251,7 +1254,7 @@ class AdminProductsController extends Controller
                     return $product->pivot_order;
                 })
                 ->addColumn('urls', function ($product) use ($uuid) {
-                    $urls['web_edit'] = route('admin.web.product.tab', ['uuid' => $product->uuid, 'tab' => 'general']);
+                    $urls['edit'] = route('admin.web.product.tab', ['uuid' => $product->uuid, 'tab' => 'general']);
                     $urls['delete'] = route('admin.api.product_group_product.delete',
                         ['uuid' => $uuid, 'p_uuid' => $product->uuid]);
 
@@ -1618,7 +1621,7 @@ class AdminProductsController extends Controller
                     return $product_attribute_group->productAttributes->count();
                 })
                 ->addColumn('urls', function ($product_attribute_group) {
-                    $urls['web_edit'] = route('admin.web.product_attribute_group.tab',
+                    $urls['edit'] = route('admin.web.product_attribute_group.tab',
                         ['uuid' => $product_attribute_group->uuid, 'tab' => 'general']);
                     $urls['delete'] = route('admin.api.product_attribute_group.delete', $product_attribute_group->uuid);
 
@@ -1792,7 +1795,7 @@ class AdminProductsController extends Controller
                     return $query->images;
                 })
                 ->addColumn('urls', function ($product_attribute) {
-                    $urls['web_edit'] = route('admin.web.product_attribute_group.tab', [
+                    $urls['edit'] = route('admin.web.product_attribute_group.tab', [
                         'uuid' => $product_attribute->product_attribute_group_uuid, 'tab' => 'attributes',
                         'edit' => $product_attribute->uuid,
                     ]);
@@ -1996,7 +1999,7 @@ class AdminProductsController extends Controller
                 ->addColumn('products_count', fn($query) => $query->products_count)
                 ->addColumn('urls', function ($query) {
                     return [
-                        'web_edit' => route('admin.web.product_option_group.tab',
+                        'edit' => route('admin.web.product_option_group.tab',
                             ['uuid' => $query->uuid, 'tab' => 'general']),
                         'delete' => route('admin.api.product_option_group.delete', $query->uuid),
                     ];
@@ -2189,7 +2192,7 @@ class AdminProductsController extends Controller
                     $query->orderBy('order', $direction);
                 })
                 ->addColumn('urls', function ($product_option) {
-                    $urls['web_edit'] = route('admin.web.product_option_group.tab', [
+                    $urls['edit'] = route('admin.web.product_option_group.tab', [
                         'uuid' => $product_option->product_option_group_uuid, 'tab' => 'options',
                         'edit' => $product_option->uuid,
                     ]);
@@ -2380,6 +2383,9 @@ class AdminProductsController extends Controller
                 })
                 ->addColumn('currency', function ($price) {
                     return $price->currency->code ?? '';
+                })
+                ->addColumn('default', function ($price) {
+                    return $price->currency->default ?? false;
                 })
                 ->addColumn('urls', function ($price) use ($uuid) {
                     $urls['edit'] = route('admin.api.product_option.price.get',

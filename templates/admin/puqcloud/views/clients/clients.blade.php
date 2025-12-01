@@ -184,8 +184,8 @@
                     orderable: false,
                     render: function (data, type, row) {
                         var btn = '';
-                        if (row.urls.web_edit) {
-                            btn = btn + renderEditLink(row.urls.web_edit);
+                        if (row.urls.edit) {
+                            btn = btn + renderEditLink(row.urls.edit);
                         }
                         if (row.urls.delete) {
                             btn = btn + renderDeleteButton(row.urls.delete);

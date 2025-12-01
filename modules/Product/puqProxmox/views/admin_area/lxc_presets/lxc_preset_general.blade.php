@@ -335,6 +335,85 @@
                     </div>
                 </div>
 
+                <div class="col-md-2 d-flex">
+                    <div class="card mb-2 border w-100">
+                        <div class="card-header bg-light py-1 px-2 small fw-bold">
+                            <i class="fas fa-cubes me-1"></i> {{ __('Product.puqProxmox.LXC Features') }}
+                        </div>
+
+                        <div class="card-body py-2 px-2">
+                            <div class="row g-2">
+
+                                <div class="col-12 form-check">
+                                    <input class="form-check-input" type="checkbox" name="ha_managed" id="ha_managed" value="1">
+                                    <label class="form-check-label small" for="ha_managed">
+                                        <i class="fas fa-hands-helping me-1 text-muted"></i>
+                                        {{ __('Product.puqProxmox.HA Managed') }}
+                                    </label>
+                                </div>
+
+                                <div class="col-12 form-check">
+                                    <input class="form-check-input" type="checkbox" name="unprivileged" id="unprivileged" value="1">
+                                    <label class="form-check-label small" for="unprivileged">
+                                        <i class="fas fa-user-shield me-1 text-muted"></i>
+                                        {{ __('Product.puqProxmox.Unprivileged') }}
+                                    </label>
+                                </div>
+
+                                <div class="col-12 form-check">
+                                    <input class="form-check-input" type="checkbox" name="nesting" id="nesting" value="1">
+                                    <label class="form-check-label small" for="nesting">
+                                        <i class="fas fa-layer-group me-1 text-muted"></i>
+                                        {{ __('Product.puqProxmox.Nesting') }}
+                                    </label>
+                                </div>
+
+                                <div class="col-12 form-check">
+                                    <input class="form-check-input" type="checkbox" name="fuse" id="fuse" value="1">
+                                    <label class="form-check-label small" for="fuse">
+                                        <i class="fas fa-plug me-1 text-muted"></i>
+                                        {{ __('Product.puqProxmox.Fuse') }}
+                                    </label>
+                                </div>
+
+                                <div class="col-12 form-check">
+                                    <input class="form-check-input" type="checkbox" name="keyctl" id="keyctl" value="1">
+                                    <label class="form-check-label small" for="keyctl">
+                                        <i class="fas fa-key me-1 text-muted"></i>
+                                        {{ __('Product.puqProxmox.Keyctl') }}
+                                    </label>
+                                </div>
+
+                                <div class="col-12 form-check">
+                                    <input class="form-check-input" type="checkbox" name="mknod" id="mknod" value="1">
+                                    <label class="form-check-label small" for="mknod">
+                                        <i class="fas fa-cogs me-1 text-muted"></i>
+                                        {{ __('Product.puqProxmox.Mknod') }}
+                                    </label>
+                                </div>
+
+                                <div class="col-12 form-check">
+                                    <input class="form-check-input" type="checkbox" name="mount_nfs" id="mount_nfs" value="1">
+                                    <label class="form-check-label small" for="mount_nfs">
+                                        <i class="fas fa-network-wired me-1 text-muted"></i>
+                                        {{ __('Product.puqProxmox.Mount NFS') }}
+                                    </label>
+                                </div>
+
+                                <div class="col-12 form-check">
+                                    <input class="form-check-input" type="checkbox" name="mount_cifs" id="mount_cifs" value="1">
+                                    <label class="form-check-label small" for="mount_cifs">
+                                        <i class="fas fa-server me-1 text-muted"></i>
+                                        {{ __('Product.puqProxmox.Mount CIFS') }}
+                                    </label>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
 
             </div>
 
@@ -548,6 +627,15 @@
                         $("#firewall_log_level_out").val(response.data?.firewall_log_level_out);
                         $("#firewall_policy_in").val(response.data?.firewall_policy_in);
                         $("#firewall_policy_out").val(response.data?.firewall_policy_out);
+
+                        $("#ha_managed").prop("checked", response.data?.ha_managed);
+                        $("#unprivileged").prop("checked", response.data?.unprivileged);
+                        $("#nesting").prop("checked", response.data?.nesting);
+                        $("#fuse").prop("checked", response.data?.fuse);
+                        $("#keyctl").prop("checked", response.data?.keyctl);
+                        $("#mknod").prop("checked", response.data?.mknod);
+                        $("#mount_nfs").prop("checked", response.data?.mount_nfs);
+                        $("#mount_cifs").prop("checked", response.data?.mount_cifs);
 
                         unblockUI('container');
                     })

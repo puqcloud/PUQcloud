@@ -65,4 +65,6 @@ return [
     'Total balance cannot exceed :amount' => 'Загальний баланс після поповнення не може перевищувати :amount.',
     'Invoice not found' => 'Рахунок не знайдено',
     'User does not exist or the token has expired' => 'Користувача не існує або токен протерміновано',
+    'Unexpected internal error' => 'Неочікувана внутрішня помилка',
+
 ];

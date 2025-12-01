@@ -679,8 +679,8 @@ return [
     'Renewed At' => 'Renewed At',
 
     'Move To' => 'Move To',
-    '' => '',
-    '' => '',
+    'SSL Manager' => 'SSL Manager',
+    'Retry Deploy' => 'Retry Deploy',
     '' => '',
     '' => '',
     '' => '',

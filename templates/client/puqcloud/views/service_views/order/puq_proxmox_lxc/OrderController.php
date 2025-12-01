@@ -425,7 +425,7 @@ class OrderController
             }
 
             $optionsOutput[] = [
-                'group_lable' => $option->productOptionGroup->name,
+                'group_label' => $option->productOptionGroup->name,
                 'label' => $option->name,
                 'price' => $currency->prefix.' '.number_format($base, 2).' '.$currency->suffix,
             ];

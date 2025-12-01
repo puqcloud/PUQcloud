@@ -87,8 +87,8 @@
                     orderable: false,
                     render: function (data, type, row) {
                         var btn = '';
-                        if (row.urls.web_edit) {
-                            btn += renderEditButton(row.urls.web_edit);
+                        if (row.urls.edit) {
+                            btn += renderEditButton(row.urls.edit);
                         }
                         if (row.urls.delete) {
                             btn += renderDeleteButton(row.urls.delete);

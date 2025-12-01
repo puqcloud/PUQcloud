@@ -218,6 +218,11 @@
                                     <i class="lnr-plus-circle btn-icon-wrapper"></i>{{ __('main.Create') }}
                                 </button>
 
+                                <button data-action="retry_deploy"
+                                        class="mb-2 me-2 btn-icon btn-shadow btn-outline-2x btn btn-outline-primary">
+                                    <i class="lnr-sync btn-icon-wrapper"></i>{{ __('main.Retry Deploy') }}
+                                </button>
+
                                 <button data-action="idle"
                                         class="mb-2 me-2 btn-icon btn-shadow btn-outline-2x btn btn-outline-dark">
                                     <i class="lnr-hourglass btn-icon-wrapper"></i>{{ __('main.Idle') }}

@@ -17,7 +17,9 @@
 
 namespace Modules\Product\puqProxmox\Commands;
 
+use App\Services\TranslationService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\App;
 use Modules\Product\puqProxmox\Models\PuqPmLxcInstance;
 use Carbon\Carbon;
 
@@ -25,6 +27,13 @@ class puqProxmoxMakeBackups extends Command
 {
     protected $signature = 'puqProxmox:MakeBackups';
     protected $description = 'Make Backups task.';
+
+    public function __construct()
+    {
+        parent::__construct();
+        App::setLocale(config('locale.admin.default'));
+        TranslationService::init('admin');
+    }
 
     public function handle()
     {

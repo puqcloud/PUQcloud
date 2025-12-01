@@ -31,6 +31,7 @@ class ApiMiddleware
         if ($response->headers->get('Content-Type') === 'application/pdf') {
             return $response;
         }
+        $response->headers->set('Content-Type', 'application/json');
 
         $statusCode = $response->getStatusCode();
         $data = json_decode($response->content(), true);

@@ -100,8 +100,8 @@
                     orderable: false,
                     render: function (data, type, row) {
                         var btn = '';
-                        if (row.urls.web_edit) {
-                            btn += renderEditButton(row.urls.web_edit);
+                        if (row.urls.edit) {
+                            btn += renderEditLink(row.urls.edit);
                         }
                         if (row.urls.delete) {
                             btn += renderDisconnectButton(row.urls.delete);
@@ -163,12 +163,6 @@
                             $dataTable.ajax.reload(null, false);
                         });
                 }
-            });
-
-            $tableId.on('click', 'button.edit-btn', function (e) {
-                e.preventDefault();
-                var url = $(this).data('model-url');
-                window.open(url, '_blank');
             });
 
             $tableId.on('click', 'button.disconnect-btn', function (e) {

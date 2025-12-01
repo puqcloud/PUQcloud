@@ -73,9 +73,9 @@
                         {{ ucfirst($lxc_instance_status['status'] ?? 'n/a') }}
                     </span>
                 </p>
-                <p><i class="fas fa-memory me-1"></i> Memory: {{ $lxc_instance_status['memory'] ?? 'n/a' }} GB</p>
-                <p><i class="fas fa-hdd me-1"></i> Disk: {{ $lxc_instance_status['disk'] ?? 'n/a' }} GB</p>
-                <p><i class="fas fa-microchip me-1"></i> CPU: {{ $lxc_instance_status['cpu'] ?? 'n/a' }}/{{ $lxc_instance_status['maxcpu'] ?? 'n/a' }}</p>
+                <p><i class="fas fa-memory me-1"></i> Memory: {{ $lxc_instance_status['memory'] ?? 'n/a' }} %</p>
+                <p><i class="fas fa-hdd me-1"></i> Disk: {{ $lxc_instance_status['disk'] ?? 'n/a' }} %</p>
+                <p><i class="fas fa-microchip me-1"></i> CPU: {{ $lxc_instance_status['cpu'] ?? 'n/a' }} %</p>
                 <p><i class="fas fa-network-wired me-1"></i> Net In: {{ $lxc_instance_status['netin'] ?? 'n/a' }} / Out: {{ $lxc_instance_status['netout'] ?? 'n/a' }}</p>
                 <p><i class="fas fa-clock me-1"></i> Uptime: {{ $lxc_instance_status['uptime'] ?? 'n/a' }}</p>
             </div>

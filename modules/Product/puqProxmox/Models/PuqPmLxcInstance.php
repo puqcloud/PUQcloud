@@ -64,12 +64,14 @@ class PuqPmLxcInstance extends Model
         'firewall_policy_in',
         'firewall_policy_out',
 
+        'env',
     ];
 
     protected $casts = [
         'status' => 'array',
         'backup_schedule' => 'array',
         'firewall_rules' => 'array',
+        'env' => 'array',
     ];
 
     protected $guarded = ['status'];
@@ -149,6 +151,54 @@ class PuqPmLxcInstance extends Model
         return $this->belongsTo(Service::class, 'service_uuid', 'uuid');
     }
 
+    public function puqPmScriptLogs(): HasMany
+    {
+        return $this->hasMany(PuqPmScriptLog::class, 'model_uuid', 'uuid')
+            ->where('model', self::class);
+    }
+
+    public function buildFeatures(): string
+    {
+        $p = $this->puqPmLxcPreset;
+        $features = [];
+
+        if ($p->fuse) {
+            $features['fuse'] = 1;
+        }
+        if ($p->mknod) {
+            $features['mknod'] = 1;
+        }
+        if ($p->nesting) {
+            $features['nesting'] = 1;
+        }
+
+        if ($p->unprivileged && $p->keyctl) {
+            $features['keyctl'] = 1;
+        }
+
+        if (!$p->unprivileged) {
+            $mounts = [];
+
+            if ($p->mount_nfs) {
+                $mounts[] = 'nfs';
+            }
+            if ($p->mount_cifs) {
+                $mounts[] = 'cifs';
+            }
+
+            if (!empty($mounts)) {
+                $features['mount'] = implode(';', $mounts);
+            }
+        }
+
+        $parts = [];
+        foreach ($features as $key => $value) {
+            $parts[] = $key.'='.$value;
+        }
+
+        return implode(',', $parts);
+    }
+
     public function buildLxcConfig(): array
     {
         $puq_pm_lxc_preset = $this->puqPmLxcPreset;
@@ -165,7 +215,16 @@ class PuqPmLxcInstance extends Model
             'onboot' => $puq_pm_lxc_preset->onboot,
             'start' => 1,
             'searchdomain' => $puq_pm_lxc_preset->puqPmDnsZone->name,
+
+            'ha-managed' => $puq_pm_lxc_preset->ha_managed,
+            'unprivileged' => $puq_pm_lxc_preset->unprivileged,
         ];
+
+        $features = $this->buildFeatures();
+
+        if (!empty($features)) {
+            $data['features'] = $features;
+        }
 
         $puq_pm_lxc_instance_nets = $this->puqPmLxcInstanceNets;
 
@@ -194,27 +253,28 @@ class PuqPmLxcInstance extends Model
         return array_merge($data, $net);
     }
 
-    public function createLxc(): array
+    public function createLxc(string $note = ''): array
     {
         $puq_pm_lxc_preset = $this->puqPmLxcPreset;
 
         $service = $this->service;
         $service_data = $service->provision_data;
-        $service_data['root_password'] = $this->randomString(16);
-        $service_data['username'] = $this->randomString(8, 'abcdefghijklmnopqrstuvwxyz');
-        $service_data['password'] = $this->randomString(16);
+        $service_data['root_password'] = $this->randomString(8, 'ASDFGHJKQWERTYZXCVBabcdefghkmnpqrstuvwxyz');
+        $service_data['username'] = $this->randomString(6, 'abcdefghkmnpqrstuvwxyz');
+        $service_data['password'] = $this->randomString(8, 'ASDFGHJKQWERTYZXCVBabcdefghkmnpqrstuvwxyz');
         $service_data['show_password_once'] = true;
 
         $service->setProvisionData($service_data);
 
-        $ssh_public_key = PuqPmSshPublicKey::query()
-            ->where('client_uuid', $service->client_uuid)
-            ->where('uuid',
-                $service_data['puq_pm_ssh_public_key_uuid'] ?? '')->first();
-
-        if (!$ssh_public_key) {
-            $ssh_public_key = PuqPmSshPublicKey::query()->where('client_uuid', $service->client_uuid)->first();
+        if (!empty($service_data['puq_pm_ssh_public_key_uuid'])) {
+            $ssh_public_key = PuqPmSshPublicKey::query()
+                ->where('client_uuid', $service->client_uuid)
+                ->where('uuid',
+                    $service_data['puq_pm_ssh_public_key_uuid'] ?? '')->first();
         }
+//        if (!$ssh_public_key) {
+//            $ssh_public_key = PuqPmSshPublicKey::query()->where('client_uuid', $service->client_uuid)->first();
+//        }
 
         $puq_pm_lxc_os_template = $puq_pm_lxc_preset->puqPmLxcOsTemplates()->where('uuid',
             $this->puq_pm_lxc_os_template_uuid)->first();
@@ -238,12 +298,31 @@ class PuqPmLxcInstance extends Model
 
         $data = $this->buildLxcConfig();
 
+        $description = 'client_uuid: '.$service->client_uuid.PHP_EOL.PHP_EOL;
+        $description .= 'service_uuid: '.$service->uuid.PHP_EOL.PHP_EOL;
+        $description .= 'lxc_instance_uuid: '.$this->uuid.PHP_EOL.PHP_EOL;
+        $description .= $note;
+
+
+        $data['description'] = $description;
+
         $data['ostemplate'] = "{$os_template_storage->name}:vztmpl/".$this->addExtensionIfMissing($puq_pm_lxc_template->name);
 
         $data['password'] = $service_data['root_password'];
 
-        if ($ssh_public_key) {
+        if (!empty($ssh_public_key)) {
             $data['ssh-public-keys'] = $ssh_public_key->public_key;
+        }
+
+
+        $features = null;
+        $start = null;
+        if (!empty($data['features'])) {
+            $features = $data['features'];
+            unset($data['features']);
+
+            $start = $data['start'];
+            unset($data['start']);
         }
 
         $create = $puq_pm_cluster->createLxc($data);
@@ -255,6 +334,29 @@ class PuqPmLxcInstance extends Model
         $this->creating_upid = $create['data']['upid'];
         $this->vmid = $create['data']['vmid'];
         $this->save();
+
+        $crete_task = $puq_pm_cluster->waitForTask($this->creating_upid, 100, 5);
+
+        if ($crete_task['status'] == 'error') {
+            return $crete_task;
+        }
+
+        if (!empty($features)) {
+
+            $data_config['vmid'] = $this->vmid;
+            $data_config['node'] = $data['node'];
+            $data_config['features'] = $features;
+
+            $config = $puq_pm_cluster->setLxcConfig($data['node'], $this->vmid, $data_config, true);
+
+            if ($config['status'] == 'error') {
+                return $config;
+            }
+        }
+
+        if (!empty($start)) {
+            $start = $this->start();
+        }
 
         $this->getStatus();
 
@@ -589,7 +691,7 @@ class PuqPmLxcInstance extends Model
             $post_install_script->script
         );
 
-        $post_install = $this->runSshScriptOnLxc($script);
+        $post_install = $this->runSshScriptOnLxc($script, $post_install_script);
 
         if ($post_install['status'] !== 'success') {
             return $post_install;
@@ -606,7 +708,7 @@ class PuqPmLxcInstance extends Model
         return ['status' => 'success'];
     }
 
-    public function runSshScriptOnLxc($script): array
+    public function runSshScriptOnLxc(string $script, $puq_pm_script = null): array
     {
         $puq_pm_cluster = $this->puqPmCluster;
 
@@ -617,7 +719,7 @@ class PuqPmLxcInstance extends Model
             ];
         }
 
-        return $puq_pm_cluster->runSshScriptOnLxc($this->vmid, $script);
+        return $puq_pm_cluster->runSshScriptOnLxc($this, $script, $puq_pm_script);
     }
 
     // Generate a random string
@@ -717,20 +819,19 @@ class PuqPmLxcInstance extends Model
 
         $service_data = $service->provision_data;
 
-        $os_product_option_group_uuid = data_get($product,
-            'module.module.product_data.os_product_option_group_uuid');
+        $os_product_option_group_uuid = data_get($product, 'module.module.product_data.os_product_option_group_uuid');
         $os_product_option = $service->productOptions()->where('product_option_group_uuid',
             $os_product_option_group_uuid)->first();
 
         $os_product_icon_url = data_get($os_product_option, 'images.icon');
-        $os_product_name = $os_product_option->name;
+        $os_product_name = $os_product_option?->name;
 
         $mp_size = $this->mp_size > 0 ? (string) $this->mp_size / 1024 .' GB' : null;
 
         $data = [
             'os' => [
-                'icon_url' => $os_product_icon_url,
-                'name' => $os_product_name,
+                'icon_url' => $os_product_icon_url ?? '',
+                'name' => $os_product_name ?? '',
             ],
             'cores' => (string) $this->cores,
             'ram' => (string) $this->memory / 1024 .' GB',
@@ -816,7 +917,7 @@ class PuqPmLxcInstance extends Model
             'uptime' => $uptime,
         ];
 
-        return array_merge($status, $custom);
+        return array_merge($status ?? [], $custom);
 
     }
 
@@ -945,8 +1046,8 @@ class PuqPmLxcInstance extends Model
         $service = $this->service;
         $service_data = $service->provision_data;
 
-        $service_data['root_password'] = $this->randomString(16);
-        $service_data['password'] = $this->randomString(16);
+        $service_data['root_password'] = $this->randomString(8, 'ASDFGHJKQWERTYZXCVBabcdefghkmnpqrstuvwxyz');
+        $service_data['password'] = $this->randomString(8, 'ASDFGHJKQWERTYZXCVBabcdefghkmnpqrstuvwxyz');
         $service_data['show_password_once'] = true;
 
         $puq_pm_lxc_os_template = $this->puqPmLxcOsTemplate;
@@ -962,7 +1063,7 @@ class PuqPmLxcInstance extends Model
             $reset_password_script->script
         );
 
-        $reset_passwords = $this->runSshScriptOnLxc($script);
+        $reset_passwords = $this->runSshScriptOnLxc($script, $reset_password_script);
 
         if ($reset_passwords['status'] !== 'success') {
             return $reset_passwords;
@@ -1477,14 +1578,14 @@ class PuqPmLxcInstance extends Model
     }
 
     // Rescale
-    public function rescaleNow(): array
+    public function rescaleNow(array $extra_product_options = []): array
     {
         $lcx_preset = $this->puqPmLxcPreset;
         $service = $this->service;
         $product = $service->product;
         $puq_pm_cluster = $this->puqPmCluster;
         $product_data = data_get($product, 'module.module.product_data');
-        $product_options = $lcx_preset->getServiceProductOptions($service, $product_data);
+        $product_options = $lcx_preset->getServiceProductOptions($service, $product_data, $extra_product_options);
         $status = $this->getStatus();
 
         if ($status['status'] == 'running') {
@@ -1496,7 +1597,7 @@ class PuqPmLxcInstance extends Model
 
         // Backups -------------------------------------------------------------------------
         $backup_count = $lcx_preset->backup_count + $product_options['backup_count'];
-        if ($this->backup_count != $this->backup_count) {
+        if ($this->backup_count != $backup_count) {
 
             $set_backup_storage = $this->setBackupStorage();
 
@@ -2200,6 +2301,42 @@ class PuqPmLxcInstance extends Model
             }
         }
 
+    }
+
+    public function getScriptLogList(): array
+    {
+        $logs = [];
+        $puq_pm_script_logs = $this->puqPmScriptLogs()->select([
+            'uuid',
+            'puq_pm_script_uuid',
+            'status',
+            'duration',
+            'model',
+            'model_uuid',
+            'created_at',
+        ])->orderBy('created_at')->get();
+
+        foreach ($puq_pm_script_logs as $puq_pm_script_log) {
+            $puq_pm_script = $puq_pm_script_log->puqPmScript;
+            $puq_pm_script_log_tmp = [
+                'uuid' => $puq_pm_script_log->uuid,
+                'status' => $puq_pm_script_log->status,
+                'duration' => $puq_pm_script_log->duration,
+                'created_at' => $puq_pm_script_log->created_at,
+            ];
+            $relatedModel = $puq_pm_script->relatedModel;
+            $logs[$puq_pm_script->uuid] = [
+                'puq_pm_script_uuid' => $puq_pm_script->uuid,
+                'puq_pm_script_type' => $puq_pm_script->type,
+                'puq_pm_script_name' => $puq_pm_script->name,
+                'puq_pm_script_logs' => $puq_pm_script_log_tmp,
+                'related_model_name' => $relatedModel->name,
+                'related_model_class' => class_basename($relatedModel),
+
+            ];
+        }
+
+        return array_values($logs);
     }
 
 }

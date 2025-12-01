@@ -96,9 +96,16 @@
             ];
 
             var $dataTable = initializeDataTable($tableId, ajaxUrl, columnsConfig, DataTableAddData, {
-                "paging": false,
-                "ordering": false,
-                "searching": false
+                paging: false,
+                ordering: false,
+                searching: false,
+                columns: columnsConfig,
+
+                rowCallback: function (row, data) {
+                    if (data.default === 1) {
+                        $(row).addClass('table-success');
+                    }
+                }
             });
 
             function DataTableAddData() {

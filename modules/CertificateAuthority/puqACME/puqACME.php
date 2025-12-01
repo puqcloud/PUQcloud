@@ -36,7 +36,7 @@ class puqACME extends CertificateAuthority
     public function getModuleData(array $data = []): array
     {
         $this->module_data = [
-            'ca' => $data['ca'] ?? 'letsencrypt',                        // letsencrypt, letsencrypt_staging, zerossl
+            'ca' => $data['ca'] ?? 'zerossl',                        // letsencrypt, letsencrypt_staging, zerossl
             'email' => $data['email'] ?? '',                            // Account email used for registration
             'allow_wildcard' => $data['allow_wildcard'] ?? true,        // Whether CA supports *.domain
             'dns_zone_uuid' => $data['dns_zone_uuid'] ?? '',            // dns zone for dns-01
@@ -378,12 +378,12 @@ class puqACME extends CertificateAuthority
             ];
         }
 
-        if (empty($this->certificate_data['accept_tos']) or $this->certificate_data['accept_tos'] != 'yes') {
-            return [
-                'status' => 'error',
-                'errors' => [__('CertificateAuthority.puqACME.You must accept the Terms of Service')],
-            ];
-        }
+//        if (empty($this->certificate_data['accept_tos']) or $this->certificate_data['accept_tos'] != 'yes') {
+//            return [
+//                'status' => 'error',
+//                'errors' => [__('CertificateAuthority.puqACME.You must accept the Terms of Service')],
+//            ];
+//        }
         $request = [
             'certificate_uuid' => $this->certificate->uuid,
             'certificate_domain' => $this->certificate->domain,
@@ -404,7 +404,10 @@ class puqACME extends CertificateAuthority
         $privateKey = RSA::createKey(2048)->withPadding(RSA::SIGNATURE_PKCS1);
 
         $this->certificate_data['account_private_key'] = Crypt::encrypt($privateKey->toString('PKCS8'));
-        $this->certificate_data['account_email'] = $this->certificate_data['account_email'] ?? $this->module_data['email'];
+        $this->certificate_data['account_email'] =
+            !empty($this->certificate_data['account_email'])
+                ? $this->certificate_data['account_email']
+                : $this->module_data['email'];
         $this->certificate_data['account_id'] = '';
         $this->certificate_data['certificate_url'] = '';
         $this->certificate_data['finalize_url'] = '';
@@ -481,14 +484,14 @@ class puqACME extends CertificateAuthority
         $this->consoleLog('info', 'DNS Zone loaded', ['zone' => $this->tech_dns_zone->name]);
 
         // --- Step 3: Check Terms of Service ---
-        if (empty($this->certificate_data['accept_tos']) || $this->certificate_data['accept_tos'] !== 'yes') {
-            $error = 'You must accept the Terms of Service';
-            $this->logError('TOS not accepted', $data, $error);
-            $this->consoleLog('error', 'TOS not accepted', $data);
-
-            return ['status' => 'error', 'errors' => [$error]];
-        }
-        $this->consoleLog('info', 'Terms of Service accepted');
+//        if (empty($this->certificate_data['accept_tos']) || $this->certificate_data['accept_tos'] !== 'yes') {
+//            $error = 'You must accept the Terms of Service';
+//            $this->logError('TOS not accepted', $data, $error);
+//            $this->consoleLog('error', 'TOS not accepted', $data);
+//
+//            return ['status' => 'error', 'errors' => [$error]];
+//        }
+//        $this->consoleLog('info', 'Terms of Service accepted');
 
         // --- Step 4: Check DNS Validation Records ---
         $check_cname_dns_records = $this->checkCnameDnsValidationRecords();
@@ -756,6 +759,12 @@ class puqACME extends CertificateAuthority
             'status' => 'active',
         ]);
 
+        $clear_dns_records = $this->clearDnsRecords();
+        if ($clear_dns_records['status'] === 'error') {
+            $this->logError('Clear DNS Records', $this->certificate->domain, $clear_dns_records);
+            $this->consoleLog('error', 'Clear DNS Records Error', $clear_dns_records['errors'] ?? '');
+        }
+
         return [
             'status' => 'success',
             'message' => 'Certificate successfully issued',
@@ -906,6 +915,55 @@ class puqACME extends CertificateAuthority
         }
 
         return null;
+    }
+
+    public function clearDnsRecords(): array
+    {
+        $domains = array_merge([$this->certificate->domain], $this->certificate->aliases ?? []);
+        $errors = [];
+
+        foreach ($domains as $domain) {
+            $txtRecords = $this->tech_dns_zone->dnsRecords()
+                ->where('name', $domain)
+                ->where('type', 'TXT')
+                ->get();
+
+            foreach ($txtRecords as $record) {
+                $deleted = $this->tech_dns_zone->deleteRecord($record->uuid);
+                if (($deleted['status'] ?? '') === 'error') {
+                    $errors[] = "TXT record deletion failed for $domain: " . json_encode($deleted['errors'] ?? []);
+                }
+            }
+
+            $dns_zone = $this->findDnsZoneForDomain($domain);
+            if ($dns_zone) {
+                $record_name = '_acme-challenge.' . $domain;
+                if (str_ends_with($record_name, '.' . $dns_zone->name)) {
+                    $record_name = substr($record_name, 0, -strlen('.' . $dns_zone->name));
+                }
+
+                $cnameRecords = $dns_zone->dnsRecords()
+                    ->where('name', $record_name)
+                    ->where('type', 'CNAME')
+                    ->get();
+
+                foreach ($cnameRecords as $record) {
+                    $deleted = $dns_zone->deleteRecord($record->uuid);
+                    if (($deleted['status'] ?? '') === 'error') {
+                        $errors[] = "CNAME record deletion failed for $domain: " . json_encode($deleted['errors'] ?? []);
+                    }
+                }
+            } else {
+                $errors[] = "No DNS zone found for $domain";
+            }
+        }
+
+        if (!empty($errors)) {
+            $this->logError('clearDnsRecords', $domains, $errors);
+            return ['status' => 'error', 'errors' => $errors];
+        }
+
+        return ['status' => 'success'];
     }
 
     // checking

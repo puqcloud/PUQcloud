@@ -53,7 +53,7 @@ class Client extends Model
         });
 
         static::retrieved(function ($client) {
-            if (! ClientBalance::where('client_uuid', $client->uuid)->exists()) {
+            if (!ClientBalance::where('client_uuid', $client->uuid)->exists()) {
                 ClientBalance::createSafe([
                     'client_uuid' => $client->uuid,
                     'balance' => 0,
@@ -64,7 +64,7 @@ class Client extends Model
         static::saving(function ($model) {
 
             $billingAddress = $model->billingAddress();
-            if (! empty($billingAddress)) {
+            if (!empty($billingAddress)) {
                 $countryCode = $billingAddress->country->code;
                 $euCountries = config('taxes.EU');
 
@@ -200,7 +200,7 @@ class Client extends Model
         logActivity('info', 'Start VIES VAT validation', 'vies_validation', null, null, null, $this->uuid);
 
         $vies_validation = $this->viesValidation;
-        if (! $vies_validation) {
+        if (!$vies_validation) {
             $vies_validation = new ViesValidation;
             $vies_validation->client_uuid = $this->uuid;
         }
@@ -208,10 +208,11 @@ class Client extends Model
 
         $billingAddress = $this->billingAddress();
 
-        if (! $billingAddress) {
+        if (!$billingAddress) {
             $vies_validation->error = 'Billing address not found';
             $vies_validation->save();
-            logActivity('error', 'Billing address not found during VIES validation', 'vies_validation', null, null, null, $this->uuid);
+            logActivity('error', 'Billing address not found during VIES validation', 'vies_validation', null, null,
+                null, $this->uuid);
 
             return;
         }
@@ -219,10 +220,11 @@ class Client extends Model
         $countryCode = $billingAddress->country->code;
         $euCountries = config('taxes.EU');
 
-        if (! array_key_exists($countryCode, $euCountries)) {
+        if (!array_key_exists($countryCode, $euCountries)) {
             $vies_validation->error = 'Not applicable';
             $vies_validation->save();
-            logActivity('error', 'Client not from EU country during VIES validation', 'vies_validation', null, null, null, $this->uuid);
+            logActivity('error', 'Client not from EU country during VIES validation', 'vies_validation', null, null,
+                null, $this->uuid);
 
             return;
         }
@@ -258,12 +260,14 @@ class Client extends Model
                 $vies_validation->save();
             } else {
                 $vies_validation->error = 'Request failed or timed out';
-                logActivity('error', 'VIES request failed or timed out', 'vies_validation', null, null, null, $this->uuid);
+                logActivity('error', 'VIES request failed or timed out', 'vies_validation', null, null, null,
+                    $this->uuid);
                 $vies_validation->save();
             }
         } catch (\Exception $e) {
             $vies_validation->error = $e->getMessage();
-            logActivity('error', 'Exception during VIES validation: '.$e->getMessage(), 'vies_validation', null, null, null, $this->uuid);
+            logActivity('error', 'Exception during VIES validation: '.$e->getMessage(), 'vies_validation', null, null,
+                null, $this->uuid);
             $vies_validation->save();
         }
 
@@ -273,14 +277,18 @@ class Client extends Model
     public function getTaxRule(): ?TaxRule
     {
         $private_client = empty($this->tax_id) && empty($this->company_name);
-        $company_without_tax_id = empty($this->tax_id) && ! empty($this->company_name);
-        $company_with_tax_id = ! empty($this->tax_id);
+        $company_without_tax_id = empty($this->tax_id) && !empty($this->company_name);
+        $company_with_tax_id = !empty($this->tax_id);
 
         $billingAddress = $this->billingAddress();
         $country_uuid = $billingAddress->country->uuid ?? null;
         $region_uuid = $billingAddress->region->uuid ?? null;
 
-        $tax_rule = TaxRule::where(function ($query) use ($private_client, $company_without_tax_id, $company_with_tax_id) {
+        $tax_rule = TaxRule::where(function ($query) use (
+            $private_client,
+            $company_without_tax_id,
+            $company_with_tax_id
+        ) {
             if ($private_client) {
                 $query->where('private_client', true);
             }
@@ -312,7 +320,7 @@ class Client extends Model
         $billingAddress = $this->billingAddress();
         $country_uuid = $billingAddress->country->uuid ?? null;
 
-        if (! $tax_rule) {
+        if (!$tax_rule) {
             $home_company = HomeCompany::where('default', true)->first();
         } else {
             $home_company = $tax_rule->homeCompany;
@@ -331,7 +339,7 @@ class Client extends Model
         if ($tax_rule) {
             $taxes = [];
             foreach (['tax_1', 'tax_2', 'tax_3'] as $tax) {
-                if (! empty($tax_rule->{$tax})) {
+                if (!empty($tax_rule->{$tax})) {
                     $taxes[] = ['name' => $tax_rule->{$tax.'_name'}, 'rate' => $tax_rule->{$tax}];
                 }
             }
@@ -341,7 +349,7 @@ class Client extends Model
 
         $taxes = [];
         foreach (['tax_1', 'tax_2', 'tax_3'] as $tax) {
-            if (! empty($home_company->{$tax})) {
+            if (!empty($home_company->{$tax})) {
                 $taxes[] = ['name' => $home_company->{$tax.'_name'}, 'rate' => $home_company->{$tax}];
             }
         }
@@ -353,7 +361,7 @@ class Client extends Model
     {
         $tax_rule = $this->getTaxRule();
 
-        if (! $tax_rule) {
+        if (!$tax_rule) {
             $home_company = HomeCompany::where('default', true)->first();
         } else {
             $home_company = $tax_rule->homeCompany;
@@ -415,7 +423,7 @@ class Client extends Model
     public function getNotificationRule($category, $notification): ?NotificationRule
     {
         $home_company = $this->getHomeCompany();
-        if (! $home_company) {
+        if (!$home_company) {
             return null;
         }
         $group = $home_company->group;
@@ -442,11 +450,11 @@ class Client extends Model
         $recommended_add_funds_amount = min($recommended_add_funds_amount, $max_add_funds_amount);
 
         return [
-            'balance' => round($balance, 2,PHP_ROUND_HALF_UP),
-            'min_add_funds_amount' => round($min_add_funds_amount, 2,PHP_ROUND_HALF_UP),
-            'max_add_funds_amount' => round($max_add_funds_amount, 2,PHP_ROUND_HALF_UP),
-            'max_client_balance' => round($max_client_balance, 2,PHP_ROUND_HALF_UP),
-            'recommended_add_funds_amount' => ceil($recommended_add_funds_amount * 100) / 100,
+            'balance' => round($balance, 2, PHP_ROUND_HALF_UP),
+            'min_add_funds_amount' => round($min_add_funds_amount, 2, PHP_ROUND_HALF_UP),
+            'max_add_funds_amount' => round($max_add_funds_amount, 2, PHP_ROUND_HALF_UP),
+            'max_client_balance' => round($max_client_balance, 2, PHP_ROUND_HALF_UP),
+            'recommended_add_funds_amount' => round($recommended_add_funds_amount, 0),
             'taxes' => $taxes,
             'currency' => [
                 'code' => $currency->code,
@@ -534,12 +542,12 @@ class Client extends Model
         }
 
         $totals = [
-            'hourly' => round($totalHourly, 4,PHP_ROUND_HALF_UP),
-            'daily' => round($totalHourly * 24, 2,PHP_ROUND_HALF_UP),
-            'weekly' => round($totalHourly * 168, 2,PHP_ROUND_HALF_UP),
-            'monthly' => round($totalHourly * 720, 2,PHP_ROUND_HALF_UP),
-            'yearly' => round($totalHourly * 8760, 2,PHP_ROUND_HALF_UP),
-            'recommended_funds' => round($this->calculateRecommendedAddFundsAmount(), 2,PHP_ROUND_HALF_UP),
+            'hourly' => round($totalHourly, 4, PHP_ROUND_HALF_UP),
+            'daily' => round($totalHourly * 24, 2, PHP_ROUND_HALF_UP),
+            'weekly' => round($totalHourly * 168, 2, PHP_ROUND_HALF_UP),
+            'monthly' => round($totalHourly * 720, 2, PHP_ROUND_HALF_UP),
+            'yearly' => round($totalHourly * 8760, 2, PHP_ROUND_HALF_UP),
+            'recommended_funds' => round($this->calculateRecommendedAddFundsAmount(), 2, PHP_ROUND_HALF_UP),
             'currency' => $currency,
         ];
 

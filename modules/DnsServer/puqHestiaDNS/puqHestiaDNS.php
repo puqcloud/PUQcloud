@@ -1157,7 +1157,7 @@ class puqHestiaDNS extends DnsServer
         $data = [
             'module' => $this,
             'method' => 'deleteRecordJob',
-            'callback' => 'restoreRecordOnDeleteError',
+            'callback' => '',  // No callback needed - workaround is handled synchronously in deleteRecordJob
             'tries' => 5,
             'backoff' => 60,
             'timeout' => 600,
@@ -1212,39 +1212,9 @@ class puqHestiaDNS extends DnsServer
 
         $client = new puqHestiaDnsClient($this->module_data);
 
-        // Check if this is an A record and if it's the last one
-        if ($type === 'A') {
-            $allRecordsResult = $client->listDnsRecords($model_zone->name);
-            if ($allRecordsResult['status'] === 'success') {
-                $aRecordCount = 0;
-                foreach ($allRecordsResult['data'] as $r) {
-                    if ($r['TYPE'] === 'A') $aRecordCount++;
-                }
-                
-                if ($aRecordCount === 1) {
-                    $this->logError('deleteRecordJob - Cannot Delete Last A Record', [
-                        'zone' => $model_zone->name,
-                        'name' => $name,
-                        'type' => $type,
-                        'content' => $content
-                    ], ['error' => 'Cannot delete the last A record. Zone must have at least one A record.']);
-                    
-                    return [
-                        'status' => 'error',
-                        'errors' => [__('DnsServer.puqHestiaDNS.cannot_delete_last_a_record')],
-                        'code' => 422,
-                    ];
-                }
-                
-                $this->logInfo('deleteRecordJob - A Record Analysis', [
-                    'zone' => $model_zone->name,
-                    'total_a_records' => $aRecordCount,
-                    'safe_to_delete' => true
-                ], []);
-            }
-        }
-
         // Find record by name, type and content
+        // Note: Early A record check removed - let HestiaCP API return the error,
+        // then workaround will handle it by creating new record and deleting old one
         $this->logInfo('Delete Record Job - Searching for Record on HestiaCP', [
             'zone' => $model_zone->name,
             'name' => $name,
@@ -1281,21 +1251,156 @@ class puqHestiaDNS extends DnsServer
             'result_errors' => $result['errors'] ?? []
         ], $result);
         
-        // Handle specific HestiaCP errors
+        // Handle specific HestiaCP error: "at least one A record should remain active"
+        // Solution: Create new record first, then delete the old one
         if ($result['status'] === 'error' && isset($result['errors'])) {
             foreach ($result['errors'] as $error) {
                 if (strpos($error, 'at least one A record should remain active') !== false) {
-                    $this->logError('deleteRecordJob - Cannot Delete Last A Record', [
+                    $this->logInfo('deleteRecordJob - Last A Record Error Detected, Applying Workaround', [
+                        'zone' => $model_zone->name,
+                        'name' => $name,
+                        'type' => $type,
+                        'content' => $content,
+                        'old_record_id' => $recordId
+                    ], []);
+                    
+                    // Step 1: Create new record in DB
+                    $this->logInfo('deleteRecordJob - Creating New Record in DB', [
                         'zone' => $model_zone->name,
                         'name' => $name,
                         'type' => $type,
                         'content' => $content
-                    ], ['error' => $error]);
+                    ], []);
                     
+                    $autoComment = 'Default A record for domain HestiaDNS module (HestiaCP requires at least one A record in zone)';
+                    $recordDescription = !empty($description) ? $description . ' | ' . $autoComment : $autoComment;
+                    
+                    $newRecord = new DnsRecord();
+                    $newRecord->dns_zone_uuid = $zone_uuid;
+                    $newRecord->name = $name;
+                    $newRecord->type = $type;
+                    $newRecord->content = $content;
+                    $newRecord->ttl = $ttl;
+                    $newRecord->description = $recordDescription;
+                    $newRecord->save();
+                    
+                    $this->logInfo('deleteRecordJob - New Record Created in DB', [
+                        'zone' => $model_zone->name,
+                        'new_record_uuid' => $newRecord->uuid
+                    ], []);
+                    
+                    // Step 2: Create record on ALL servers synchronously
+                    $this->logInfo('deleteRecordJob - Creating Record on All Servers (sync)', [
+                        'zone' => $model_zone->name,
+                        'new_record_uuid' => $newRecord->uuid
+                    ], []);
+                    
+                    $dnsServerGroup = $model_zone->dnsServerGroup;
+                    $createErrors = [];
+                    
+                    foreach ($dnsServerGroup->dnsServers as $dnsServer) {
+                        $this->logInfo('deleteRecordJob - Creating Record on Server', [
+                            'server_id' => $dnsServer->id,
+                            'server_name' => $dnsServer->name,
+                            'server_module' => $dnsServer->module->module_name ?? 'unknown',
+                            'record_uuid' => $newRecord->uuid
+                        ], []);
+                        
+                        try {
+                            // Call getModuleData first to setup configuration
+                            $dataResult = $dnsServer->module->moduleExecute('getModuleData', $dnsServer->configuration);
+                            if ($dataResult['status'] === 'error') {
+                                $createErrors[] = "Server {$dnsServer->name}: Failed to get module data - " . implode(', ', $dataResult['errors'] ?? ['Unknown error']);
+                                continue;
+                            }
+                            
+                            // Call createRecordJob directly (synchronously)
+                            $serverResult = $dnsServer->module->moduleExecute('createRecordJob', $newRecord->uuid);
+                            
+                            $this->logInfo('deleteRecordJob - Server Create Result', [
+                                'server_id' => $dnsServer->id,
+                                'server_name' => $dnsServer->name,
+                                'result_status' => $serverResult['status'] ?? 'unknown'
+                            ], $serverResult);
+                            
+                            if ($serverResult['status'] === 'error') {
+                                $createErrors[] = "Server {$dnsServer->name}: " . implode(', ', $serverResult['errors'] ?? ['Unknown error']);
+                            }
+                        } catch (\Exception $e) {
+                            $errorMsg = "Server {$dnsServer->name}: " . $e->getMessage();
+                            $createErrors[] = $errorMsg;
+                            $this->logError('deleteRecordJob - Exception Creating on Server', [
+                                'server_id' => $dnsServer->id,
+                                'server_name' => $dnsServer->name,
+                                'exception' => $e->getMessage()
+                            ], []);
+                        }
+                    }
+                    
+                    if (!empty($createErrors)) {
+                        $this->logError('deleteRecordJob - Some Servers Failed to Create Record', [
+                            'zone' => $model_zone->name,
+                            'errors' => $createErrors
+                        ], []);
+                        
+                        // Delete record from DB
+                        $newRecord->delete();
+                        
+                        return [
+                            'status' => 'error',
+                            'errors' => array_merge([__('DnsServer.puqHestiaDNS.cannot_delete_last_a_record')], $createErrors),
+                            'code' => 422,
+                        ];
+                    }
+                    
+                    $this->logInfo('deleteRecordJob - Record Created on All Servers Successfully', [
+                        'zone' => $model_zone->name,
+                        'new_record_uuid' => $newRecord->uuid
+                    ], []);
+                    
+                    // Step 2: Delete old record from HestiaCP by ID
+                    // Now it's no longer the last A record because we created a new one
+                    $this->logInfo('deleteRecordJob - Deleting Old Record from HestiaCP', [
+                        'zone' => $model_zone->name,
+                        'old_record_id' => $recordId
+                    ], []);
+                    
+                    // Use restart=true to reload DNS after deletion
+                    $deleteOldResult = $client->deleteDnsRecord($model_zone->name, $recordId, true);
+                    
+                    $this->logInfo('deleteRecordJob - Delete Old Record Result', [
+                        'zone' => $model_zone->name,
+                        'old_record_id' => $recordId,
+                        'result' => $deleteOldResult
+                    ], $deleteOldResult);
+                    
+                    if ($deleteOldResult['status'] === 'error') {
+                        $this->logError('deleteRecordJob - Failed to Delete Old Record by ID', [
+                            'zone' => $model_zone->name,
+                            'old_record_id' => $recordId,
+                            'note' => 'New record created on all servers, but old record remains on HestiaCP. This may cause duplicate A records on HestiaCP.'
+                        ], $deleteOldResult);
+                        
+                        // Don't fail the job - new record is created on all servers
+                        // Just log the warning about duplicate on HestiaCP
+                        $this->logInfo('deleteRecordJob - Workaround Partially Successful', [
+                            'zone' => $model_zone->name,
+                            'new_record_uuid' => $newRecord->uuid,
+                            'note' => 'New record created on all servers in group, but old record could not be deleted from HestiaCP. Manual cleanup may be needed.'
+                        ], []);
+                    } else {
+                        $this->logInfo('deleteRecordJob - Workaround Successful', [
+                            'zone' => $model_zone->name,
+                            'old_record_id' => $recordId,
+                            'new_record_uuid' => $newRecord->uuid,
+                            'note' => 'Old record deleted from HestiaCP, new record created successfully on all servers in group (PowerDNS, HestiaCP, etc.)'
+                        ], []);
+                    }
+                    
+                    // Return success - the record has been effectively "replaced"
                     return [
-                        'status' => 'error',
-                        'errors' => [__('DnsServer.puqHestiaDNS.cannot_delete_last_a_record')],
-                        'code' => 422,
+                        'status' => 'success',
+                        'message' => 'Record replaced successfully (last A record workaround applied)',
                     ];
                 }
             }
@@ -1307,6 +1412,13 @@ class puqHestiaDNS extends DnsServer
     /**
      * Callback to restore record in DB if deletion failed
      * Called after deleteRecordJob completes
+     * 
+     * NOTE: "Last A record" error is now handled synchronously in deleteRecordJob.
+     * This callback is kept for potential future use with other error types.
+     * 
+     * For "last A record" error (handled in deleteRecordJob now):
+     * 1. Create new record through DnsZone->createUpdateRecord() (creates on all servers)
+     * 2. Delete old record on HestiaCP by ID
      */
     public function restoreRecordOnDeleteError($result, $jobId): void
     {
@@ -1352,7 +1464,7 @@ class puqHestiaDNS extends DnsServer
             $ttl = $params[4] ?? 3600;
             $description = $params[5] ?? '';
             
-            $this->logInfo('restoreRecordOnDeleteError - Restoring Record', [
+            $this->logInfo('restoreRecordOnDeleteError - Processing Last A Record Error', [
                 'zone_uuid' => $zone_uuid,
                 'name' => $name,
                 'type' => $type,
@@ -1361,14 +1473,14 @@ class puqHestiaDNS extends DnsServer
                 'description' => $description
             ], []);
             
-            // Restore record in database
+            // Get zone
             $zone = DnsZone::where('uuid', $zone_uuid)->first();
             if (!$zone) {
                 $this->logError('restoreRecordOnDeleteError - Zone Not Found', ['zone_uuid' => $zone_uuid], []);
                 return;
             }
             
-            // Check if record already exists (maybe it wasn't deleted)
+            // Check if record already exists (maybe it wasn't deleted from DB)
             $existingRecord = $zone->dnsRecords()
                 ->where('name', $name)
                 ->where('type', $type)
@@ -1376,30 +1488,122 @@ class puqHestiaDNS extends DnsServer
                 ->first();
             
             if ($existingRecord) {
-                $this->logInfo('restoreRecordOnDeleteError - Record Already Exists, No Restoration Needed', [
+                $this->logInfo('restoreRecordOnDeleteError - Record Already Exists in DB', [
                     'zone_uuid' => $zone_uuid,
+                    'record_uuid' => $existingRecord->uuid,
                     'name' => $name
+                ], []);
+                // Record exists in DB, continue to recreate on servers
+                $record = $existingRecord;
+            } else {
+                // Create new record in DB
+                $record = new DnsRecord();
+                $record->dns_zone_uuid = $zone_uuid;
+                $record->name = $name;
+                $record->type = $type;
+                $record->content = $content;
+                $record->ttl = $ttl;
+                $record->description = $description;
+                $record->save();
+                
+                $this->logInfo('restoreRecordOnDeleteError - Record Restored in DB', [
+                    'zone_uuid' => $zone_uuid,
+                    'record_uuid' => $record->uuid,
+                    'name' => $name,
+                    'type' => $type,
+                    'content' => $content
+                ], []);
+            }
+            
+            // Step 1: Create record on all servers in the group
+            // This will create new records with new IDs on all servers
+            $this->logInfo('restoreRecordOnDeleteError - Creating Record on All Servers', [
+                'zone_uuid' => $zone_uuid,
+                'record_uuid' => $record->uuid,
+                'zone_name' => $zone->name
+            ], []);
+            
+            try {
+                $createResult = $zone->runOnDnsServers(fn($dns_server) => $dns_server->createRecord($record->uuid));
+                
+                $this->logInfo('restoreRecordOnDeleteError - Create on All Servers Result', [
+                    'zone_uuid' => $zone_uuid,
+                    'record_uuid' => $record->uuid,
+                    'result' => $createResult
+                ], []);
+                
+                if ($createResult['status'] === 'error') {
+                    $this->logError('restoreRecordOnDeleteError - Failed to Create Record on Servers', [
+                        'zone_uuid' => $zone_uuid,
+                        'record_uuid' => $record->uuid
+                    ], $createResult);
+                    return;
+                }
+            } catch (\Exception $e) {
+                $this->logError('restoreRecordOnDeleteError - Exception Creating Record on Servers', [
+                    'zone_uuid' => $zone_uuid,
+                    'record_uuid' => $record->uuid,
+                    'exception' => $e->getMessage()
                 ], []);
                 return;
             }
             
-            // Create new record
-            $record = new DnsRecord();
-            $record->dns_zone_uuid = $zone_uuid;
-            $record->name = $name;
-            $record->type = $type;
-            $record->content = $content;
-            $record->ttl = $ttl;
-            $record->description = $description;
-            $record->save();
-            
-            $this->logInfo('restoreRecordOnDeleteError - Record Restored Successfully', [
-                'zone_uuid' => $zone_uuid,
-                'record_uuid' => $record->uuid,
+            // Step 2: Find and delete the old record on HestiaCP
+            // The old record still exists because HestiaCP prevented deletion
+            $this->logInfo('restoreRecordOnDeleteError - Finding Old Record on HestiaCP', [
+                'zone_name' => $zone->name,
                 'name' => $name,
                 'type' => $type,
                 'content' => $content
             ], []);
+            
+            try {
+                $client = new puqHestiaDnsClient($this->module_data);
+                $oldRecordId = $this->findRecordIdByData($client, $zone, $name, $type, $content);
+                
+                if ($oldRecordId) {
+                    $this->logInfo('restoreRecordOnDeleteError - Found Old Record, Deleting', [
+                        'zone_name' => $zone->name,
+                        'old_record_id' => $oldRecordId
+                    ], []);
+                    
+                    // Force delete with restart=true to ensure DNS is reloaded
+                    $deleteResult = $client->deleteDnsRecord($zone->name, $oldRecordId, true);
+                    
+                    $this->logInfo('restoreRecordOnDeleteError - Old Record Delete Result', [
+                        'zone_name' => $zone->name,
+                        'old_record_id' => $oldRecordId,
+                        'result' => $deleteResult
+                    ], $deleteResult);
+                    
+                    if ($deleteResult['status'] === 'error') {
+                        $this->logError('restoreRecordOnDeleteError - Failed to Delete Old Record', [
+                            'zone_name' => $zone->name,
+                            'old_record_id' => $oldRecordId,
+                            'note' => 'New record created successfully, but old record remains. Manual cleanup may be needed.'
+                        ], $deleteResult);
+                    } else {
+                        $this->logInfo('restoreRecordOnDeleteError - Successfully Replaced Record', [
+                            'zone_name' => $zone->name,
+                            'old_record_id' => $oldRecordId,
+                            'new_record_uuid' => $record->uuid,
+                            'note' => 'Old record deleted, new record created on all servers'
+                        ], []);
+                    }
+                } else {
+                    $this->logInfo('restoreRecordOnDeleteError - Old Record Not Found on HestiaCP', [
+                        'zone_name' => $zone->name,
+                        'name' => $name,
+                        'note' => 'Old record may have been deleted or not found. New record created successfully.'
+                    ], []);
+                }
+            } catch (\Exception $e) {
+                $this->logError('restoreRecordOnDeleteError - Exception Deleting Old Record', [
+                    'zone_name' => $zone->name,
+                    'exception' => $e->getMessage(),
+                    'note' => 'New record created successfully, but old record cleanup failed'
+                ], []);
+            }
         }
     }
 

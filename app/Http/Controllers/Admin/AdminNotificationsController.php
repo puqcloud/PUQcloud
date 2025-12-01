@@ -64,7 +64,7 @@ class AdminNotificationsController extends Controller
                     $admin = app('admin');
                     $urls = [];
                     if ($admin->hasPermission('notification-senders-management')) {
-                        $urls['web_edit'] = route('admin.web.notification_sender', $notification_sender->uuid);
+                        $urls['edit'] = route('admin.web.notification_sender', $notification_sender->uuid);
                         $urls['get'] = route('admin.api.notification_sender.get', $notification_sender->uuid);
                     }
 
@@ -321,7 +321,7 @@ class AdminNotificationsController extends Controller
                     $admin = app('admin');
                     $urls = [];
                     if ($admin->hasPermission('notification-layouts-management')) {
-                        $urls['web_edit'] = route('admin.web.notification_layout', $notification_layout->uuid);
+                        $urls['edit'] = route('admin.web.notification_layout', $notification_layout->uuid);
                         $urls['get'] = route('admin.api.notification_layout.get', $notification_layout->uuid);
                     }
 
@@ -506,7 +506,7 @@ class AdminNotificationsController extends Controller
                     $admin = app('admin');
                     $urls = [];
                     if ($admin->hasPermission('notification-templates-management')) {
-                        $urls['web_edit'] = route('admin.web.notification_template', $notification_template->uuid);
+                        $urls['edit'] = route('admin.web.notification_template', $notification_template->uuid);
                         $urls['get'] = route('admin.api.notification_template.get', $notification_template->uuid);
                     }
 

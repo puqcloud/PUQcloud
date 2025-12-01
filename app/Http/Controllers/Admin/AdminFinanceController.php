@@ -124,7 +124,7 @@ class AdminFinanceController extends Controller
                     $admin_online = app('admin');
                     $urls = [];
                     if ($admin_online && $admin_online->hasPermission('finance-view')) {
-                        $urls['web_edit'] = route('admin.web.home_company.tab', ['uuid' => $home_company->uuid, 'tab' => 'general']);
+                        $urls['edit'] = route('admin.web.home_company.tab', ['uuid' => $home_company->uuid, 'tab' => 'general']);
                     }
                     if ($admin_online && $admin_online->hasPermission('finance-delete')) {
                         $urls['delete'] = route('admin.api.home_company.delete', $home_company->uuid);
@@ -388,7 +388,7 @@ class AdminFinanceController extends Controller
                     $admin = app('admin');
                     $urls = [];
                     if ($admin->hasPermission('finance-view')) {
-                        $urls['web_edit'] = route('admin.web.home_company.tab', ['uuid' => $home_company->uuid, 'tab' => 'payment_gateways', 'edit' => $payment_gateway->uuid]);
+                        $urls['edit'] = route('admin.web.home_company.tab', ['uuid' => $home_company->uuid, 'tab' => 'payment_gateways', 'edit' => $payment_gateway->uuid]);
                         $urls['get'] = route('admin.api.payment_gateway.get', $payment_gateway->uuid);
                     }
 

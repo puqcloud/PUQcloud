@@ -881,16 +881,16 @@ class PuqPmCluster extends Model
         return $response;
     }
 
-    public function setLxcConfig(string $node, int $vmid, array $data): array
+    public function setLxcConfig(string $node, int $vmid, array $data, $ssh = false): array
     {
         $command = 'setLxcConfig';
-        $response = $this->firstSuccessfulResponse(function ($access_server) use ($node, $vmid, $data) {
+        $response = $this->firstSuccessfulResponse(function ($access_server) use ($node, $vmid, $data, $ssh) {
 
             $client = new puqProxmoxClient($access_server->toArray());
             $data['node'] = $node;
             $data['vmid'] = $vmid;
 
-            return $client->putLxcConfig($data);
+            return $client->putLxcConfig($data, $ssh);
         }, $command);
 
         return $response;
@@ -909,7 +909,7 @@ class PuqPmCluster extends Model
         }, $command);
 
 
-        return $this->waitForTask($response['data'], 100,1);
+        return $this->waitForTask($response['data'], 100, 1);
     }
 
     public function getLxcResources($vmid): array
@@ -1063,6 +1063,7 @@ class PuqPmCluster extends Model
         $command = 'getClusterResources';
         $response = $this->firstSuccessfulResponse(function ($access_server) {
             $client = new puqProxmoxClient($access_server->toArray(), 20);
+
             return $client->getClusterResources();
         }, $command);
 
@@ -1100,12 +1101,14 @@ class PuqPmCluster extends Model
 
             $tries++;
         }
+
         return ['status' => 'error', 'errors' => ['Vmid not found']];
     }
 
 
-    public function runSshScriptOnLxc($vmid, $script): array
+    public function runSshScriptOnLxc($puq_pm_lxc_instance, $script, $puq_pm_script = null): array
     {
+        $vmid = $puq_pm_lxc_instance->vmid;
         $lxc_data = $this->getLxcResources($vmid);
 
         if ($lxc_data['status'] == 'error') {
@@ -1162,6 +1165,19 @@ class PuqPmCluster extends Model
 
             return $client->executeSSH($pct_script, $node_ip);
         }, $command);
+
+        if (!empty($puq_pm_script)) {
+            $puq_pm_script_log = new PuqPmScriptLog();
+            $puq_pm_script_log->puq_pm_script_uuid = $puq_pm_script->uuid ?? null;
+            $puq_pm_script_log->input = $script;
+            $puq_pm_script_log->output = $execute['data'] ?? null;
+            $puq_pm_script_log->status = $execute['status'] ?? null;
+            $puq_pm_script_log->errors = $execute['errors'] ?? [];
+            $puq_pm_script_log->duration = (int) $execute['duration'] ?? 0;
+            $puq_pm_script_log->model = $puq_pm_lxc_instance::class;
+            $puq_pm_script_log->model_uuid = $puq_pm_lxc_instance->uuid;
+            $puq_pm_script_log->save();
+        }
 
         return $execute;
     }

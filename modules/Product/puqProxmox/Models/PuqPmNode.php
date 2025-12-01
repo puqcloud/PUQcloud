@@ -56,7 +56,7 @@ class PuqPmNode extends Model
 
     public function puqPmCluster(): BelongsTo
     {
-        return $this->belongsTo(puqPmCluster::class, 'puq_pm_cluster_uuid', 'uuid');
+        return $this->belongsTo(PuqPmCluster::class, 'puq_pm_cluster_uuid', 'uuid');
     }
 
     public function puqPmStorages(): HasMany

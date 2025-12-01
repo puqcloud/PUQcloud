@@ -2,74 +2,110 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.0.0-beta.6] - 2025-11-05
-### Added
-- DNS Manager
-  -  Zone migration to other DNS server groups
-
-### Fixed
-- HestiaCP DNS module
-  - deleting records
-- ACME SSL Module
-    - ZeroSSL EAB 
-    - encrypting private keys
 ---
 
-## [1.0.0-beta.5] - 2025-11-02
-### Added
+## [1.0.0] – 2025-12-01
+### First Stable Release
+This is the first stable release of **PUQcloud**, including full automation, billing, DNS, Proxmox support, SaaS deployment, monitoring, and payment integrations.
+
+---
+
+## Main Features
+
+### **Dashboard, Monitoring & Logs**
+- System status widgets
+- Task Queue monitoring
+- Module logs with log
+
+### **Automation & Access Control**
+- Full task queue system
+- Custom queues for modules
+- Automatic Scheduler Tasks
+- Multi-company support
+- Role & permission system
+
+### **Proxmox Module**
+- Fully included in the stable release
+- Sell **LXC containers** as standalone products
+- Sell **APP (SaaS) applications** with automatic deploy
+- Each app deploys in isolated environments
+- Multi-cluster support
+- Http load balancing
+- Automatic forward & reverse DNS records
+- Automatic deploy of SaaS apps
+- Apps run in containers in LXC
+- Local IP per app (WEB proxy)
+- APP templates
+
+### **DNS System**
+- DNS Manager
+- PowerDNS module
+- HestiaCP DNS module
+- Zone migration between DNS server groups
+- DNS record validation
+
+### **SSL & Security**
 - SSL Manager
-- ACME SSL module, support Let's Encrypt and ZeroSSL
-- HestiaCP DNS module
-- Proxmox module: Added support DNS forward and revers DNS record automation
+- ACME module
+- Let’s Encrypt & ZeroSSL
+- ZeroSSL EAB support
 
-### Fixed
-- DNS manager (record types and validation)
+### **Admin & Client Panel**
+- Full billing & invoice system
+- Service management
+- Multi-language system
+- Enhanced client and admin templates
 
----
+### Payment Modules
+- **Stripe**
+- **PayPal**
+- **Monobank**
+- **Przelewy24**
+- **Bank Transfer**
 
-## [1.0.0-beta.4] - 2025-10-13
-### Added
-- DNS Manager
-- PowerDNS Module
-- Available create own module task queues
-- Module log function is follow global log level
-- Module log, Delete all function and button
-- Task Queue: Task Detail more detailed
+--- 
+### **CLI Tools**
+#### **puqProxmox**
+- **puqProxmox:LoadBalancerRebalance** – Rebalances all active Proxmox load balancers and DNS records.
+- **puqProxmox:MakeBackups** – Run backup tasks for Proxmox.
+- **puqProxmox:SyncApp** – Synchronize APP data to the system.
+- **puqProxmox:SyncClusters** – Synchronize cluster data to the system.
 
----
+#### **puqSamplePlugin**
+- **puqSamplePlugin:test** – Test command for Sample Plugin.
 
-## [1.0.0-beta.3] - 2025-09-28
-### Added
-- Proxmox Module 
+#### **puqSampleProduct**
+- **puqSampleProduct:test** – Test command for Sample Product.
 
-### Fixed
-- puqMonobank 
-- puqTraccarSMS
+#### **puqcloud**
+- **puqcloud:create-client** – Create a new client with full profile and billing address.
+- **puqcloud:demo_seed** – Generate realistic demo data with products, clients, and groups.
+- **puqcloud:regions** – Show all supported regions.
+- **puqcloud:seed** – Run Post-Install Seed.
 
----
+#### **Finance**
+- **Finance:ChargeServices** – Charge active services and create transaction records.
 
-## [1.0.0-beta.1] - 2025-07-03
-### Added
-- Added new options to the puqcloud:demo-data command: create/pay proformas, deploy/terminate services.
-- Added puqcloud:create-client command:
-- Supports parameterized client creation with validation.
-- Required: firstname, email, password, address1, city, postcode, country, region.
-- Optional: lastname, company, tax-id, language, status, address2, phone, notes, admin-notes, credit-limit.
-- Validates unique email/company/tax-id and country-region compatibility.
-- Auto-generates full client structure (User, Client, ClientAddress).
-- Supports balance top-up via --extrapay.
-- Added detailed help with examples.
-- Improved payment success/failure messages and error handling in client creation.
+#### **Products**
+- **Products:ConvertPrice** – Convert product prices using currency exchange rate.
 
-### Fixed
-- gitignore
-- admin templates
-- fixed UUID generation issue during client creation.
+#### **Schedule**
+- **Schedule:listCommandsJson** – Show scheduled commands list in JSON format.
 
-## [1.0.0-beta] - 2025-07-01
-### Added
-- First public beta release.
-- Initial modular architecture.
-- Admin and client panels.
-- User and service management system.
-- Billing, invoicing.
+#### **Service**
+- **Service:CancellationServices** – Cancel pending services when funds are not enough.
+- **Service:CreateServices** – Create pending services after successful payment.
+- **Service:SuspendServices** – Suspend active services with insufficient funds.
+- **Service:TerminationServices** – Terminate suspended services with insufficient funds.
+- **Service:UnsuspendServices** – Unsuspend services when funds become sufficient.
+
+#### **SslManager**
+- **SslManager:CheckExpiration** – Check certificates and mark expired ones.
+- **SslManager:ProcessPending** – Process and issue pending certificates.
+- **SslManager:ProcessRenewal** – Renew active certificates when needed.
+
+#### **System**
+- **System:Cleanup** – Clear logs, sessions, and history data.
+- **System:DeleteAllTasks** – Delete all tasks from the system.
+- **System:clearingLostTasks** – Mark lost tasks as failed and remove duplicates.
+- **System:queueTest** – Run test tasks on all queues for 30 seconds.

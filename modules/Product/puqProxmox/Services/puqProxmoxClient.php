@@ -61,31 +61,31 @@ class puqProxmoxClient
     {
         $url = "https://{$this->api_host}:{$this->api_port}/api2/json{$path}";
 
-        $this->logDebug('API Request - Init', [
-            'path' => $path,
-            'method' => $method,
-            'data' => $data,
-            'url' => $url,
-        ]);
+//        $this->logDebug('API Request - Init', [
+//            'path' => $path,
+//            'method' => $method,
+//            'data' => $data,
+//            'url' => $url,
+//        ]);
 
         try {
             $method = strtoupper($method);
 
-            $this->logDebug('API Request - Preparing HTTP client', [
-                'timeout' => $this->api_timeout,
-                'token_id' => $this->api_token_id,
-            ]);
+//            $this->logDebug('API Request - Preparing HTTP client', [
+//                'timeout' => $this->api_timeout,
+//                'token_id' => $this->api_token_id,
+//            ]);
 
             $http = Http::withHeaders([
                 'Authorization' => "PVEAPIToken={$this->api_token_id}={$this->api_token}",
             ])->timeout($this->api_timeout)
                 ->withOptions(['verify' => false]);
 
-            $this->logDebug('API Request - Sending Request', [
-                'method' => $method,
-                'url' => $url,
-                'data' => $data,
-            ]);
+//            $this->logDebug('API Request - Sending Request', [
+//                'method' => $method,
+//                'url' => $url,
+//                'data' => $data,
+//            ]);
 
             $response = match ($method) {
                 'GET' => $http->get($url, $data),
@@ -107,7 +107,6 @@ class puqProxmoxClient
             ];
 
             if ($response->successful()) {
-                $this->logDebug('API Request - Success', $logContext, $response->json());
 
                 return [
                     'status' => 'success',
@@ -161,6 +160,7 @@ class puqProxmoxClient
     {
         $commandsMap = [
             'POST' => 'create',
+            'PUT' => 'set',
             'DELETE' => 'delete',
             'GET' => 'get',
             '?' => 'ls',
@@ -186,11 +186,11 @@ class puqProxmoxClient
             $execCommand .= ' --output-format=json';
         }
 
-        $this->logDebug('SSH Request - Init', [
-            'command' => $path,
-            'options' => $data,
-            'execCommand' => $execCommand,
-        ]);
+//        $this->logDebug('SSH Request - Init', [
+//            'command' => $path,
+//            'options' => $data,
+//            'execCommand' => $execCommand,
+//        ]);
 
         try {
             if (!$this->ssh->isConnected() || !$this->ssh->isAuthenticated()) {
@@ -226,10 +226,10 @@ class puqProxmoxClient
                 ];
             }
 
-            $this->logDebug('SSH Request - Command executed', [
-                'execCommand' => $execCommand,
-                'output' => $output,
-            ]);
+//            $this->logDebug('SSH Request - Command executed', [
+//                'execCommand' => $execCommand,
+//                'output' => $output,
+//            ]);
 
             if ($jsonOutput) {
                 $decoded = json_decode($output, true);
@@ -285,13 +285,13 @@ class puqProxmoxClient
                     $this->logError('SSH login', 'SSH login failed', [
                         'command' => $execCommand,
                         'errors' => $errors,
-                        'duration' => round(microtime(true) - $startTime, 2, PHP_ROUND_HALF_UP).'s',
+                        'duration' => round(microtime(true) - $startTime, 2, PHP_ROUND_HALF_UP),
                     ]);
 
                     return [
                         'status' => 'error',
                         'errors' => $errors,
-                        'duration' => round(microtime(true) - $startTime, 2, PHP_ROUND_HALF_UP).'s',
+                        'duration' => round(microtime(true) - $startTime, 2, PHP_ROUND_HALF_UP),
                     ];
                 }
             }
@@ -307,49 +307,49 @@ class puqProxmoxClient
                 $this->logError('SSH exec', 'SSH command execution error', [
                     'command' => $execCommand,
                     'errors' => $filteredErrors,
-                    'duration' => $duration.'s',
+                    'duration' => $duration,
                 ]);
 
                 return [
                     'status' => 'error',
                     'errors' => $filteredErrors,
-                    'duration' => $duration.'s',
+                    'duration' => $duration,
                 ];
             }
 
-            $this->logDebug('SSH Request - Command executed', [
-                'execCommand' => $execCommand,
-                'output' => $output,
-                'duration' => $duration.'s',
-            ]);
+//            $this->logDebug('SSH Request - Command executed', [
+//                'execCommand' => $execCommand,
+//                'output' => $output,
+//                'duration' => $duration,
+//            ]);
 
             if ($jsonOutput) {
                 $decoded = json_decode($output, true);
                 if (!is_array($decoded)) {
                     $this->logError('executeSSH', 'Invalid JSON response', [
                         'output' => $output,
-                        'duration' => $duration.'s',
+                        'duration' => $duration,
                     ]);
 
                     return [
                         'status' => 'error',
                         'errors' => ['The answer is not valid JSON'],
                         'data' => $output,
-                        'duration' => $duration.'s',
+                        'duration' => $duration,
                     ];
                 }
 
                 return [
                     'status' => 'success',
                     'data' => $decoded,
-                    'duration' => $duration.'s',
+                    'duration' => $duration,
                 ];
             }
 
             return [
                 'status' => 'success',
                 'data' => $output,
-                'duration' => $duration.'s',
+                'duration' => $duration,
             ];
 
         } catch (\Throwable $e) {
@@ -357,13 +357,13 @@ class puqProxmoxClient
             $this->logError('executeSSH', 'SSH command execution exception', [
                 'command' => $execCommand,
                 'exception' => $e->getMessage(),
-                'duration' => $duration.'s',
+                'duration' => $duration,
             ]);
 
             return [
                 'status' => 'error',
                 'errors' => [$e->getMessage()],
-                'duration' => $duration.'s',
+                'duration' => $duration,
             ];
         }
     }
@@ -447,10 +447,15 @@ class puqProxmoxClient
     }
 
     // ------------------------------------------------------------------------------------
-    private function request(string $path, string $method = 'GET', array $data = [], bool $ssh = false): array
-    {
+    private function request(
+        string $path,
+        string $method = 'GET',
+        array $data = [],
+        bool $ssh = false,
+        bool $json = true
+    ): array {
         if ($ssh) {
-            return $this->requestSSH($path, $method, $data);
+            return $this->requestSSH($path, $method, $data, $json);
         } else {
             return $this->requestAPI($path, $method, $data);
         }
@@ -613,7 +618,12 @@ class puqProxmoxClient
         $node = $data['node'];
         $vmid = $data['vmid'];
 
-        return $this->request("/nodes/{$node}/lxc/{$vmid}/config", 'PUT', $data, $ssh);
+        if ($ssh) {
+            unset($data['node']);
+            unset($data['vmid']);
+        }
+
+        return $this->request("/nodes/{$node}/lxc/{$vmid}/config", 'PUT', $data, $ssh, false);
     }
 
     public function resizeLxcDisk(array $data, bool $ssh = false): array

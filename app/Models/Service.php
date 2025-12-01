@@ -220,13 +220,15 @@ class Service extends Model
         }
     }
 
-    public function getProvisionDataAttribute($value): array {
+    public function getProvisionDataAttribute($value): array
+    {
         $provision_data = json_decode($value, true);
 
         return is_array($provision_data) ? $provision_data : [];
     }
 
-    public function setProvisionDataAttribute($value): void {
+    public function setProvisionDataAttribute($value): void
+    {
         $this->attributes['provision_data'] = json_encode($value);
     }
 
@@ -426,7 +428,8 @@ class Service extends Model
         }
     }
 
-    public function updateProductOptions(array $uuids): void {
+    public function updateProductOptions(array $uuids): void
+    {
         $product = $this->product;
         $price = $this->price;
 
@@ -460,7 +463,8 @@ class Service extends Model
         }
     }
 
-    public static function clientServicesByGroup(Client $client, string $groupUuid) {
+    public static function clientServicesByGroup(Client $client, string $groupUuid)
+    {
         return self::query()
             ->where('client_uuid', $client->uuid)
             ->whereHas('product.productGroups', function ($query) use ($groupUuid) {
@@ -729,7 +733,72 @@ class Service extends Model
         ];
     }
 
-    public function suspend(): array
+    public function retry_deploy(): array
+    {
+
+        if ($this->status != 'active') {
+            return ['status' => 'error', 'errors' => ['Status should be pending']];
+        }
+
+        if ($this->provision_status != 'error') {
+            return ['status' => 'error', 'errors' => ['Provision Status should be error']];
+        }
+
+        $this->create_error = null;
+
+        $this->suspended_date = null;
+        $this->suspended_reason = null;
+
+        $this->terminated_date = null;
+        $this->terminated_reason = null;
+
+        $this->cancelled_date = null;
+        $this->cancelled_reason = null;
+
+        $this->termination_request = false;
+
+        $this->setProvisionStatus('deploying');
+        $result = $this->module->moduleExecute('retry_deploy');
+
+        if ($result['status'] === 'error') {
+            if ($this->create_error !== implode(', ', $result['errors'] ?? [])) {
+                logActivity(
+                    'error',
+                    'Service:'.$this->uuid.' '.implode(', ', $result['errors'] ?? []),
+                    'retry_deploy',
+                    null,
+                    null,
+                    null,
+                    $this->client_uuid
+                );
+                $this->create_error = implode(', ', $result['errors'] ?? []);
+                $this->save();
+            }
+
+            return $result;
+        }
+
+        $this->create_error = null;
+        $this->save();
+
+        logActivity(
+            'info',
+            'Service:'.$this->uuid.' Success',
+            'retry_deploy',
+            null,
+            null,
+            null,
+            $this->client_uuid
+        );
+
+        return [
+            'status' => 'success',
+            'message' => __('message.Action successfully completed'),
+        ];
+    }
+
+    public
+    function suspend(): array
     {
         if ($this->status != 'active') {
             return ['status' => 'error', 'errors' => ['Status should be active']];
@@ -793,7 +862,8 @@ class Service extends Model
         return [];
     }
 
-    public function unsuspend(): array
+    public
+    function unsuspend(): array
     {
         if ($this->status !== 'suspended') {
             return ['status' => 'error', 'errors' => ['Status should be suspended']];
@@ -854,7 +924,8 @@ class Service extends Model
         return [];
     }
 
-    public function termination(): array
+    public
+    function termination(): array
     {
         $termination_time = $this->getTerminationTime();
 
@@ -911,7 +982,8 @@ class Service extends Model
         ];
     }
 
-    public function cancellation(): array
+    public
+    function cancellation(): array
     {
         if ($this->termination_request) {
             $termination_time = $this->getTerminationTime();
@@ -972,8 +1044,9 @@ class Service extends Model
         ];
     }
 
-    // Finance
-    public function calculateCharge(): ?array
+// Finance
+    public
+    function calculateCharge(): ?array
     {
         $priceTotal = $this->getPriceTotal();
         $chargeAmount = $this->idle ? $priceTotal['idle'] : $priceTotal['base'];
@@ -1006,8 +1079,8 @@ class Service extends Model
                 : 1;
 
             $hoursInMonth = $billingTimestamp->daysInMonth * 24;
-            $hourlyRate = round($chargeAmount / $hoursInMonth, 4,PHP_ROUND_HALF_UP);
-            $amountToCharge = round(-abs($hourlyRate) * $hoursToCharge, 4,PHP_ROUND_HALF_UP);
+            $hourlyRate = round($chargeAmount / $hoursInMonth, 4, PHP_ROUND_HALF_UP);
+            $amountToCharge = round(-abs($hourlyRate) * $hoursToCharge, 4, PHP_ROUND_HALF_UP);
 
             return [
                 'period' => 'monthly',
@@ -1046,7 +1119,8 @@ class Service extends Model
         return null;
     }
 
-    private function hasEnoughBalance(
+    private
+    function hasEnoughBalance(
         float $amount
     ): bool {
         $client = $this->client;
@@ -1056,7 +1130,8 @@ class Service extends Model
         return ($balance + $creditLimit) >= $amount;
     }
 
-    protected function createTransaction(
+    protected
+    function createTransaction(
         float $amount,
         $periodStart,
         $periodStop,
@@ -1072,9 +1147,9 @@ class Service extends Model
         }
 
         if ($hours !== null && $rate !== null) {
-            if($hours <= 0) {
+            if ($hours <= 0) {
                 $description .= ", >1h × {$rate} per hour";
-            }else{
+            } else {
                 $description .= ", {$hours}h × {$rate} per hour";
             }
         }
@@ -1095,7 +1170,8 @@ class Service extends Model
 
     }
 
-    public function chargeJob(): void
+    public
+    function chargeJob(): void
     {
         if ($this->status != 'active') {
             return;
@@ -1130,7 +1206,8 @@ class Service extends Model
         }
     }
 
-    public function getTerminationTime(): array
+    public
+    function getTerminationTime(): array
     {
         $product = $this->product;
         $terminationDelayHours = $product->termination_delay_hours;
@@ -1179,7 +1256,8 @@ class Service extends Model
         ];
     }
 
-    public function getCancellationTime(): array
+    public
+    function getCancellationTime(): array
     {
         $product = $this->product;
         $cancellationDelayHours = $product->cancellation_delay_hours;
@@ -1215,7 +1293,8 @@ class Service extends Model
         ];
     }
 
-    public function getUpdateDowngradeProductOptions(): array
+    public
+    function getUpdateDowngradeProductOptions(): array
     {
         $price = $this->price;
         $client = $this->client;
@@ -1282,8 +1361,10 @@ class Service extends Model
         return $update_downgrade_product_options;
     }
 
-    public function setUpdateDowngradeProductOptions(array $new_product_options): array
-    {
+    public
+    function setUpdateDowngradeProductOptions(
+        array $new_product_options
+    ): array {
         DB::beginTransaction();
         try {
             $price_total = $this->getPriceTotal();
@@ -1329,6 +1410,7 @@ class Service extends Model
                 Log::warning('Service:'.$this->uuid.'. Insufficient funds for Update/Downgrade. Required: '.$total);
 
                 DB::rollBack();
+
                 return [
                     'status' => 'error',
                     'errors' => ['Insufficient funds for Update/Downgrade service'],
@@ -1355,7 +1437,8 @@ class Service extends Model
             $product = $this->product;
             foreach ($new_product_options as $product_option_group_uuid => $new_product_option_uuid) {
                 if ($product->hasProductOption($product_option_group_uuid, $new_product_option_uuid)) {
-                    $current_options = $this->productOptions()->where('product_option_group_uuid', $product_option_group_uuid)->pluck('uuid');
+                    $current_options = $this->productOptions()->where('product_option_group_uuid',
+                        $product_option_group_uuid)->pluck('uuid');
                     if ($current_options->isNotEmpty()) {
                         $this->productOptions()->detach($current_options);
                     }
@@ -1383,8 +1466,11 @@ class Service extends Model
         }
     }
 
-    public function calculateProductOptionsCorrection($old_price, $new_price): array
-    {
+    public
+    function calculateProductOptionsCorrection(
+        $old_price,
+        $new_price
+    ): array {
         $price = $this->price;
         $period = $price->period;
         $now = Carbon::now();

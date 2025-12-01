@@ -17,14 +17,23 @@
 
 namespace Modules\Product\puqProxmox\Commands;
 
+use App\Models\Task;
+use App\Services\TranslationService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\App;
 use Modules\Product\puqProxmox\Models\PuqPmCluster;
 
 class puqProxmoxSyncClusters extends Command
 {
     protected $signature = 'puqProxmox:SyncClusters';
-
     protected $description = 'Synchronize data from clusters to the system.';
+
+    public function __construct()
+    {
+        parent::__construct();
+        App::setLocale(config('locale.admin.default'));
+        TranslationService::init('admin');
+    }
 
     public function handle()
     {
@@ -44,16 +53,24 @@ class puqProxmoxSyncClusters extends Command
         foreach ($clusters as $cluster) {
             $this->info("-> Syncing cluster: {$cluster->name} (UUID: {$cluster->uuid})");
 
-            $info = $cluster->getSyncClusterInfo();
-            if ($info['status'] === 'success') {
-                $cluster->getSyncResources($info['raw']);
-                $this->info('  Cluster info synced successfully.');
-            } else {
-                $this->error('  Errors syncing cluster info:');
-                foreach ($info['errors'] as $error) {
-                    $this->error("    - {$error}");
-                }
-            }
+            $data = [
+                'module' => $cluster,
+                'method' => 'getSyncResources',
+                'tries' => 3,                   // Number of retry attempts if the job fails
+                'backoff' => 30,                // Delay in seconds between retries
+                'timeout' => 30,               // Max execution time for the job in seconds
+                'maxExceptions' => 1,           // Max number of unhandled exceptions before marking the job as failed
+                'params' => [],
+            ];
+
+            $tags = [
+                'getClusterSyncResources',
+            ];
+
+            Task::add('ModuleJob', 'puqProxmox-Cluster', $data, $tags);
+
+
+
             $this->line('');
         }
 

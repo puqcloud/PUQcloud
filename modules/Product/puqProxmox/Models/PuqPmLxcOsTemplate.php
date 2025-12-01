@@ -45,6 +45,10 @@ class PuqPmLxcOsTemplate extends Model
         static::creating(function ($model) {
             $model->uuid = Str::uuid();
         });
+
+        static::deleting(function ($model) {
+            $model->puqPmScripts()->delete();
+        });
     }
 
     public function puqPmLxcTemplate(): BelongsTo
@@ -55,7 +59,8 @@ class PuqPmLxcOsTemplate extends Model
 
     public function puqPmScripts(): HasMany
     {
-        return $this->hasMany(PuqPmScript::class, 'puq_pm_lxc_os_template_uuid', 'uuid');
+        return $this->hasMany(PuqPmScript::class, 'model_uuid', 'uuid')
+            ->where('model', self::class);
     }
 
 

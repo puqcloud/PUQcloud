@@ -111,7 +111,12 @@ class Product extends Module
         return ['status' => 'success'];
     }
 
-    public function createCallback($result, $jobId=null): void
+    public function retry_deploy(): array
+    {
+        return ['status' => 'success'];
+    }
+
+    public function createCallback($result, $jobId = null): void
     {
         $service = \App\Models\Service::find($this->service_uuid);
 
@@ -145,7 +150,7 @@ class Product extends Module
         return ['status' => 'success'];
     }
 
-    public function suspendCallback($result, $jobId=null): void
+    public function suspendCallback($result, $jobId = null): void
     {
         $service = \App\Models\Service::find($this->service_uuid);
 
@@ -153,6 +158,7 @@ class Product extends Module
             $this->logError(__FUNCTION__, $service, ['result' => $result, 'jobId' => $jobId]);
             $service->setProvisionStatus('error');
             $service->save();
+
             return;
         }
 
@@ -169,7 +175,7 @@ class Product extends Module
         return ['status' => 'success'];
     }
 
-    public function unsuspendCallback($result, $jobId=null): void
+    public function unsuspendCallback($result, $jobId = null): void
     {
         $service = \App\Models\Service::find($this->service_uuid);
 
@@ -177,6 +183,7 @@ class Product extends Module
             $this->logError(__FUNCTION__, $service, ['result' => $result, 'jobId' => $jobId]);
             $service->setProvisionStatus('error');
             $service->save();
+
             return;
         }
 
@@ -203,7 +210,7 @@ class Product extends Module
         return ['status' => 'success'];
     }
 
-    public function terminationCallback($result, $jobId=null): void
+    public function terminationCallback($result, $jobId = null): void
     {
         $service = \App\Models\Service::find($this->service_uuid);
 
@@ -211,6 +218,7 @@ class Product extends Module
             $this->logError(__FUNCTION__, $service, ['result' => $result, 'jobId' => $jobId]);
             $service->setProvisionStatus('error');
             $service->save();
+
             return;
         }
 
@@ -227,7 +235,7 @@ class Product extends Module
         return ['status' => 'success'];
     }
 
-    public function cancellationCallback($result, $jobId=null): void
+    public function cancellationCallback($result, $jobId = null): void
     {
         $service = \App\Models\Service::find($this->service_uuid);
 
@@ -235,6 +243,7 @@ class Product extends Module
             $this->logError(__FUNCTION__, $service, ['result' => $result, 'jobId' => $jobId]);
             $service->setProvisionStatus('error');
             $service->save();
+
             return;
         }
 
@@ -251,7 +260,7 @@ class Product extends Module
         return ['status' => 'success'];
     }
 
-    public function change_packageCallback($result, $jobId=null): void
+    public function change_packageCallback($result, $jobId = null): void
     {
         $service = \App\Models\Service::find($this->service_uuid);
 
@@ -259,6 +268,7 @@ class Product extends Module
             $this->logError(__FUNCTION__, $service, ['result' => $result, 'jobId' => $jobId]);
             $service->setProvisionStatus('error');
             $service->save();
+
             return;
         }
 

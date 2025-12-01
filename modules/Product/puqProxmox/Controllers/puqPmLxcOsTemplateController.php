@@ -274,11 +274,16 @@ class puqPmLxcOsTemplateController extends Controller
                 ->first();
 
             if ($lxc_preset) {
+
                 $os_template_uuids = $lxc_preset->puqPmLxcOsTemplates()
                     ->pluck('uuid')
                     ->toArray();
 
-                $query->whereNotIn('uuid', $os_template_uuids ?? []);
+                if ($request->has('lxc_preset_all')) {
+                    $query->whereIn('uuid', $os_template_uuids ?? []);
+                } else {
+                    $query->whereNotIn('uuid', $os_template_uuids ?? []);
+                }
             }
         }
 
@@ -358,7 +363,6 @@ class puqPmLxcOsTemplateController extends Controller
 
     public function putLxcOsTemplateScript(Request $request, $uuid, $type): JsonResponse
     {
-        // Find the LXC template by UUID
         $model = PuqPmLxcOsTemplate::find($uuid);
 
         if (empty($model)) {
@@ -367,24 +371,20 @@ class puqPmLxcOsTemplateController extends Controller
             ], 404);
         }
 
-        // Validate request
         $request->validate([
             'script' => 'required|string',
         ]);
 
-        // Try to find existing script
         $scriptModel = $model->puqPmScripts()->where('type', $type)->first();
 
         if ($scriptModel) {
-            // Update existing script
             $scriptModel->script = $request->input('script');
             $scriptModel->save();
         } else {
-            // Create new script
             $scriptModel = $model->puqPmScripts()->create([
-                'puq_pm_lxc_os_template_uuid' => $uuid,
                 'type' => $type,
                 'script' => $request->input('script'),
+                'model' => PuqPmLxcOsTemplate::class,
             ]);
         }
 

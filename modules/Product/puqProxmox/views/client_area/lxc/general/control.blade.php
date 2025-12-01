@@ -206,17 +206,13 @@
                         }
                     })
                     .catch(function () {
-                        $("#status_text").text("error");
-                        $("#status_btn").removeClass().addClass("btn btn-warning btn-lg rounded-circle mb-2").text("{{ __('Product.puqProxmox.ERR') }}");
-                        if (firstLoad) {
-                            unblockUI('status');
-                            firstLoad = false;
-                        }
+                        unblockUI('status');
+                        firstLoad = false;
                     });
             }
 
             loadStatusData();
-            setInterval(loadStatusData, 3000);
+            setInterval(loadStatusData, 1000);
 
             $('#start').on('click', function () {
 
@@ -280,7 +276,6 @@
                         });
                 }
             });
-
 
 
         });

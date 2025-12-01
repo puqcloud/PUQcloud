@@ -83,4 +83,10 @@ return [
     'HMAC secret for External Account Binding (EAB)' => 'Sekret HMAC dla powiązania zewnętrznego konta (EAB)',
     'The Certificate Authority field is required' => 'Pole Urząd Certyfikacji jest wymagane',
     'Invalid Certificate Authority selected' => 'Wybrano nieprawidłowy Urząd Certyfikacji',
+    'ZeroSSL — SSL certificates' => 'ZeroSSL — certyfikaty SSL',
+    'Get unlimited SSL certificates for' => 'Uzyskaj nieograniczoną liczbę certyfikatów SSL za',
+    'month' => 'miesiąc',
+    'Use our referral link — it supports PUQcloud and helps our project grow.' => 'Użyj naszego linku polecającego — wspierasz PUQcloud i pomagasz naszemu projektowi się rozwijać.',
+    'Open ZeroSSL (referral)' => 'Otwórz ZeroSSL (polecenie)',
+    'By buying through our link we may receive a reward that will help development of PUQcloud.' => 'Kupując przez nasz link, możemy otrzymać nagrodę, która pomoże w rozwoju PUQcloud.',
 ];

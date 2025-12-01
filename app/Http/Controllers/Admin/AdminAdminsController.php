@@ -57,7 +57,7 @@ class AdminAdminsController extends Controller
                     $urls = ['gravatar' => get_gravatar($admin->email, 100)];
 
                     if ($admin_online->hasPermission('admins-view')) {
-                        $urls['web_edit'] = route('admin.web.admin', $admin->uuid);
+                        $urls['edit'] = route('admin.web.admin', $admin->uuid);
                         $urls['get'] = route('admin.api.admin.get', $admin->uuid);
                     }
 

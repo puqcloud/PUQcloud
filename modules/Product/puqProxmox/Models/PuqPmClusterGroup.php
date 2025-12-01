@@ -79,6 +79,12 @@ class PuqPmClusterGroup extends Model
         return mb_strtolower($country->code.'-'.$this->data_center);
     }
 
+    public function getCountry(): string
+    {
+        $country = $this->country;
+        return mb_strtolower($country->code);
+    }
+
     public function getLocalPrivateNetworks(): Collection
     {
         $private_networks = collect();

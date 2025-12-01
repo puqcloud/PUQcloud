@@ -244,6 +244,7 @@ class puqPmLxcPresetController extends Controller
         $model->name = $request->input('name');
         $model->description = $request->input('description');
 
+        $model->hostname = $request->input('hostname');
         $model->puq_pm_dns_zone_uuid = $request->input('puq_pm_dns_zone_uuid');
         $model->onboot = $toBool($request->input('onboot'));
 
@@ -293,6 +294,26 @@ class puqPmLxcPresetController extends Controller
         $model->firewall_log_level_out = $request->input('firewall_log_level_out');
         $model->firewall_policy_in = $request->input('firewall_policy_in');
         $model->firewall_policy_out = $request->input('firewall_policy_out');
+
+        $model->ha_managed = $toBool($request->input('ha_managed'));
+        $model->unprivileged = $toBool($request->input('unprivileged'));
+        $model->nesting = $toBool($request->input('nesting'));
+        $model->fuse = $toBool($request->input('fuse'));
+        $model->mknod = $toBool($request->input('mknod'));
+
+        if ($model->unprivileged) {
+            $model->keyctl = $toBool($request->input('keyctl'));
+        } else {
+            $model->keyctl = false;
+        }
+
+        if (!$model->unprivileged) {
+            $model->mount_nfs = $toBool($request->input('mount_nfs'));
+            $model->mount_cifs = $toBool($request->input('mount_cifs'));
+        } else {
+            $model->mount_nfs = false;
+            $model->mount_cifs = false;
+        }
 
         $model->save();
         $model->refresh();

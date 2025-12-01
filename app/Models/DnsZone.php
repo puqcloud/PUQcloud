@@ -426,7 +426,7 @@ class DnsZone extends Model
 
     }
 
-    public function createUpdateRecord(array $data, $uuid = null, $shadow = false, $revers = false): array
+    public function createUpdateRecord(array $data, string $uuid = null, bool $shadow = false, bool $revers = false): array
     {
 
         $type = strtoupper($data['type']);
@@ -615,9 +615,9 @@ class DnsZone extends Model
     private function buildRecordAAAA(array $data, bool $reverse = false): array
     {
         if ($reverse) {
-            $data['ipv6'] = $data['content'] ?? null;
+            $data['ipv6'] = compressIpv6($data['content']) ?? null;
         } else {
-            $data['content'] = $data['ipv6'] ?? null;
+            $data['content'] = compressIpv6($data['ipv6']) ?? null;
         }
 
         $rules = [

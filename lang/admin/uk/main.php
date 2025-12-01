@@ -573,7 +573,7 @@ return [
     'Maximum Add Funds Amount' => 'Максимальна сума для поповнення',
     'Maximum amount allowed for adding funds (in default currency)' => 'Максимальна дозволена сума для поповнення (у валюті за замовчуванням)',
     'Maximum Client Balance' => 'Максимальний баланс клієнта',
-    'Maximum allowed total balance on client\'s account (in default currency)' => 'Максимально дозволений загальний баланс на рахунку клієнта (у валюті за замовчуванням)',
+    'Maximum allowed total balance on client’s account (in default currency)' => 'Максимально дозволений загальний баланс на рахунку клієнта (у валюті за замовчуванням)',
     'Images' => 'Зображення',
     'Email setting' => 'Налаштування електронної пошти',
     'Logo' => 'Логотип',

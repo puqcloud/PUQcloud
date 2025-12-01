@@ -69,7 +69,7 @@ class AdminSslManagerController extends Controller
                     $urls = [];
 
                     if ($admin->hasPermission('dns-manager-dns-servers')) {
-                        $urls['web_edit'] = route('admin.web.certificate_authority', $model->uuid);
+                        $urls['edit'] = route('admin.web.certificate_authority', $model->uuid);
                         $urls['delete'] = route('admin.api.certificate_authority.delete', $model->uuid);
                     }
 
@@ -336,7 +336,7 @@ class AdminSslManagerController extends Controller
                     $urls = [];
 
                     if ($admin->hasPermission('dns-manager-dns-servers')) {
-                        $urls['web_edit'] = route('admin.web.ssl_certificate', $model->uuid);
+                        $urls['edit'] = route('admin.web.ssl_certificate', $model->uuid);
                         $urls['delete'] = route('admin.api.ssl_certificate.delete', $model->uuid);
                     }
 

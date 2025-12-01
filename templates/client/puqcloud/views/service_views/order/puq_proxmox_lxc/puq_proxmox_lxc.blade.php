@@ -283,6 +283,7 @@
                     </div>
                 </div>
             </div>
+
             <div class="widget-content-left flex-grow-1">
                 <div class="widget-heading d-flex align-items-center flex-wrap">
                     ${location.name}
@@ -290,19 +291,21 @@
                 <div class="widget-subheading">${location.value}</div>
             </div>
 
-${location.price && Object.keys(location.price).length > 0
+            ${location.price && Object.keys(location.price).length > 0
                                 ? `<div class="ms-3 small text-muted">
-           <div class="text-nowrap">
-               {{__('Product.puqProxmox.Setup')}}: <span class="fw-bold text-success">${location.price.setup || ''}</span>
-           </div>
-           <div class="text-nowrap">
-               <span class="fw-bold text-success">${location.price.base || ''} </span>/ {{__('Product.puqProxmox.mo')}}
+                       <div class="text-nowrap">
+                           {{__('Product.puqProxmox.Setup')}}:
+                           <span class="fw-bold text-success">${location.price.setup || ''}</span>
+                       </div>
+                       <div class="text-nowrap">
+                           <span class="fw-bold text-success">${location.price.base || ''}</span>
+                           / {{__('Product.puqProxmox.mo')}}
                                 </div>
                             </div>`
                                 : ''
                             }
-
         </div>
+
         <i class="fa fa-check text-white position-absolute d-none"
            style="top:0; right:0; transform: translate(50%, -50%);
                   background-color: #28a745;
@@ -317,14 +320,23 @@ ${location.price && Object.keys(location.price).length > 0
                             $container.append(card);
                         });
 
+                        // Click bind
                         $('.location-widget').on('click', function () {
                             $('.location-widget').removeClass('border-3 border-success fw-bold');
                             $('.location-widget .fa-check').addClass('d-none');
+
                             $(this).addClass('border-3 border-success fw-bold');
                             $(this).find('.fa-check').removeClass('d-none');
+
                             $('#selectedLocation').val($(this).data('value'));
                             updateValues();
                         });
+
+                        // Auto-select first
+                        const $first = $('.location-widget').first();
+                        if ($first.length) {
+                            $first.trigger('click');
+                        }
                     }
 
                     unblockUI('locations');
@@ -333,6 +345,7 @@ ${location.price && Object.keys(location.price).length > 0
                     unblockUI('locations');
                 });
             }
+
 
             function loadImages() {
                 blockUI('images');
@@ -1353,7 +1366,7 @@ style="cursor:pointer;">
                     html += `
         <div class="d-flex justify-content-between align-items-center mb-1">
             <span>
-                <span class="text-secondary fw-bold">${opt.group_lable}: </span>
+                <span class="text-secondary fw-bold">${opt.group_label}: </span>
                 <span class="ms-2">${opt.label}</span>
             </span>
             <span class="text-nowrap">${opt.price}</span>

@@ -15,10 +15,7 @@
  * Do not remove this header.
  */
 
-use App\Models\Module;
 use Illuminate\Contracts\Console\Kernel as ConsoleKernel;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Schema;
 
 if (!function_exists('asset_admin')) {
 
@@ -119,13 +116,13 @@ if (!function_exists('logModule')) {
         ];
 
         $map = [
-            'debug'     => 'debug',
-            'info'      => 'info',
-            'notice'    => 'info',
-            'warning'   => 'info',
-            'error'     => 'error',
-            'critical'  => 'error',
-            'alert'     => 'error',
+            'debug' => 'debug',
+            'info' => 'info',
+            'notice' => 'info',
+            'warning' => 'info',
+            'error' => 'error',
+            'critical' => 'error',
+            'alert' => 'error',
             'emergency' => 'error',
         ];
 
@@ -660,7 +657,6 @@ if (!function_exists('isValidCronExpression')) {
     }
 }
 
-
 if (!function_exists('expandIpv6')) {
     function expandIpv6(string $ip): string
     {
@@ -687,25 +683,142 @@ if (!function_exists('compressIpv6')) {
     function compressIpv6(string $ip): string
     {
         $groups = explode(':', $ip);
-        $groups = array_map(fn($g) => ltrim($g, '0') ?: '0', $groups);
 
-        $ip = implode(':', $groups);
-
-        if (preg_match_all('/(?:^|:)(0(?::0)+)(?::|$)/', $ip, $matches)) {
-            $longest = '';
-            foreach ($matches[1] as $block) {
-                if (strlen($block) > strlen($longest)) {
-                    $longest = $block;
-                }
+        foreach ($groups as &$g) {
+            $g = ltrim($g, '0');
+            if ($g === '') {
+                $g = '0';
             }
-            $ip = str_replace($longest, '', $ip);
-            $ip = preg_replace('/(^|:):(:|$)/', '::', $ip, 1);
+        }
+        unset($g);
+
+        $zeroBlocks = [];
+        $currentStart = null;
+        $currentLength = 0;
+
+        foreach ($groups as $i => $g) {
+            if ($g === '0') {
+                if ($currentStart === null) {
+                    $currentStart = $i;
+                }
+                $currentLength++;
+            } else {
+                if ($currentLength > 1) {
+                    $zeroBlocks[] = ['start' => $currentStart, 'length' => $currentLength];
+                }
+                $currentStart = null;
+                $currentLength = 0;
+            }
+        }
+        if ($currentLength > 1) {
+            $zeroBlocks[] = ['start' => $currentStart, 'length' => $currentLength];
+        }
+
+        if (!empty($zeroBlocks)) {
+            usort($zeroBlocks, fn($a, $b) => $b['length'] - $a['length']);
+            $longest = $zeroBlocks[0];
+
+            $start = $longest['start'];
+            $length = $longest['length'];
+            array_splice($groups, $start, $length, ['']);
+            if ($start === 0) {
+                array_unshift($groups, '');
+            }
+            if ($start + $length === count($groups)) {
+                array_push($groups, '');
+            }
+            $ip = implode(':', $groups);
+            $ip = preg_replace('/:{3,}/', '::', $ip);
         }
 
         return $ip;
     }
 }
 
+if (!function_exists('getSystemMacros')) {
 
+    function getSystemMacros(): array
+    {
+        return [
+            ['name' => 'YEAR', 'description' => '4-digit current year (e.g., 2025)'],
+            ['name' => 'MONTH', 'description' => '2-digit current month (01–12)'],
+            ['name' => 'DAY', 'description' => '2-digit current day of the month (01–31)'],
+            ['name' => 'HOUR', 'description' => '2-digit hour in 24h format (00–23)'],
+            ['name' => 'MINUTE', 'description' => '2-digit current minute (00–59)'],
+            ['name' => 'SECOND', 'description' => '2-digit current second (00–59)'],
+            ['name' => 'TIMESTAMP', 'description' => 'Full timestamp in YmdHis format (e.g., 20250804153322)'],
+            ['name' => 'RAND:X', 'description' => 'Random number of X digits (e.g., {RAND:4} → 3842)'],
+            [
+                'name' => 'RSTR:X',
+                'description' => 'Random uppercase string of X characters (e.g., {RSTR:5} → KDJRW)',
+            ],
+            ['name' => 'COUNTRY', 'description' => '2-letter country code of the client (e.g., us, ua, ca, pl, fr)'],
+            [
+                'name' => 'N:charset',
+                'description' => 'Random string of length N from specified charset (e.g., {10:abc123} → random string of 10 characters from abc123)',
+            ],
+        ];
+    }
+}
 
+if (!function_exists('macroReplace')) {
 
+    function macroReplace(string $pattern, string $country = null): string
+    {
+        $now = Carbon\Carbon::now();
+
+        $replacements = [
+            '{YEAR}' => $now->format('Y'),
+            '{MONTH}' => $now->format('m'),
+            '{DAY}' => $now->format('d'),
+            '{HOUR}' => $now->format('H'),
+            '{MINUTE}' => $now->format('i'),
+            '{SECOND}' => $now->format('s'),
+            '{TIMESTAMP}' => time(),
+        ];
+
+        // Simple replacements
+        $result = str_replace(array_keys($replacements), array_values($replacements), $pattern);
+
+        if ($country) {
+            $result = str_replace('{COUNTRY}', strtolower($country), $result);
+        }
+
+        // {RAND:5}
+        $result = preg_replace_callback('/\{RAND:(\d+)\}/', function ($m) {
+            $len = (int) $m[1];
+
+            return substr(str_shuffle(str_repeat('0123456789', $len)), 0, $len);
+        }, $result);
+
+        // {RSTR:5}
+        $result = preg_replace_callback('/\{RSTR:(\d+)\}/', function ($m) {
+            $len = (int) $m[1];
+            $chars = 'abcdefghijklmnopqrstuvwxyz';
+
+            return substr(str_shuffle(str_repeat($chars, $len)), 0, $len);
+        }, $result);
+
+        // {10:abc123...}
+        $result = preg_replace_callback('/\{(\d+):(.+?)\}/', function ($m) {
+            $len = (int) $m[1];
+            $charset = $m[2];
+
+            if ($len <= 0 || $charset === '') {
+                return '';
+            }
+
+            $out = '';
+            $max = strlen($charset) - 1;
+
+            for ($i = 0; $i < $len; $i++) {
+                $out .= $charset[random_int(0, $max)];
+            }
+
+            return $out;
+        }, $result);
+
+        return $result;
+    }
+
+}

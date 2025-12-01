@@ -58,13 +58,14 @@ class AppServiceProvider extends ServiceProvider
         }
 
         try {
-            if (Schema::hasTable('modules')) {
-                $Modules = Module::all();
-            } else {
-                $Modules = collect();
-                Log::warning('Table "modules" does not exist. Using empty collection.');
-            }
+            $Modules = Module::all();
             app()->instance('Modules', $Modules);
+        } catch (\Illuminate\Database\QueryException $e) {
+            Log::warning('Table "modules" not found or query failed. Using empty collection.', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            app()->instance('Modules', collect());
         } catch (\Throwable $e) {
             Log::error('Error booting modules', [
                 'message' => $e->getMessage(),

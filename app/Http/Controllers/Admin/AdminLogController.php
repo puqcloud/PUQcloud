@@ -137,7 +137,7 @@ class AdminLogController extends Controller
                 ->addColumn('initializer', function ($activity_log) {
                     $initializer = [
                         'name' => 'System',
-                        'web_edit' => null,
+                        'edit' => null,
                     ];
                     $admin_online = app('admin');
                     if ($activity_log->admin) {
@@ -145,7 +145,7 @@ class AdminLogController extends Controller
                         $initializer['lastname'] = $activity_log->admin->lastname;
                         $initializer['email'] = $activity_log->admin->email;
                         if ($admin_online->hasPermission('admins-view')) {
-                            $initializer['web_edit'] = route('admin.web.admin', $activity_log->admin->uuid);
+                            $initializer['edit'] = route('admin.web.admin', $activity_log->admin->uuid);
                         }
                         $initializer['gravatar'] = get_gravatar($activity_log->admin->email, 100);
                     }

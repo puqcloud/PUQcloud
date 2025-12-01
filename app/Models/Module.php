@@ -72,35 +72,32 @@ class Module extends Model
     public static function syncModulesWithDatabase(): void
     {
         $basePath = base_path('modules');
+
+        $existingModules = self::whereIn('type', self::$directories)->pluck('name')->toArray();
+
         foreach (self::$directories as $type) {
             $typePath = $basePath.'/'.$type;
-            if (!is_dir($typePath)) {
-                continue;
-            }
+            if (!is_dir($typePath)) continue;
 
-            $folders = scandir($typePath);
+            $folders = array_diff(scandir($typePath), ['.', '..']);
+
             foreach ($folders as $folder) {
-                if ($folder === '.' || $folder === '..') {
+                if (in_array($folder, $existingModules)) {
                     continue;
                 }
 
-                $configPath = $typePath.'/'.$folder.'/'.'config.php';
-
-                if (!file_exists($configPath)) {
-                    continue;
-                }
+                $configPath = $typePath.'/'.$folder.'/config.php';
+                if (!file_exists($configPath)) continue;
 
                 $config = include $configPath;
                 $version = $config['version'] ?? 'unknown';
 
-                if (!self::where('name', $folder)->where('type', $type)->exists()) {
-                    self::create([
-                        'name' => $folder,
-                        'type' => $type,
-                        'version' => $version,
-                        'status' => 'inactive',
-                    ]);
-                }
+                self::create([
+                    'name' => $folder,
+                    'type' => $type,
+                    'version' => $version,
+                    'status' => 'inactive',
+                ]);
             }
         }
     }

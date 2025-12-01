@@ -73,6 +73,13 @@ class PuqPmLxcPreset extends Model
         'puq_pm_dns_zone_uuid',
         'firewall_enable', 'firewall_dhcp', 'firewall_ipfilter', 'firewall_macfilter', 'firewall_ndp', 'firewall_radv',
         'firewall_log_level_in', 'firewall_log_level_out', 'firewall_policy_in', 'firewall_policy_out',
+
+        'ha_managed', 'unprivileged', 'nesting', 'fuse', 'keyctl', 'mknod', 'mount_nfs', 'mount_cifs',
+        'env',
+    ];
+
+    protected $casts = [
+        'env' => 'array',
     ];
 
     protected static function boot(): void
@@ -115,7 +122,7 @@ class PuqPmLxcPreset extends Model
         $puq_pm_lxc_preset_cluster_group = $this->puqPmLxcPresetClusterGroups()->where('puq_pm_cluster_group_uuid',
             $puq_pm_cluster_group->uuid)->first();
 
-        if (!$puq_pm_lxc_preset_cluster_group) {
+        if (! $puq_pm_lxc_preset_cluster_group) {
             return null;
         }
 
@@ -130,7 +137,7 @@ class PuqPmLxcPreset extends Model
         ];
     }
 
-    public function getServiceProductOptions($service, array $product_data): array
+    public function getServiceProductOptions($service, array $product_data, array $extra_product_options = []): array
     {
         $getOption = function ($group_uuid) use ($service) {
             return $service->productOptions()
@@ -154,7 +161,7 @@ class PuqPmLxcPreset extends Model
             ->where('key', $os_product_option_group?->value)
             ->first();
 
-        return [
+        $result = [
             'service_uuid' => $service->uuid,
             'location' => $location_product_option->value ?? '',
             'ipv4_public_network' => $ipv4_product_option->value ?? false,
@@ -168,17 +175,53 @@ class PuqPmLxcPreset extends Model
             'backup_count' => $backup_count_product_option->value ?? 0,
             'os_template_uuid' => $template?->uuid,
         ];
+
+        // override defaults with extra options
+        return array_merge($result, $extra_product_options);
     }
 
-    public function createLxcInstance(Service $service, array $product_data): array
+    private function generateUniqueHostname(?string $base): string
+    {
+        $base = trim($base);
+        if ($base === '') {
+            $base = 'host';
+        }
+
+        $existing = PuqPmLxcInstance::where('hostname', 'LIKE', $base.'%')
+            ->pluck('hostname');
+
+        if ($existing->isEmpty()) {
+            return $base;
+        }
+
+        $max = 0;
+
+        foreach ($existing as $name) {
+            $suffix = substr($name, strlen($base));
+            if ($suffix === '') {
+                $num = 0;
+            } elseif (ctype_digit($suffix)) {
+                $num = (int) $suffix;
+            } else {
+                continue;
+            }
+            if ($num > $max) {
+                $max = $num;
+            }
+        }
+
+        return $base.($max + 1);
+    }
+
+    public function createLxcInstance(Service $service, array $product_data, array $extra_product_options = []): array
     {
 
-        $product_options = $this->getServiceProductOptions($service, $product_data);
+        $product_options = $this->getServiceProductOptions($service, $product_data, $extra_product_options);
         $location = $product_options['location'];
         $client = $service->client;
 
         $puq_pm_cluster_group = PuqPmClusterGroup::getByLocation($location);
-        if (!$puq_pm_cluster_group) {
+        if (! $puq_pm_cluster_group) {
             return [
                 'status' => 'error',
                 'errors' => ['No available cluster group for the location: '.$location],
@@ -187,7 +230,7 @@ class PuqPmLxcPreset extends Model
 
         $puq_pm_lxc_os_template = $this->puqPmLxcOsTemplates()->where('uuid',
             $product_options['os_template_uuid'])->first();
-        if (!$puq_pm_lxc_os_template) {
+        if (! $puq_pm_lxc_os_template) {
             return [
                 'status' => 'error',
                 'errors' => ['OS template is not available'],
@@ -310,7 +353,7 @@ class PuqPmLxcPreset extends Model
                 $mac_ipv4 = $macPoolIPv4->getMac($excludeMacs);
                 $excludeMacs[] = $mac_ipv4;
 
-                if (!$mac_ipv4) {
+                if (! $mac_ipv4) {
                     DB::rollBack();
 
                     return [
@@ -318,7 +361,7 @@ class PuqPmLxcPreset extends Model
                         'errors' => ["No free MAC in MAC pool '{$macPoolIPv4->name}' for IPv4"],
                     ];
                 }
-                if (!$ip_ipv4) {
+                if (! $ip_ipv4) {
                     DB::rollBack();
 
                     return [
@@ -334,7 +377,7 @@ class PuqPmLxcPreset extends Model
                 $macPoolIPv6 = $ipv6_public_network->puqPmMacPool;
                 $ipPoolIPv6 = $ipv6_public_network->puqPmIpPool;
 
-                if (!$product_options['ipv4_public_network']) {
+                if (! $product_options['ipv4_public_network']) {
                     $needSeparateIPv6 = true;
                 } else {
                     if (
@@ -354,7 +397,7 @@ class PuqPmLxcPreset extends Model
                         $ip_ipv6 = 'dhcp';
                     }
 
-                    if (!$mac_ipv6) {
+                    if (! $mac_ipv6) {
                         DB::rollBack();
 
                         return [
@@ -362,7 +405,7 @@ class PuqPmLxcPreset extends Model
                             'errors' => ["No free MAC in MAC pool '{$macPoolIPv6->name}' for IPv6"],
                         ];
                     }
-                    if (!$ip_ipv6) {
+                    if (! $ip_ipv6) {
                         DB::rollBack();
 
                         return [
@@ -376,7 +419,7 @@ class PuqPmLxcPreset extends Model
                     } else {
                         $ip_ipv6 = 'dhcp';
                     }
-                    if (!$ip_ipv6) {
+                    if (! $ip_ipv6) {
                         DB::rollBack();
 
                         return [
@@ -390,8 +433,11 @@ class PuqPmLxcPreset extends Model
             $parts = explode('-', $location);
             $country = $parts[0];
 
-            $puqPmLxcInstance = new PuqPmLxcInstance();
-            $puqPmLxcInstance->hostname = $puq_pm_dns_zone->generateLxcHostname($this->hostname, $country);
+            $puqPmLxcInstance = new PuqPmLxcInstance;
+
+            $base = $puq_pm_dns_zone->generateLxcHostname($this->hostname, $country);
+            $puqPmLxcInstance->hostname = $this->generateUniqueHostname($base);
+
             $puqPmLxcInstance->vmid = null;
             $puqPmLxcInstance->puq_pm_lxc_preset_uuid = $this->uuid;
             $puqPmLxcInstance->puq_pm_dns_zone_uuid = $puq_pm_dns_zone->uuid;
@@ -414,7 +460,7 @@ class PuqPmLxcPreset extends Model
             $puqPmLxcInstance->save();
 
             if ($product_options['ipv4_public_network']) {
-                $puq_pm_lxc_instance_net = new PuqPmLxcInstanceNet();
+                $puq_pm_lxc_instance_net = new PuqPmLxcInstanceNet;
                 $puq_pm_lxc_instance_net->name = $this->pn_name;
                 $puq_pm_lxc_instance_net->puq_pm_lxc_instance_uuid = $puqPmLxcInstance->uuid;
                 $puq_pm_lxc_instance_net->type = 'public';
@@ -424,7 +470,7 @@ class PuqPmLxcPreset extends Model
                 $puq_pm_lxc_instance_net->ipv4 = $ip_ipv4 == 'dhcp' ? null : $ip_ipv4;
                 $puq_pm_lxc_instance_net->rdns_v4 = $puqPmLxcInstance->hostname.'.'.$puq_pm_dns_zone->name;
 
-                if ($product_options['ipv6_public_network'] && !$needSeparateIPv6) {
+                if ($product_options['ipv6_public_network'] && ! $needSeparateIPv6) {
                     $puq_pm_lxc_instance_net->puq_pm_ipv6_pool_uuid = $ipPoolIPv6->uuid ?? null;
                     $puq_pm_lxc_instance_net->ipv6 = $ip_ipv6 == 'dhcp' ? null : $ip_ipv6;
                     $puq_pm_lxc_instance_net->rdns_v6 = $puqPmLxcInstance->hostname.'.'.$puq_pm_dns_zone->name;
@@ -433,7 +479,7 @@ class PuqPmLxcPreset extends Model
                 $puq_pm_lxc_instance_net->save();
 
                 if ($product_options['ipv6_public_network'] && $needSeparateIPv6) {
-                    $puq_pm_lxc_instance_net_v6 = new PuqPmLxcInstanceNet();
+                    $puq_pm_lxc_instance_net_v6 = new PuqPmLxcInstanceNet;
                     $puq_pm_lxc_instance_net_v6->name = $this->pn_name.'v6';
                     $puq_pm_lxc_instance_net_v6->puq_pm_lxc_instance_uuid = $puqPmLxcInstance->uuid;
                     $puq_pm_lxc_instance_net_v6->type = 'public';
@@ -446,8 +492,8 @@ class PuqPmLxcPreset extends Model
                 }
             }
 
-            if (!$product_options['ipv4_public_network'] && $product_options['ipv6_public_network']) {
-                $puq_pm_lxc_instance_net = new PuqPmLxcInstanceNet();
+            if (! $product_options['ipv4_public_network'] && $product_options['ipv6_public_network']) {
+                $puq_pm_lxc_instance_net = new PuqPmLxcInstanceNet;
                 $puq_pm_lxc_instance_net->name = $this->pn_name.'v6';
                 $puq_pm_lxc_instance_net->puq_pm_lxc_instance_uuid = $puqPmLxcInstance->uuid;
                 $puq_pm_lxc_instance_net->type = 'public';
@@ -469,14 +515,14 @@ class PuqPmLxcPreset extends Model
                     ->where('client_uuid', $client->uuid)
                     ->where('puq_pm_cluster_group_uuid', $puq_pm_cluster_group->uuid)
                     ->first();
-                if (!$puq_pm_client_private_network) {
+                if (! $puq_pm_client_private_network) {
                     $bridge_vlan_tag = $local_private_network->getLocalBridgeVlanTag($puq_pm_cluster_group->uuid);
-                    if (!$bridge_vlan_tag) {
+                    if (! $bridge_vlan_tag) {
                         DB::rollBack();
 
                         return [
                             'status' => 'error',
-                            'errors' => ["No available bridge or vlan in Local Private Network"],
+                            'errors' => ['No available bridge or vlan in Local Private Network'],
                         ];
                     }
 
@@ -486,18 +532,18 @@ class PuqPmLxcPreset extends Model
                 }
                 $ipv4_cidr = $puq_pm_client_private_network->getIPv4();
 
-                if (!$ipv4_cidr) {
+                if (! $ipv4_cidr) {
                     DB::rollBack();
 
                     return [
                         'status' => 'error',
-                        'errors' => ["No available IP in Local Private Network"],
+                        'errors' => ['No available IP in Local Private Network'],
                     ];
                 }
 
-                list($ip_ipv4, $prefix_ipv) = explode('/', $ipv4_cidr);
+                [$ip_ipv4, $prefix_ipv] = explode('/', $ipv4_cidr);
 
-                $puq_pm_lxc_instance_net = new PuqPmLxcInstanceNet();
+                $puq_pm_lxc_instance_net = new PuqPmLxcInstanceNet;
                 $puq_pm_lxc_instance_net->name = $this->lpn_name;
                 $puq_pm_lxc_instance_net->puq_pm_lxc_instance_uuid = $puqPmLxcInstance->uuid;
                 $puq_pm_lxc_instance_net->type = 'local_private';
@@ -517,15 +563,15 @@ class PuqPmLxcPreset extends Model
                     ->where('client_uuid', $client->uuid)
                     ->first();
 
-                if (!$puq_pm_client_private_network) {
+                if (! $puq_pm_client_private_network) {
                     $bridge_vlan_tag = $global_private_network->getGlobalBridgeVlanTag();
 
-                    if (!$bridge_vlan_tag) {
+                    if (! $bridge_vlan_tag) {
                         DB::rollBack();
 
                         return [
                             'status' => 'error',
-                            'errors' => ["No available bridge or vlan in Global Private Network"],
+                            'errors' => ['No available bridge or vlan in Global Private Network'],
                         ];
                     }
 
@@ -536,18 +582,18 @@ class PuqPmLxcPreset extends Model
 
                 $ipv4_cidr = $puq_pm_client_private_network->getIPv4();
 
-                if (!$ipv4_cidr) {
+                if (! $ipv4_cidr) {
                     DB::rollBack();
 
                     return [
                         'status' => 'error',
-                        'errors' => ["No available IP in Global Private Network"],
+                        'errors' => ['No available IP in Global Private Network'],
                     ];
                 }
 
-                list($ip_ipv4, $prefix_ipv) = explode('/', $ipv4_cidr);
+                [$ip_ipv4, $prefix_ipv] = explode('/', $ipv4_cidr);
 
-                $puq_pm_lxc_instance_net = new PuqPmLxcInstanceNet();
+                $puq_pm_lxc_instance_net = new PuqPmLxcInstanceNet;
                 $puq_pm_lxc_instance_net->name = $this->gpn_name;
                 $puq_pm_lxc_instance_net->puq_pm_lxc_instance_uuid = $puqPmLxcInstance->uuid;
                 $puq_pm_lxc_instance_net->type = 'global_private';
@@ -557,7 +603,6 @@ class PuqPmLxcPreset extends Model
                 $puq_pm_lxc_instance_net->mask_v4 = $prefix_ipv;
                 $puq_pm_lxc_instance_net->save();
             }
-
 
             $puqPmLxcInstance->save();
 
@@ -606,7 +651,7 @@ class PuqPmLxcPreset extends Model
         }
 
         foreach ($product_option_values as $value) {
-            if (!in_array($value, $used_values)) {
+            if (! in_array($value, $used_values)) {
                 $data[] = [
                     'cluster_group' => null,
                     'value' => $value,
@@ -631,7 +676,6 @@ class PuqPmLxcPreset extends Model
 
             $value = strtolower($puqPmLxcOsTemplate->key);
 
-
             if (in_array($value, $product_option_values)) {
                 $used_values[] = $value;
             }
@@ -643,7 +687,7 @@ class PuqPmLxcPreset extends Model
         }
 
         foreach ($product_option_values as $value) {
-            if (!in_array($value, $used_values)) {
+            if (! in_array($value, $used_values)) {
                 $data[] = [
                     'cluster_group' => null,
                     'value' => $value,
@@ -682,5 +726,4 @@ class PuqPmLxcPreset extends Model
 
         return $attributes;
     }
-
 }

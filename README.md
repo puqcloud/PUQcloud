@@ -1,6 +1,7 @@
 # PUQ Cloud Panel
 
-**PUQ Cloud Panel** is an open-source, modular cloud automation and billing system designed to empower individuals and companies to start their IT service business quickly and independently. Built on [Laravel](https://laravel.com), it provides advanced billing, provisioning, service management, and cloud orchestration features — all in a single system.
+**PUQ Cloud Panel** is an open-source, modular cloud automation and billing system designed to help individuals and companies launch their own IT service business quickly and independently.  
+Built on [Laravel](https://laravel.com), it includes full billing, provisioning, DNS, cluster management, SaaS deployment, and cloud orchestration — all in one platform.
 
 🌐 [Official Website](https://puqcloud.com) | 📚 [Documentation](https://doc.puq.info/books/puqcloud-panel)
 
@@ -9,58 +10,98 @@
 ## 🧩 Key Features
 
 - ✅ **Modular Architecture** — Easily extendable with custom modules.
-- 🚀 **Service Automation** — Automatically deploy and manage cloud services.
-- 💳 **Advanced Billing System** — Invoices, proformas, add funds, taxation by region.
-- 🛍️ **Product Catalog & eCommerce** — Sell services and physical items.
-- 🛠️ **Helpdesk & Support** — Manage paid or free technical support (Remote Hands).
-- 🧾 **Multi-company Support** — Manage multiple home companies under one panel.
-- 🌍 **Internationalization** — Tax rules, currencies, languages per client country.
-- 🏗️ **Cluster Support** — Node orchestration with master/agent communication.
-- 🔄 **Queue-Based Task Handling** — Fast and reliable job processing in background.
+- 🚀 **Service Automation** — Automatic deployment and full lifecycle management.
+- 💳 **Advanced Billing System** — Invoices, proformas, credit balance, multi-currency, tax by region.
+- 🛍️ **Product Catalog & eCommerce** — Sell hosting, SaaS, LXC, services, and physical items.
+- 🛠️ **Helpdesk & Support Tools** — Free or paid support (Remote Hands).
+- 🧾 **Multi-company Support** — Multiple home companies with separate tax profiles.
+- 🌍 **Internationalization** — Taxes, currencies, languages per client country.
+- 🏗️ **Cluster Architecture**
+    - Master nodes management
+    - Worker nodes
+    - Secure token authorization
+    - Automatic syncing
+- 🐳 **APP Hosting (SaaS)** — Deploy SaaS applications on Proxmox clusters automatically.
+- 📦 **LXC Hosting** — Provision LXC containers as products.
+- 🔄 **Queue-Based Task Engine** — Fast background operations.
+- 🗄️ **DNS Manager** — PowerDNS, HestiaCP, zone migration.
+- 🔐 **SSL Manager** — Let’s Encrypt, ZeroSSL, ACME, EAB support.
 - 🔓 **Free & Open Source**
 
 ---
 
 ## 🎯 Mission
 
-Our mission is to **democratize cloud business infrastructure** by giving everyone the tools to run their own IT business — for free.
+We aim to make cloud business infrastructure available to everyone by providing a powerful, free system for building your IT business.
 
-
-> 🫶 Learn more about our [goals and philosophy](https://puqcloud.com/puqcloud-panel.php)
+> 🫶 Learn more about our vision and philosophy  
+> https://puqcloud.com/puqcloud-panel.php
 
 ---
 
 ## 👥 Community & Contribution
 
-PUQ Cloud Panel is built and maintained by a global community of volunteers.
+Community Platform → https://community.puqcloud.com/
 
-- 💡 Want to contribute code? Fork the repo and submit a PR.
-- 🤝 Want to help in other ways? Join as a [Volunteer](https://puqcloud.com/puqcloud-volunteers.php)
-- 💰 Want to support us? Become a [Sponsor](https://puqcloud.com/puqcloud-sponsors.php)
+PUQcloud Panel is developed by international volunteers.
 
-We welcome all types of contributions — code, documentation, translations, bug reports, and ideas.
+- Submit code → Fork and make a PR
+- Join the project → https://puqcloud.com/puqcloud-volunteers.php
+- Support development → https://puqcloud.com/puqcloud-sponsors.php
+
+We welcome ideas, bug reports, translations, and module developers.
 
 ---
 
 ## ⚙️ Requirements
 
-- PHP 8.2 or higher
-- Laravel 12+
-- MySQL 8.x or MariaDB
-- Redis (for queues)
-- Node.js (for frontend assets, optional)
+- PHP 8.2+
+- MySQL 8.x / MariaDB
+- Redis (queues)
+- Node.js (frontend assets)
 - Composer
 - npm
 
 ---
 
-## 🛠️ Fully Automated Installation of PUQcloud Panel
+## 🔌 Proxmox Integration Features
 
-For fully automated installation of the PUQcloud panel, we have prepared special scripts.
+PUQcloud provides full automation for Proxmox clusters:
 
-You can find the scripts and detailed usage instructions in this repository:  
-👉 [https://github.com/puqcloud/PUQcloud-Scripts](https://github.com/puqcloud/PUQcloud-Scripts)
+### **LXC Hosting**
+- Create, start, stop, reboot LXC containers
+- Automatic provisioning and termination
+- Custom resource limits
+- Reverse/forward DNS automation
 
+### **APP Hosting (SaaS Apps)**
+- Automatic SaaS deployment on Proxmox
+- Each app runs in isolated environment
+- Multi-cluster support
+- Load balancing and rebalance tools
+- Automatic syncing between clusters
+
+### **Console Access**
+#### Required modules:
+
+#### **noVNC Proxy (for console access of servers and LXC)**
+Repository:  
+🔗 https://github.com/puqcloud/webproxy
+
+#### **VNC Web Proxy (for APP deployments on Proxmox)**
+Repository:  
+🔗 https://github.com/puqcloud/vncwebproxy
+
+These tools allow secure, modular console access for both LXC and APP containers.
+
+---
+
+## 🛠️ Fully Automated Installation (Production)
+
+Ready-to-use scripts for installing the PUQcloud Panel:  
+👉 https://github.com/puqcloud/PUQcloud-Scripts
+
+---
 
 ## 🚀 Installation (Development)
 
@@ -73,6 +114,7 @@ php artisan key:generate
 chmod -R 775 storage bootstrap/cache
 npm install
 npm run prod
+
 ```
 Edit the .env file and fill in the required variables (database, app URL, etc).
 

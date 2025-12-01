@@ -95,8 +95,8 @@
                     orderable: false,
                     render: function (data, type, row) {
                         var btn = '';
-                        if(row.urls.web_edit) {
-                            btn = btn + renderEditButton(row.urls.web_edit);
+                        if(row.urls.edit) {
+                            btn = btn + renderEditButton(row.urls.edit);
                         }
                         if(row.urls.delete) {
                             btn = btn + renderDeleteButton(row.urls.delete);
