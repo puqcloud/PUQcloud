@@ -677,4 +677,8 @@ return [
     'OCSP Checked At' => 'Sprawdzono OCSP',
     'Days Remaining' => 'Pozostałe dni',
     'Renewed At' => 'Odnowiono',
+    'Move To' => 'Przenieś do',
+    'SSL Manager' => 'Menedżer SSL',
+    'Retry Deploy' => 'Ponów wdrożenie',
+    'Community' => 'Społeczność',
 ];

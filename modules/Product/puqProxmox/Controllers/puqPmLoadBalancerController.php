@@ -18,6 +18,8 @@
 namespace Modules\Product\puqProxmox\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\Service;
+use App\Models\Task;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -467,14 +469,23 @@ class puqPmLoadBalancerController extends Controller
             ], 404);
         }
 
-        $deploy = $model->deployAll();
+        $data = [
+            'module' => $model,
+            'method' => 'deployAll',        // The method name that should be executed inside the job
+            'callback' => 'deployAllCallback',
+            // Optional. The method name in the module that will be executed after the main method is finished.
+            // Receives the result and jobId as parameters.
+            'tries' => 1,                   // Number of retry attempts if the job fails
+            'backoff' => 60,                // Delay in seconds between retries
+            'timeout' => 3600,               // Max execution time for the job in seconds
+            'maxExceptions' => 1,           // Max number of unhandled exceptions before marking the job as failed
+        ];
 
-        if ($deploy['status'] === 'error') {
-            return response()->json([
-                'status' => 'error',
-                'errors' => $deploy['errors'] ?? [],
-            ], $deploy['code'] ?? 500);
-        }
+        $tags = [
+            'deployAll'
+        ];
+
+        Task::add('ModuleJob', 'puqProxmox-LoadBalancer', $data, $tags);
 
         return response()->json([
             'status' => 'success',

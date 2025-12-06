@@ -88,48 +88,79 @@
                                     var nextRun = schedule.next_run_at ? formatDateWithoutTimezone(schedule.next_run_at) : '<span class="text-danger"><i class="fa fa-times"></i></span>';
 
                                     tabsContent += `
-                                <div class="col-lg-6 col-xl-6">
-                                    <div class="card mb-3 widget-content">
-                                        <div class="row">
-                                            <div class="col-lg-6 col-xl-6"><div class="menu-header-title">${schedule.artisan}</div></div>
-                                            <div class="col-lg-3 col-xl-3">
-                                                <div class="font-weight-bold text-muted">${translate('Last Run')}:</div>
-                                                <div class="text-dark">
-                                                    <i class="fa fa-clock"></i> ${lastRun}
-                                                </div>
-                                            </div>
-                                            <div class="col-lg-3 col-xl-3">
-                                                <div class="font-weight-bold text-muted">${translate('Next Run')}:</div>
-                                                <div class="text-dark">
-                                                    <i class="fa fa-arrow-right"></i> ${nextRun}
-                                                </div>
-                                            </div>
+<div class="col-12">
+    <div class="p-3 border-bottom bg-white">
 
-                                            <div class="col-lg-12 col-xl-12"><div class="widget-subheading">${schedule.description}</div></div>
-                                            <div class="col-lg-6 col-xl-6"><input type="text" class="form-control mt-2 cron-input" value="${schedule.cron}" data-uuid="${schedule.uuid}"></div>
-                                            <div class="col-lg-6 col-xl-6">
-                                                <span class="float-end">
-                                                    <input type="checkbox" data-toggle="toggle" ${checked} data-uuid="${schedule.uuid}" class="schedule-checkbox">
-                                                    <button type="button" class="btn-icon btn-icon-only btn-outline-2x btn btn-outline-success save-btn"
-                                                        data-uuid="${schedule.uuid}"
-                                                        data-cron_default="${schedule.cron_default}"
-                                                        data-disable_default="${schedule.disable_default}"
-                                                        data-disable_old="${schedule.disable}"
-                                                        data-url="${schedule.urls.put}">
-                                                        <i class="fa fa-save"></i>
-                                                     </button>
-                                                    <button type="button" class="btn-icon btn-icon-only btn-outline-2x btn btn-outline-info default-btn"
-                                                        data-uuid="${schedule.uuid}"
-                                                        data-cron_default="${schedule.cron_default}"
-                                                        data-disable_default="${schedule.disable_default}">
-                                                        <i class="fa fa-fw"></i>
-                                                     </button>
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            `;
+        <div class="row g-2 align-items-center">
+
+            <!-- NAME + DESCRIPTION -->
+            <div class="col-lg-4 col-md-6 col-12">
+                <div class="fw-bold fs-6">${schedule.artisan}</div>
+                <div class="text-muted small">${schedule.description}</div>
+            </div>
+
+            <!-- LAST RUN -->
+            <div class="col-lg-2 col-md-3 col-6 text-lg-center">
+                <div class="text-muted small">${translate('Last Run')}</div>
+                <div class="fw-semibold">
+                    <i class="fa fa-clock me-1"></i>${lastRun}
+                </div>
+            </div>
+
+            <!-- NEXT RUN -->
+            <div class="col-lg-2 col-md-3 col-6 text-lg-center">
+                <div class="text-muted small">${translate('Next Run')}</div>
+                <div class="fw-semibold">
+                    <i class="fa fa-arrow-right me-1"></i>${nextRun}
+                </div>
+            </div>
+
+            <!-- CRON -->
+            <div class="col-lg-2 col-md-6 col-12">
+                <input type="text"
+                    class="form-control form-control-sm cron-input"
+                    value="${schedule.cron}"
+                    data-uuid="${schedule.uuid}">
+            </div>
+
+            <!-- TOGGLE -->
+            <div class="col-lg-1 col-md-3 col-6 text-center">
+                <input type="checkbox"
+                    data-toggle="toggle"
+                    ${checked}
+                    data-uuid="${schedule.uuid}"
+                    class="schedule-checkbox">
+            </div>
+
+            <!-- ACTION BUTTONS -->
+            <div class="col-lg-1 col-md-3 col-6 d-flex justify-content-end align-items-center"
+                 style="white-space: nowrap;">
+
+                <button type="button"
+                    class="btn btn-sm btn-outline-secondary me-1 default-btn"
+                    data-uuid="${schedule.uuid}"
+                    data-cron_default="${schedule.cron_default}"
+                    data-disable_default="${schedule.disable_default}">
+                    <i class="fa fa-undo"></i>
+                </button>
+
+                <button type="button"
+                    class="btn-icon btn-sm btn-icon-only btn-outline-2x btn btn-outline-success save-btn"
+                    data-uuid="${schedule.uuid}"
+                    data-cron_default="${schedule.cron_default}"
+                    data-disable_default="${schedule.disable_default}"
+                    data-disable_old="${schedule.disable}"
+                    data-url="${schedule.urls.put}">
+                    <i class="fa fa-save"></i>
+                </button>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+`;
+
                                 });
 
                                 tabsContent += `</div></div>`;

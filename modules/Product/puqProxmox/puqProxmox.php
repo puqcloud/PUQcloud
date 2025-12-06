@@ -1992,10 +1992,57 @@ class puqProxmox extends Product
             $suspend = $this->suspendLxcJob();
         }
 
+        if ($type == 'app') {
+            $suspend = $this->suspendAppJob();
+        }
+
         return $suspend;
     }
 
     public function suspendLxcJob(): array
+    {
+        try {
+            $service = \App\Models\Service::find($this->service_uuid);
+            $lxc_instance = PuqPmLxcInstance::query()
+                ->where('service_uuid', $service->uuid)
+                ->first();
+
+            if (empty($lxc_instance) or empty($lxc_instance->vmid)) {
+                $status = ['status' => 'error', 'errors' => ['LXC is not ready']];
+                $this->suspendCallback($status);
+
+                return $status;
+            }
+
+            $status = $lxc_instance->getStatus();
+            if ($status['status'] != 'stopped') {
+                $suspend = $lxc_instance->stop();
+
+                if ($suspend['status'] == 'error') {
+                    $this->suspendCallback($suspend);
+
+                    return $suspend;
+                }
+            }
+
+            $status = ['status' => 'success'];
+            $this->suspendCallback($status);
+
+            return $status;
+        } catch (\Throwable $e) {
+            $status = [
+                'status' => 'error',
+                'errors' => [$e->getMessage()],
+                'trace' => $e->getTraceAsString(),
+            ];
+            $this->logError('Suspend', '', $e->getMessage());
+            $this->suspendCallback($status);
+
+            return $status;
+        }
+    }
+
+    public function suspendAppJob(): array
     {
         try {
             $service = \App\Models\Service::find($this->service_uuid);
@@ -2048,10 +2095,54 @@ class puqProxmox extends Product
             $unsuspend = $this->unsuspendLxcJob();
         }
 
+        if ($type == 'app') {
+            $unsuspend = $this->unsuspendAppJob();
+        }
+
         return $unsuspend;
     }
 
     public function unsuspendLxcJob(): array
+    {
+        try {
+            $service = \App\Models\Service::find($this->service_uuid);
+            $lxc_instance = PuqPmLxcInstance::query()
+                ->where('service_uuid', $service->uuid)
+                ->first();
+
+            if (empty($lxc_instance) or empty($lxc_instance->vmid)) {
+                $status = ['status' => 'error', 'errors' => ['LXC is not ready']];
+                $this->unsuspendCallback($status);
+
+                return $status;
+            }
+
+            $unsuspend = $lxc_instance->start();
+
+            if ($unsuspend['status'] == 'error') {
+                $this->unsuspendCallback($unsuspend);
+
+                return $unsuspend;
+            }
+
+            $status = ['status' => 'success'];
+            $this->unsuspendCallback($status);
+
+            return $status;
+        } catch (\Throwable $e) {
+            $status = [
+                'status' => 'error',
+                'errors' => [$e->getMessage()],
+                'trace' => $e->getTraceAsString(),
+            ];
+            $this->logError('Suspend', '', $e->getMessage());
+            $this->unsuspendCallback($status);
+
+            return $status;
+        }
+    }
+
+    public function unsuspendAppJob(): array
     {
         try {
             $service = \App\Models\Service::find($this->service_uuid);
@@ -3822,7 +3913,7 @@ class puqProxmox extends Product
             ],
             [
                 'artisan' => 'SyncApp',
-                'cron' => '* * * * *',
+                'cron' => '30 * * * *',
                 'disable' => false,
             ],
             [
@@ -3833,6 +3924,11 @@ class puqProxmox extends Product
             [
                 'artisan' => 'LoadBalancerRebalance',
                 'cron' => '* * * * *',
+                'disable' => false,
+            ],
+            [
+                'artisan' => 'LoadBalancerDeployAll',
+                'cron' => '0 5 * * *',
                 'disable' => false,
             ],
         ];
@@ -3906,7 +4002,6 @@ class puqProxmox extends Product
                 'timeout' => 3600,
                 'nice' => 0,
             ],
-
             'AppSync' => [
                 'connection' => 'redis',
                 'queue' => ['AppSync'],

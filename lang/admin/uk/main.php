@@ -677,4 +677,8 @@ return [
     'OCSP Checked At' => 'OCSP перевірено',
     'Days Remaining' => 'Залишилося днів',
     'Renewed At' => 'Продовжено',
+    'Move To' => 'Перемістити до',
+    'SSL Manager' => 'Менеджер SSL',
+    'Retry Deploy' => 'Спробувати повторно розгортання',
+    'Community' => 'Спільнота',
 ];

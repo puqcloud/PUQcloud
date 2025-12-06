@@ -39,7 +39,7 @@ class puqProxmoxSyncApp extends Command
     public function handle()
     {
 
-        $puq_pm_app_instances = PuqPmAppInstance::where('deploy_status', 'success')->get();
+        $puq_pm_app_instances = PuqPmAppInstance::query()->where('deploy_status', 'success')->get();
 
         $this->info(str_repeat('=', 70));
         $this->info('Starting synchronization...');

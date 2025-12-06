@@ -48,6 +48,13 @@
         </div>
     </div>
 
+    <div class="alert alert-info" role="alert">
+        You can download and discuss templates at
+        <a href="https://community.puqcloud.com/c/puqcloud-panel/app-templates-puqcloud/" class="alert-link" target="_blank">
+            PUQcloud Community
+        </a>.
+    </div>
+
     <div class="main-card mb-3 card">
         <div class="card-body">
             <table style="width: 100%;" id="app_presets"

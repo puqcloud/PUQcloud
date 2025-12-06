@@ -363,7 +363,7 @@ CONF
     }
 
 
-    public function deployAll(): array
+    public function deployAll($puq_pm_app_instances = null): array
     {
         $errors = [];
         $data = [
@@ -380,7 +380,9 @@ CONF
             $errors = array_merge($errors, $deploy_main_config['errors']);
         }
 
-        $puq_pm_app_instances = PuqPmAppInstance::query()->where('deploy_status', 'success')->get();
+        if (empty($puq_pm_app_instances)) {
+            $puq_pm_app_instances = PuqPmAppInstance::query()->where('deploy_status', 'success')->get();
+        }
 
         foreach ($puq_pm_app_instances as $puq_pm_app_instance) {
             $configs = $puq_pm_app_instance->getNginxConfigData();
@@ -412,6 +414,22 @@ CONF
         }
 
         return ['status' => 'success'];
+    }
+
+    public function deployAllCallback(array $result, string $jobId = null): void
+    {
+        if (!empty($result['errors'])) {
+            logModule(
+                'Product',
+                'PuqProxmox',
+                'deployAll',
+                'error',
+                [
+                    'PuqPmLoadBalancer' => $this->name,
+                ],
+                $result
+            );
+        }
     }
 
     public

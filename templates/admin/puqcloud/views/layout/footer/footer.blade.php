@@ -7,6 +7,9 @@
            href="https://doc.puq.info/books/puqcloud-panel" target="_blank">{{ __('main.Documentation') }}</a>
 
         <a class="mb-2 me-2 border-0 btn-transition btn btn-outline-secondary"
+           href="https://community.puqcloud.com/" target="_blank">{{ __('main.Community') }}</a>
+
+        <a class="mb-2 me-2 border-0 btn-transition btn btn-outline-secondary"
            href="https://puqcloud.com/aboutus.php" target="_blank">{{ __('main.About Us') }}</a>
     </div>
 </div>

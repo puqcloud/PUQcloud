@@ -3,7 +3,20 @@
 All notable changes to this project will be documented in this file.
 
 ---
+[1.1.0] – 2025-12-05
 
+### Changed
+- Scheduler UI: redesigned display, now shown in a row layout.
+
+### Added
+- Proxmox Module
+    - New Scheduler task: "Deploy Web Proxy configuration on all load balancer nodes based on all successfully deployed app instances."
+
+### Fixed
+- Proxmox Module
+    - Suspend/Unsuspend
+
+---
 ## [1.0.0] – 2025-12-01
 ### First Stable Release
 This is the first stable release of **PUQcloud**, including full automation, billing, DNS, Proxmox support, SaaS deployment, monitoring, and payment integrations.

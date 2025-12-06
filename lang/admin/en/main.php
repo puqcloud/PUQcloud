@@ -681,7 +681,7 @@ return [
     'Move To' => 'Move To',
     'SSL Manager' => 'SSL Manager',
     'Retry Deploy' => 'Retry Deploy',
-    '' => '',
+    'Community' => 'Community',
     '' => '',
     '' => '',
     '' => '',
