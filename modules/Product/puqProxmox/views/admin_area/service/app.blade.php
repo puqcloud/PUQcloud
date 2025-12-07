@@ -334,6 +334,11 @@
                 <i class="fas fa-server me-2"></i> LXC Status
             </div>
             <div class="card-body">
+                <button id="reboot_lxc" type="button"
+                        class="btn btn-outline-danger btn-sm d-flex align-items-center mb-2">
+                    <i class="fa fa-sync me-1"></i> {{__('Product.puqProxmox.Reboot')}}
+                </button>
+
                 <p><strong>Name:</strong> {{ $lxc_instance_status['name'] ?? 'n/a' }}</p>
                 <p><strong>VMID:</strong> {{ $lxc_instance_status['vmid'] ?? 'n/a' }}</p>
                 <p><strong>Status:</strong>
@@ -473,6 +478,10 @@
 
         $('#put_web_dns_records').on('click', function () {
             PUQajax('{{route('admin.api.Product.puqProxmox.puq_pm_app_instance.dns_records.put',$app_instance->uuid)}}', {}, 5000, $(this), 'PUT', null);
+        });
+
+        $('#reboot_lxc').on('click', function () {
+            PUQajax('{{route('admin.api.Product.puqProxmox.puq_pm_app_instance.reboot_lxc.put',$app_instance->uuid)}}', {}, 5000, $(this), 'PUT', null);
         });
 
         function escapeHtml(text) {

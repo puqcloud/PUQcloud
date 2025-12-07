@@ -3,7 +3,16 @@
 All notable changes to this project will be documented in this file.
 
 ---
-[1.1.0] – 2025-12-05
+## [1.1.1] – 2025-12-07
+
+
+### Added
+- Proxmox Module
+    - App: client area buttons "Reboot" and "Proxy Reload"
+    - App: admin area button "Reboot LXC"
+---
+
+## [1.1.0] – 2025-12-05
 
 ### Changed
 - Scheduler UI: redesigned display, now shown in a row layout.

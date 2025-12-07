@@ -91,6 +91,30 @@ class puqPmAppInstanceController extends Controller
         ]);
     }
 
+    public function putRebootLxc(Request $request, $uuid): JsonResponse
+    {
+        $model = PuqPmAppInstance::find($uuid);
+
+        if (empty($model)) {
+            return response()->json([
+                'errors' => [__('Product.puqProxmox.Not found')],
+            ], 404);
+        }
+
+        $reboot_lxc = $model->rebootLXC();
+        if ($reboot_lxc['status'] == 'error') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => $reboot_lxc['errors'],
+            ], $reboot_lxc['code'] ?? 500);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => __('Product.puqProxmox.The task was sent successfully'),
+        ]);
+    }
+
     public function getScriptLog(Request $request, $uuid, $log_uuid): JsonResponse
     {
         $model = PuqPmAppInstance::find($uuid);

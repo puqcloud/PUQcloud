@@ -56,7 +56,7 @@ class PuqPmLoadBalancer extends Model
                 ],
             ],
 
-            'default' => <<<CONF
+            'default' => <<<'CONF'
 #######################################################################
 # PUQcloud default nginx.conf
 # v1.0
@@ -103,7 +103,7 @@ CONF
                 ],
             ],
 
-            'default' => <<<CONF
+            'default' => <<<'CONF'
 #######################################################################
 # PUQcloud default service.conf
 # v1.0
@@ -207,7 +207,7 @@ CONF
         $dns_zone_records = [];
         $dns_zone = $this->puqPmDnsZone->getDnsZone();
 
-        if (!empty($dns_zone)) {
+        if (! empty($dns_zone)) {
             $records = $dns_zone->dnsRecords()->where('name', $this->subdomain)->get();
             foreach ($records as $record) {
                 $dns_zone_records[$record->content] = [
@@ -254,7 +254,7 @@ CONF
         }
 
         foreach ($dns_zone_records as $ip => $dns_record) {
-            if (!isset($records[$ip])) {
+            if (! isset($records[$ip])) {
                 $records[$ip] = [
                     'ip' => $ip,
                     'type' => $dns_record['type'],
@@ -327,10 +327,11 @@ CONF
                     $data['type'] = 'AAAA';
                     $data['ipv6'] = compressIpv6($frontend_ip);
 
-                    $existing = $old_dns_records->first(fn($r
+                    $existing = $old_dns_records->first(fn ($r
                     ) => $r->type === 'AAAA' && compressIpv6($r->content) === $data['ipv6'] && $r->ttl === $data['ttl']);
                     if ($existing) {
                         $keep_uuids[] = $existing->uuid;
+
                         continue;
                     }
 
@@ -338,10 +339,11 @@ CONF
                     $data['type'] = 'A';
                     $data['ipv4'] = $frontend_ip;
 
-                    $existing = $old_dns_records->first(fn($r
+                    $existing = $old_dns_records->first(fn ($r
                     ) => $r->type === 'A' && $r->content === $data['ipv4'] && $r->ttl === $data['ttl']);
                     if ($existing) {
                         $keep_uuids[] = $existing->uuid;
+
                         continue;
                     }
 
@@ -354,14 +356,13 @@ CONF
         }
 
         foreach ($old_dns_records as $old_dns_record) {
-            if (!in_array($old_dns_record->uuid, $keep_uuids)) {
+            if (! in_array($old_dns_record->uuid, $keep_uuids)) {
                 $dns_zone->deleteRecord($old_dns_record->uuid);
             }
         }
 
         return ['status' => 'success'];
     }
-
 
     public function deployAll($puq_pm_app_instances = null): array
     {
@@ -416,9 +417,9 @@ CONF
         return ['status' => 'success'];
     }
 
-    public function deployAllCallback(array $result, string $jobId = null): void
+    public function deployAllCallback(array $result, ?string $jobId = null): void
     {
-        if (!empty($result['errors'])) {
+        if (! empty($result['errors'])) {
             logModule(
                 'Product',
                 'PuqProxmox',
@@ -432,8 +433,7 @@ CONF
         }
     }
 
-    public
-    function deployMainConfig(
+    public function deployMainConfig(
         bool $reload = false
     ): array {
         $puq_pm_script = $this->puqPmScripts()->where('type', 'nginx-conf')->first();
@@ -454,7 +454,7 @@ CONF
             }
         }
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             return [
                 'status' => 'error',
                 'errors' => $errors,
@@ -466,8 +466,7 @@ CONF
         ];
     }
 
-    public
-    function deployServiceConfig(
+    public function deployServiceConfig(
         bool $reload = false
     ): array {
         $puq_pm_script = $this->puqPmScripts()->where('type', 'service-conf')->first();
@@ -499,7 +498,7 @@ CONF
             }
         }
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             return [
                 'status' => 'error',
                 'errors' => $errors,
@@ -511,8 +510,7 @@ CONF
         ];
     }
 
-    public
-    function getScriptVariables(
+    public function getScriptVariables(
         string $type
     ): array {
         $system = getSystemMacros();
@@ -520,11 +518,10 @@ CONF
         return array_merge($system, $this->scripts[$type]['variables']);
     }
 
-    public
-    function loadDefaultScript(
+    public function loadDefaultScript(
         string $type
     ): array {
-        if (!isset($this->scripts[$type])) {
+        if (! isset($this->scripts[$type])) {
             return [
                 'status' => 'error',
                 'errors' => ["Default script '$type' not found"],
@@ -544,8 +541,7 @@ CONF
         return ['status' => 'success'];
     }
 
-    public
-    function loadAllDefaultScripts(): array
+    public function loadAllDefaultScripts(): array
     {
         foreach ($this->scripts as $type => $script) {
             $this->loadDefaultScript($type);
@@ -554,8 +550,7 @@ CONF
         return ['status' => 'success'];
     }
 
-    protected
-    function findSslCertificate(): ?SslCertificate
+    protected function findSslCertificate(): ?SslCertificate
     {
         $domain = $this->getDnsRecord();
         $parts = explode('.', $domain);
@@ -568,7 +563,7 @@ CONF
             ->orderByDesc('expires_at')
             ->first();
 
-        if ($wildcard && !$wildcard->isExpired()) {
+        if ($wildcard && ! $wildcard->isExpired()) {
             return $wildcard;
         }
 
@@ -579,7 +574,7 @@ CONF
             ->get();
 
         foreach ($certificates as $ssl_certificate) {
-            if (!$ssl_certificate->isExpired()) {
+            if (! $ssl_certificate->isExpired()) {
                 return $ssl_certificate;
             }
         }
@@ -587,8 +582,7 @@ CONF
         return null;
     }
 
-    public
-    function deployResourceConfig(
+    public function deployResourceConfig(
         array $data
     ): array {
         $config = $this->buildResourceConfig($data);
@@ -617,7 +611,7 @@ CONF
             }
         }
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             return [
                 'status' => 'error',
                 'errors' => $errors,
@@ -629,8 +623,7 @@ CONF
         ];
     }
 
-    public
-    function removeResourceConfig(
+    public function removeResourceConfig(
         array $data
     ): array {
         $domain = $data['domain'];
@@ -650,7 +643,7 @@ CONF
             }
         }
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             return [
                 'status' => 'error',
                 'errors' => $errors,
@@ -662,8 +655,7 @@ CONF
         ];
     }
 
-    public
-    function removeResourceConfigs(
+    public function removeResourceConfigs(
         array $data
     ): array {
         $data = [
@@ -680,7 +672,7 @@ CONF
             }
         }
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             return [
                 'status' => 'error',
                 'errors' => $errors,
@@ -692,8 +684,7 @@ CONF
         ];
     }
 
-    public
-    function buildResourceConfig(
+    public function buildResourceConfig(
         array $data
     ): string {
         $domain = $data['domain'] ?? 'example.com';
@@ -702,7 +693,7 @@ CONF
         $config = "# PUQcloud app config\n";
         $config .= "# v1.0\n\n";
 
-        if (!empty($data['server_custom_config_before'])) {
+        if (! empty($data['server_custom_config_before'])) {
             $lines = explode("\n", $data['server_custom_config_before']);
             foreach ($lines as $line) {
                 $config .= "    {$line}\n";
@@ -729,7 +720,7 @@ CONF
         $config .= "    ssl_protocols TLSv1.2 TLSv1.3;\n";
         $config .= "    ssl_ciphers HIGH:!aNULL:!MD5;\n\n";
 
-        if (!empty($data['server_custom_config'])) {
+        if (! empty($data['server_custom_config'])) {
             $lines = explode("\n", $data['server_custom_config']);
             foreach ($lines as $line) {
                 $config .= "    {$line}\n";
@@ -742,10 +733,14 @@ CONF
             $customConfig = $loc['custom_config'] ?? '';
 
             $config .= "\n    location {$path} {\n";
-            if (!empty($proxyPass)) {
-                $config .= "        proxy_pass {$proxyPass};\n";
+
+            if ($loc['proxy_port'] != 0) {
+                if (! empty($proxyPass)) {
+                    $config .= "        proxy_pass {$proxyPass};\n";
+                }
             }
-            if (!empty($customConfig)) {
+
+            if (! empty($customConfig)) {
 
                 $lines = explode("\n", $customConfig);
                 foreach ($lines as $line) {
@@ -757,7 +752,7 @@ CONF
 
         $config .= "}\n\n";
 
-        if (!empty($data['server_custom_config_after'])) {
+        if (! empty($data['server_custom_config_after'])) {
             $lines = explode("\n", $data['server_custom_config_after']);
             foreach ($lines as $line) {
                 $config .= "    {$line}\n";
@@ -767,8 +762,7 @@ CONF
         return $config;
     }
 
-    public
-    function macroReplace(
+    public function macroReplace(
         string $pattern
     ): string {
         $puq_pm_cluster_group = $this->puqPmClusterGroup;
@@ -784,5 +778,4 @@ CONF
 
         return $result;
     }
-
 }

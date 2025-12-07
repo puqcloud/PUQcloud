@@ -187,30 +187,21 @@ class PuqPmLxcPreset extends Model
             $base = 'host';
         }
 
-        $existing = PuqPmLxcInstance::where('hostname', 'LIKE', $base.'%')
-            ->pluck('hostname');
-
-        if ($existing->isEmpty()) {
+        if (!PuqPmLxcInstance::where('hostname', $base)->exists()) {
             return $base;
         }
 
-        $max = 0;
+        $i = 1;
 
-        foreach ($existing as $name) {
-            $suffix = substr($name, strlen($base));
-            if ($suffix === '') {
-                $num = 0;
-            } elseif (ctype_digit($suffix)) {
-                $num = (int) $suffix;
-            } else {
-                continue;
+        while (true) {
+            $candidate = $base . $i;
+
+            if (!PuqPmLxcInstance::where('hostname', $candidate)->exists()) {
+                return $candidate;
             }
-            if ($num > $max) {
-                $max = $num;
-            }
+
+            $i++;
         }
-
-        return $base.($max + 1);
     }
 
     public function createLxcInstance(Service $service, array $product_data, array $extra_product_options = []): array

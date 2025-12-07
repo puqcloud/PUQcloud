@@ -276,6 +276,7 @@ class PuqPmAppInstance extends Model
                 $endpoints[] = [
                     'url' => $url,
                     'proxy_pass' => $proxy_pass,
+                    'proxy_port' => $puq_pm_app_endpoint_location->proxy_port,
                     'show_to_client' => $puq_pm_app_endpoint_location->show_to_client,
                 ];
             }
@@ -323,6 +324,7 @@ class PuqPmAppInstance extends Model
                 $locations[] = [
                     'path' => $puq_pm_app_endpoint_location->path,
                     'proxy_pass' => $proxy_pass,
+                    'proxy_port' => $puq_pm_app_endpoint_location->proxy_port,
                     'custom_config' => $puq_pm_app_endpoint_location->custom_config,
                 ];
             }
@@ -735,6 +737,14 @@ BASH;
         $this->env_variables = $env_variables;
     }
 
+    public function rebootLXC(): array
+    {
+        $puq_pm_lxc_instance = $this->puqPmLxcInstance;
+        $puq_pm_lxc_instance->stop();
+
+        return $puq_pm_lxc_instance->start();
+    }
+
     // Client Area
 
     public function getAppInfoClientArea(): array
@@ -816,9 +826,50 @@ BASH;
         return $endpoints;
     }
 
+    public function postAppControl($action): void
+    {
+        if ($action === 'reboot') {
+            $this->rebootLXC();
+        }
+
+        if ($action === 'proxy_reload') {
+            $this->createDnsRecords();
+            $this->webProxyDeploy();
+        }
+
+    }
+
+
+    public function getFunctionsClientArea(): array
+    {
+        $functions = [];
+
+        $reboot = [
+            'name' => __('Product.puqProxmox.Reboot'),
+            'description' => __('Product.puqProxmox.Hard Restart Application'),
+            'action' => 'reboot',
+            'color' => 'danger',
+        ];
+
+        $functions[] = $reboot;
+
+        $proxyReload = [
+            'name' => __('Product.puqProxmox.Proxy Reload'),
+            'description' => __('Product.puqProxmox.Reload WEB proxy configurations'),
+            'action' => 'proxy_reload',
+            'color' => 'warning',
+        ];
+
+        $functions[] = $proxyReload;
+
+        return $functions;
+    }
+
+
     public function getAppControlClientArea(): array
     {
         return [
+            'functions' => $this->getFunctionsClientArea(),
             'endpoints' => $this->getEndpointsClientArea(),
             'env_variables' => $this->getEnvVariablesClientArea(),
         ];

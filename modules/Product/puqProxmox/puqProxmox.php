@@ -1374,7 +1374,6 @@ class puqProxmox extends Product
 
         $type = $this->product_data['type'] ?? 'lxc';
 
-
         $data = [
             'module' => $this,
             'method' => '',        // The method name that should be executed inside the job
@@ -3833,6 +3832,13 @@ class puqProxmox extends Product
             ],
             [
                 'method' => 'put',
+                'uri' => 'puq_pm_app_instance/{uuid}/reboot_lxc',
+                'permission' => 'operator',
+                'name' => 'puq_pm_app_instance.reboot_lxc.put',
+                'controller' => 'puqPmAppInstanceController@putRebootLxc',
+            ],
+            [
+                'method' => 'put',
                 'uri' => 'puq_pm_app_instance/{uuid}/retry_deploy',
                 'permission' => 'operator',
                 'name' => 'puq_pm_app_instance.retry_deploy.put',
@@ -5756,6 +5762,58 @@ class puqProxmox extends Product
         ]);
     }
 
+    public function controllerClient_postAppControl(Request $request): JsonResponse
+    {
+        // -----------------------------------------------------------------------------
+        $service_lxc_app = $this->getLxcAppInstances();
+        if ($service_lxc_app['status'] == 'error') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => $service_lxc_app['errors'],
+            ], $service_lxc_app['code'] ?? 500);
+        }
+
+        $service = $service_lxc_app['data']['service'];
+        $lxc_instance = $service_lxc_app['data']['lxc_instance'];
+        $app_instance = $service_lxc_app['data']['app_instance'];
+        // -----------------------------------------------------------------------------
+
+        $functions = $app_instance->getFunctionsClientArea();
+        foreach ($functions as $function) {
+            $action = $request->input('action');
+            if($function['action'] == $action) {
+                $data = [
+                    'module' => $app_instance,
+                    'method' => 'postAppControl',        // The method name that should be executed inside the job
+                    'callback' => '',
+                    // Optional. The method name in the module that will be executed after the main method is finished.
+                    // Receives the result and jobId as parameters.
+                    'tries' => 1,                   // Number of retry attempts if the job fails
+                    'backoff' => 60,                // Delay in seconds between retries
+                    'timeout' => 3600,               // Max execution time for the job in seconds
+                    'maxExceptions' => 1,
+                    // Max number of unhandled exceptions before marking the job as failed
+                    'params' => [$action],
+                ];
+                $tags = [
+                    'postAppControl',
+                ];
+                Task::add('ModuleJob', 'puqProxmox-AppSync', $data, $tags);
+
+                return response()->json([
+                    'status' => 'success',
+                    'message' => __('Product.puqProxmox.The task has been queued for execution'),
+                ]);
+            }
+        }
+
+        return response()->json([
+            'status' => 'error',
+            'errors' => __('Product.puqProxmox.Action does not allow'),
+        ], 412);
+
+    }
+
     public function controllerClient_getAppCustomPage(Request $request): JsonResponse
     {
         // -----------------------------------------------------------------------------
@@ -5807,7 +5865,7 @@ class puqProxmox extends Product
         ]);
     }
 
-    // LXC Backups -------------------------------------------------------------------------------
+    // APP Backups -------------------------------------------------------------------------------
     public function controllerClient_getAppBackupSchedule(Request $request): JsonResponse
     {
         // -----------------------------------------------------------------------------
@@ -6083,7 +6141,7 @@ class puqProxmox extends Product
         ], 200);
     }
 
-    // LXC Rescale ------------------------------------------------------------------------------------------
+    // APP Rescale ------------------------------------------------------------------------------------------
     public function controllerClient_getAppRescaleOptions(Request $request): JsonResponse
     {
         // -----------------------------------------------------------------------------

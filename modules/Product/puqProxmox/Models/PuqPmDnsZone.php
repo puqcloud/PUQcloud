@@ -223,8 +223,8 @@ class PuqPmDnsZone extends Model
         $hostname = $result;
         $counter = 1;
         while ($this->checkRecordAvailability($hostname)) {
-            $hostname = $this->normalizeHostname($result.'-'.$counter);
-            $counter++;
+            $hostname = $this->normalizeHostname($result.$counter);
+            $counter++; 
         }
 
         return $hostname;
