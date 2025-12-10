@@ -18,18 +18,17 @@
 namespace Modules\Product\puqProxmox\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Models\Task;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Modules\Product\puqProxmox\Models\PuqPmAppInstance;
+use Modules\Product\puqProxmox\Models\PuqPmLxcInstance;
 use Modules\Product\puqProxmox\Models\PuqPmScriptLog;
 
-class puqPmAppInstanceController extends Controller
+class puqPmLxcInstanceController extends Controller
 {
 
     public function getDeployStatus(Request $request, $uuid): JsonResponse
     {
-        $model = PuqPmAppInstance::find($uuid);
+        $model = PuqPmLxcInstance::find($uuid);
 
         if (empty($model)) {
             return response()->json([
@@ -43,42 +42,9 @@ class puqPmAppInstanceController extends Controller
         ]);
     }
 
-    public function putLoadWebProxyConfig(Request $request, $uuid): JsonResponse
-    {
-        $model = PuqPmAppInstance::find($uuid);
-
-        if (empty($model)) {
-            return response()->json([
-                'errors' => [__('Product.puqProxmox.Not found')],
-            ], 404);
-        }
-
-        $data = [
-            'module' => $model,
-            'method' => 'webProxyDeploy',        // The method name that should be executed inside the job
-            'callback' => '',
-            // Optional. The method name in the module that will be executed after the main method is finished.
-            // Receives the result and jobId as parameters.
-            'tries' => 1,                   // Number of retry attempts if the job fails
-            'backoff' => 60,                // Delay in seconds between retries
-            'timeout' => 3600,               // Max execution time for the job in seconds
-            'maxExceptions' => 1,
-        ];
-        $tags = [
-            'webProxyDeploy',
-        ];
-        Task::add('ModuleJob', 'puqProxmox-LoadBalancer', $data, $tags);
-
-        return response()->json([
-            'status' => 'success',
-            'message' => __('Product.puqProxmox.The task has been queued for execution'),
-        ]);
-
-    }
-
     public function putDnsRecords(Request $request, $uuid): JsonResponse
     {
-        $model = PuqPmAppInstance::find($uuid);
+        $model = PuqPmLxcInstance::find($uuid);
 
         if (empty($model)) {
             return response()->json([
@@ -100,9 +66,9 @@ class puqPmAppInstanceController extends Controller
         ]);
     }
 
-    public function putRebootLxc(Request $request, $uuid): JsonResponse
+    public function putReboot(Request $request, $uuid): JsonResponse
     {
-        $model = PuqPmAppInstance::find($uuid);
+        $model = PuqPmLxcInstance::find($uuid);
 
         if (empty($model)) {
             return response()->json([
@@ -110,12 +76,12 @@ class puqPmAppInstanceController extends Controller
             ], 404);
         }
 
-        $reboot_lxc = $model->rebootLXC();
-        if ($reboot_lxc['status'] == 'error') {
+        $reboot = $model->reboot();
+        if ($reboot['status'] == 'error') {
             return response()->json([
                 'status' => 'error',
-                'errors' => $reboot_lxc['errors'],
-            ], $reboot_lxc['code'] ?? 500);
+                'errors' => $reboot['errors'],
+            ], $reboot['code'] ?? 500);
         }
 
         return response()->json([
@@ -126,7 +92,7 @@ class puqPmAppInstanceController extends Controller
 
     public function getScriptLog(Request $request, $uuid, $log_uuid): JsonResponse
     {
-        $model = PuqPmAppInstance::find($uuid);
+        $model = PuqPmLxcInstance::find($uuid);
 
         if (empty($model)) {
             return response()->json([
@@ -149,7 +115,7 @@ class puqPmAppInstanceController extends Controller
 
     public function putRetryDeploy(Request $request, $uuid): JsonResponse
     {
-        $model = PuqPmAppInstance::find($uuid);
+        $model = PuqPmLxcInstance::find($uuid);
 
         if (empty($model)) {
             return response()->json([
@@ -162,7 +128,6 @@ class puqPmAppInstanceController extends Controller
                 'errors' => [__('Product.puqProxmox.Deploy Status must be Failed')],
             ], 404);
         }
-
 
 
         return response()->json([

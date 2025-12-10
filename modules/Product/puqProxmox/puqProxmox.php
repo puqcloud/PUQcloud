@@ -512,6 +512,14 @@ class puqProxmox extends Product
 
                     $table->uuid()->primary();
 
+                    $table->string('deploy_status')->nullable(); // pending|running|success|failed|canceled
+                    $table->integer('deploy_progress')->nullable();
+                    $table->dateTime('deploy_progress')->nullable();
+                    $table->dateTime('deploy_finished_at')->nullable();
+                    $table->longText('deploy_logs')->nullable();
+                    $table->string('deploy_current_step')->nullable();
+                    $table->longText('deploy_error')->nullable();
+
                     $table->string('hostname');
                     $table->integer('vmid')->nullable();
 
@@ -790,11 +798,11 @@ class puqProxmox extends Product
 
                     $table->string('deploy_status')->nullable(); // pending|running|success|failed|canceled
                     $table->integer('deploy_progress')->nullable();
-                    $table->dateTime('deploy_progress')->nullable();
+                    $table->dateTime('deploy_started_at')->nullable();
                     $table->dateTime('deploy_finished_at')->nullable();
                     $table->longText('deploy_logs')->nullable();
                     $table->string('deploy_current_step')->nullable();
-                    $table->string('deploy_error')->nullable();
+                    $table->longText('deploy_error')->nullable();
 
                     $table->json('disk_status')->nullable();
 
@@ -813,6 +821,41 @@ class puqProxmox extends Product
                     $table->timestamps();
                 });
             }
+
+            // Updates ---------------------------------------------------------------------------------------
+            Schema::table('puq_pm_lxc_instances', function (Blueprint $table) {
+                if (!Schema::hasColumn('puq_pm_lxc_instances', 'deploy_status')) {
+                    $table->string('deploy_status')->nullable();
+                }
+                if (!Schema::hasColumn('puq_pm_lxc_instances', 'deploy_progress')) {
+                    $table->integer('deploy_progress')->nullable();
+                }
+                if (!Schema::hasColumn('puq_pm_lxc_instances', 'deploy_started_at')) {
+                    $table->dateTime('deploy_started_at')->nullable();
+                }
+                if (!Schema::hasColumn('puq_pm_lxc_instances', 'deploy_finished_at')) {
+                    $table->dateTime('deploy_finished_at')->nullable();
+                }
+                if (!Schema::hasColumn('puq_pm_lxc_instances', 'deploy_logs')) {
+                    $table->longText('deploy_logs')->nullable();
+                }
+                if (!Schema::hasColumn('puq_pm_lxc_instances', 'deploy_current_step')) {
+                    $table->string('deploy_current_step')->nullable();
+                }
+                if (!Schema::hasColumn('puq_pm_lxc_instances', 'deploy_error')) {
+                    $table->longText('deploy_error')->nullable();
+                }
+            });
+
+
+            Schema::table('puq_pm_app_instances', function (Blueprint $table) {
+                if (!Schema::hasColumn('puq_pm_app_instances', 'deploy_started_at')) {
+                    $table->dateTime('deploy_started_at')->nullable();
+                }
+                if (Schema::hasColumn('puq_pm_app_instances', 'deploy_error')) {
+                    $table->longText('deploy_error')->nullable()->change();
+                }
+            });
 
             $this->logInfo('activate', 'Success');
 
@@ -1430,14 +1473,10 @@ class puqProxmox extends Product
                 ->where('service_uuid', $service->uuid)
                 ->first();
 
-            $steps[] = [
-                'step' => 'Load Models',
-                'status' => 'success',
-                'data' => compact('product', 'service', 'puq_pm_lxc_preset', 'lxc_instance'),
-            ];
+            $steps[] = ['step' => 'Load Models', 'status' => 'success'];
 
             // ---------------------------------------------------------
-            // STEP 2: Check if LXC exists
+            // STEP 2: Check exists
             // ---------------------------------------------------------
             $steps[] = ['step' => 'Check LXC exists', 'status' => 'processing'];
 
@@ -1452,10 +1491,7 @@ class puqProxmox extends Product
                 $this->logError(__FUNCTION__, 'LXC already exist');
                 $this->logDebug(__FUNCTION__, ['steps' => $steps]);
 
-                return [
-                    'status' => 'error',
-                    'errors' => ['LXC already exist'],
-                ];
+                return ['status' => 'error', 'errors' => ['LXC already exist']];
             }
 
             $steps[] = ['step' => 'Check LXC exists', 'status' => 'success'];
@@ -1481,136 +1517,144 @@ class puqProxmox extends Product
                     $this->logError(__FUNCTION__, $create_lxc_instance['errors']);
                     $this->logDebug(__FUNCTION__, ['steps' => $steps]);
 
-                    return [
-                        'status' => 'error',
-                        'errors' => $create_lxc_instance['errors'],
-                    ];
+                    return $create_lxc_instance;
                 }
 
                 $lxc_instance = $create_lxc_instance['data'];
-
-                $steps[] = [
-                    'step' => 'Create LXC Instance',
-                    'status' => 'success',
-                    'data' => $lxc_instance,
-                ];
+                $steps[] = ['step' => 'Create LXC Instance', 'status' => 'success'];
             }
+
+            // ------------------- Initialize deploy fields -------------------
+            $lxc_instance->setDeployStatus('running');
+            $lxc_instance->setDeployStarted();
+            $lxc_instance->setDeployProgress(0);
+            $lxc_instance->appendDeployLog('LXC deploy job started');
+            $lxc_instance->setDeployStep('Start');
+
+            // ---------------------------------------------------------
+            // Helper to run steps
+            // ---------------------------------------------------------
+            $runStep = function ($stepName, $callback, $progressStep)
+            use ($lxc_instance, &$steps) {
+
+                $steps[] = ['step' => $stepName, 'status' => 'processing'];
+                $lxc_instance->setDeployStep($stepName);
+                $lxc_instance->appendDeployLog("Start step: $stepName");
+
+                $result = $callback();
+
+                if ($result['status'] === 'error') {
+
+                    $steps[] = ['step' => $stepName, 'status' => 'error', 'errors' => $result['errors']];
+
+                    $lxc_instance->setDeployError(implode('; ', $result['errors'] ?? []));
+                    $lxc_instance->appendDeployLog("Finish step: $stepName - error: ".
+                        implode('; ', $result['errors'] ?? [])
+                    );
+
+                    $lxc_instance->setDeployStatus('failed');
+                    $lxc_instance->setDeployFinished();
+
+                } else {
+
+                    $steps[] = ['step' => $stepName, 'status' => 'success'];
+
+                    $lxc_instance->appendDeployLog("Finish step: $stepName - success");
+                    $lxc_instance->setDeployProgress($progressStep);
+                }
+
+                return $result;
+            };
 
             // ---------------------------------------------------------
             // STEP 4: FDNS + RDNS
             // ---------------------------------------------------------
-            $steps[] = ['step' => 'Update FDNS & RDNS', 'status' => 'processing'];
+            $runStep('Update FDNS & RDNS', function () use ($lxc_instance) {
+                $lxc_instance->updateFDNS();
+                $lxc_instance->updateRDNS();
 
-            $lxc_instance->updateFDNS();
-            $lxc_instance->updateRDNS();
-
-            $steps[] = ['step' => 'Update FDNS & RDNS', 'status' => 'success'];
+                return ['status' => 'success'];
+            }, 10);
 
             // ---------------------------------------------------------
             // STEP 5: Create LXC
             // ---------------------------------------------------------
-            $steps[] = ['step' => 'Create LXC', 'status' => 'processing'];
-
-            $create_lxc = $lxc_instance->createLxc();
-
+            $create_lxc = $runStep('Create LXC', fn() => $lxc_instance->createLxc(), 30);
             if ($create_lxc['status'] === 'error') {
-                $steps[] = [
-                    'step' => 'Create LXC',
-                    'status' => 'error',
-                    'errors' => $create_lxc['errors'],
-                ];
-
-                $this->logError(__FUNCTION__, $create_lxc['errors']);
-                $this->logDebug(__FUNCTION__, ['steps' => $steps]);
-
                 return $create_lxc;
             }
-
-            $steps[] = ['step' => 'Create LXC', 'status' => 'success'];
 
             // ---------------------------------------------------------
             // STEP 6: Cluster Sync
             // ---------------------------------------------------------
-            $steps[] = ['step' => 'Cluster Sync', 'status' => 'processing'];
+            $cluster_sync = $runStep('Cluster Sync', function () use ($lxc_instance) {
+                $puq_pm_cluster = $lxc_instance->puqPmCluster;
+                $lxc_instance->refresh();
+                $puq_pm_cluster->getClusterResources(true);
 
-            $puq_pm_cluster = $lxc_instance->puqPmCluster;
-            $lxc_instance->refresh();
-            $puq_pm_cluster->getClusterResources(true);
+                return ['status' => 'success'];
+            }, 40);
 
-            $steps[] = ['step' => 'Cluster Sync', 'status' => 'success'];
-
-            // ---------------------------------------------------------
-            // STEP 7: Post Install Script
-            // ---------------------------------------------------------
-            $steps[] = ['step' => 'Post Install Script', 'status' => 'processing'];
-
-            sleep(10);
-
-            $post_install = $lxc_instance->postInstallLxc();
-
-            if ($post_install['status'] === 'error') {
-                $steps[] = [
-                    'step' => 'Post Install Script',
-                    'status' => 'error',
-                    'errors' => $post_install['errors'],
-                ];
-
-                $this->logError(__FUNCTION__, $post_install['errors']);
-                $this->logDebug(__FUNCTION__, ['steps' => $steps]);
-
-                return $post_install;
+            if ($cluster_sync['status'] === 'error') {
+                return $cluster_sync;
             }
 
-            $steps[] = ['step' => 'Post Install Script', 'status' => 'success'];
+            // ---------------------------------------------------------
+            // STEP 7: Post Install
+            // ---------------------------------------------------------
+            $post_install = $runStep('Post Install Script',
+                fn() => $lxc_instance->postInstallLxc(),
+                60
+            );
+            if ($post_install['status'] === 'error') {
+                return $post_install;
+            }
 
             // ---------------------------------------------------------
             // STEP 8: Sync Again
             // ---------------------------------------------------------
-            $steps[] = ['step' => 'Sync After Post Install', 'status' => 'processing'];
+            $sync2 = $runStep('Sync After Post Install', function () use ($lxc_instance) {
+                sleep(10);
+                $lxc_instance->puqPmCluster->getClusterResources(true);
 
-            sleep(10);
-            $puq_pm_cluster->getClusterResources(true);
+                return ['status' => 'success'];
+            }, 70);
 
-            $steps[] = ['step' => 'Sync After Post Install', 'status' => 'success'];
+            if ($sync2['status'] === 'error') {
+                return $sync2;
+            }
 
             // ---------------------------------------------------------
             // STEP 9: Get LXC Status
             // ---------------------------------------------------------
-            $steps[] = ['step' => 'Get LXC Status', 'status' => 'processing'];
+            $status = $runStep('Get LXC Status',
+                fn() => ['status' => 'success', 'data' => $lxc_instance->getStatus()],
+                80
+            );
 
-            $status = $lxc_instance->getStatus();
-
-            $steps[] = [
-                'step' => 'Get LXC Status',
-                'status' => 'success',
-                'data' => $status,
-            ];
-
-            // ---------------------------------------------------------
-            // STEP 10: Set Firewall Options
-            // ---------------------------------------------------------
-            $steps[] = ['step' => 'Set Firewall Options', 'status' => 'processing'];
-
-            $set_firewall_options = $lxc_instance->setFirewallOptions();
-
-            if ($set_firewall_options['status'] === 'error') {
-                $steps[] = [
-                    'step' => 'Set Firewall Options',
-                    'status' => 'error',
-                    'errors' => $set_firewall_options['errors'],
-                ];
-
-                $this->logError(__FUNCTION__, $set_firewall_options['errors']);
-                $this->logDebug(__FUNCTION__, ['steps' => $steps]);
-
-                return $set_firewall_options;
+            if ($status['status'] === 'error') {
+                return $status;
             }
 
-            $steps[] = ['step' => 'Set Firewall Options', 'status' => 'success'];
+            // ---------------------------------------------------------
+            // STEP 10: Firewall
+            // ---------------------------------------------------------
+            $firewall = $runStep('Set Firewall Options',
+                fn() => $lxc_instance->setFirewallOptions(),
+                100
+            );
+            if ($firewall['status'] === 'error') {
+                return $firewall;
+            }
 
             // ---------------------------------------------------------
-            // SUCCESS
+            // FINISH
             // ---------------------------------------------------------
+            $lxc_instance->setDeployStep('Finish');
+            $lxc_instance->appendDeployLog('LXC deploy finished successfully');
+            $lxc_instance->setDeployStatus('success');
+            $lxc_instance->setDeployFinished();
+
             $steps[] = ['step' => 'Finish', 'status' => 'success'];
 
             $this->logInfo(__FUNCTION__, 'LXC created successfully');
@@ -1620,10 +1664,17 @@ class puqProxmox extends Product
 
         } catch (\Throwable $e) {
 
+            if (isset($lxc_instance)) {
+                $lxc_instance->setDeployError($e->getMessage());
+                $lxc_instance->appendDeployLog('Exception: '.$e->getMessage());
+                $lxc_instance->setDeployStatus('failed');
+                $lxc_instance->setDeployFinished();
+            }
+
             $steps[] = [
                 'step' => 'Exception thrown',
                 'status' => 'error',
-                'error' => $e->getMessage(),
+                'errors' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ];
 
@@ -3285,6 +3336,30 @@ class puqProxmox extends Product
                 'controller' => 'puqPmLxcPresetController@getLxcPresetsSelect',
             ],
 
+            // LXC Instance
+            [
+                'method' => 'get',
+                'uri' => 'puq_pm_lxc_instance/{uuid}/deploy_status',
+                'permission' => 'operator',
+                'name' => 'puq_pm_lxc_instance.deploy_status.get',
+                'controller' => 'puqPmLxcInstanceController@getDeployStatus',
+            ],
+            [
+                'method' => 'get',
+                'uri' => 'puq_pm_lxc_instance/{uuid}/script_log/{log_uuid}',
+                'permission' => 'operator',
+                'name' => 'puq_pm_lxc_instance.script_log.get',
+                'controller' => 'puqPmLxcInstanceController@getScriptLog',
+            ],
+            [
+                'method' => 'put',
+                'uri' => 'puq_pm_lxc_instance/{uuid}/reboot',
+                'permission' => 'operator',
+                'name' => 'puq_pm_lxc_instance.reboot.put',
+                'controller' => 'puqPmLxcInstanceController@putReboot',
+            ],
+
+
             // LXC Preset Cluster Groups
             [
                 'method' => 'get',
@@ -4033,7 +4108,9 @@ class puqProxmox extends Product
 
             $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
 
-            if (!$lxc_instance) {
+            $deploy_status = $lxc_instance?->getDeployStatus();
+
+            if (empty($lxc_instance) or empty($deploy_status) or $deploy_status['status'] != 'success') {
                 return [
                     'general' => [
                         'name' => __('Product.puqProxmox.General'),
@@ -4124,6 +4201,37 @@ class puqProxmox extends Product
         return [];
     }
 
+    // LXC Deploy ------------------------------------------------------------------------------------------
+    public function controllerClient_getLxcDeployStatus(Request $request): JsonResponse
+    {
+        // -----------------------------------------------------------------------------
+        $service_lxc = $this->getLxcInstances(true);
+        if ($service_lxc['status'] == 'error') {
+            return response()->json([
+                'status' => 'error',
+                'errors' => $service_lxc['errors'],
+            ], $service_lxc['code'] ?? 500);
+        }
+
+        $service = $service_lxc['data']['service'];
+        $lxc_instance = $service_lxc['data']['lxc_instance'];
+        // -----------------------------------------------------------------------------
+
+        $status = [
+            'status' => 'pending',
+            'progress' => 0,
+        ];
+
+        $deploy_status = $lxc_instance->getDeployStatus();
+        $status['status'] = $deploy_status['status'];
+        $status['progress'] = $deploy_status['progress'];
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $status ?? [],
+        ]);
+    }
+
     // LXC General ------------------------------------------------------------------------------
     public function variables_general(): array
     {
@@ -4139,19 +4247,20 @@ class puqProxmox extends Product
 
     public function controllerClient_getLxcInfo(Request $request): JsonResponse
     {
-        if ($this->product_data['type'] != 'lxc') {
+        // -----------------------------------------------------------------------------
+        $service_lxc = $this->getLxcInstances();
+        if ($service_lxc['status'] == 'error') {
             return response()->json([
                 'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not found')],
-            ], 412);
+                'errors' => $service_lxc['errors'],
+            ], $service_lxc['code'] ?? 500);
         }
 
-        $service = \App\Models\Service::find($this->service_uuid);
-        $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
+        $service = $service_lxc['data']['service'];
+        $lxc_instance = $service_lxc['data']['lxc_instance'];
+        // -----------------------------------------------------------------------------
 
-        if ($lxc_instance) {
-            $data = $lxc_instance->getInfo();
-        }
+        $data = $lxc_instance->getInfo();
 
         return response()->json([
             'status' => 'success',
@@ -4161,19 +4270,20 @@ class puqProxmox extends Product
 
     public function controllerClient_getLxcLocation(Request $request): JsonResponse
     {
-        if ($this->product_data['type'] != 'lxc') {
+        // -----------------------------------------------------------------------------
+        $service_lxc = $this->getLxcInstances();
+        if ($service_lxc['status'] == 'error') {
             return response()->json([
                 'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not found')],
-            ], 412);
+                'errors' => $service_lxc['errors'],
+            ], $service_lxc['code'] ?? 500);
         }
 
-        $service = \App\Models\Service::find($this->service_uuid);
-        $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
+        $service = $service_lxc['data']['service'];
+        $lxc_instance = $service_lxc['data']['lxc_instance'];
+        // -----------------------------------------------------------------------------
 
-        if ($lxc_instance) {
-            $data = $lxc_instance->getLocation();
-        }
+        $data = $lxc_instance->getLocation();
 
         return response()->json([
             'status' => 'success',
@@ -4183,20 +4293,21 @@ class puqProxmox extends Product
 
     public function controllerClient_getLxcStatus(Request $request): JsonResponse
     {
-        if ($this->product_data['type'] != 'lxc') {
+        // -----------------------------------------------------------------------------
+        $service_lxc = $this->getLxcInstances();
+        if ($service_lxc['status'] == 'error') {
             return response()->json([
                 'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not found')],
-            ], 412);
+                'errors' => $service_lxc['errors'],
+            ], $service_lxc['code'] ?? 500);
         }
 
-        $service = \App\Models\Service::find($this->service_uuid);
-        $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
+        $service = $service_lxc['data']['service'];
+        $lxc_instance = $service_lxc['data']['lxc_instance'];
+        // -----------------------------------------------------------------------------
 
-        if ($lxc_instance) {
-            $status = $lxc_instance->getStatus();
-            unset($status['node']);
-        }
+        $status = $lxc_instance->getStatus();
+        unset($status['node']);
 
         return response()->json([
             'status' => 'success',
@@ -4206,22 +4317,18 @@ class puqProxmox extends Product
 
     public function controllerClient_getLxcStart(Request $request): JsonResponse
     {
-        if ($this->product_data['type'] != 'lxc') {
+        // -----------------------------------------------------------------------------
+        $service_lxc = $this->getLxcInstances();
+        if ($service_lxc['status'] == 'error') {
             return response()->json([
                 'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not found')],
-            ], 412);
+                'errors' => $service_lxc['errors'],
+            ], $service_lxc['code'] ?? 500);
         }
 
-        $service = \App\Models\Service::find($this->service_uuid);
-        $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
-
-        if (!$lxc_instance) {
-            return response()->json([
-                'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not yet ready')],
-            ], 412);
-        }
+        $service = $service_lxc['data']['service'];
+        $lxc_instance = $service_lxc['data']['lxc_instance'];
+        // -----------------------------------------------------------------------------
 
         $status = $lxc_instance->getStatus();
         if ($status['status'] != 'stopped') {
@@ -4257,22 +4364,18 @@ class puqProxmox extends Product
 
     public function controllerClient_getLxcStop(Request $request): JsonResponse
     {
-        if ($this->product_data['type'] != 'lxc') {
+        // -----------------------------------------------------------------------------
+        $service_lxc = $this->getLxcInstances();
+        if ($service_lxc['status'] == 'error') {
             return response()->json([
                 'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not found')],
-            ], 412);
+                'errors' => $service_lxc['errors'],
+            ], $service_lxc['code'] ?? 500);
         }
 
-        $service = \App\Models\Service::find($this->service_uuid);
-        $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
-
-        if (!$lxc_instance) {
-            return response()->json([
-                'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not yet ready')],
-            ], 412);
-        }
+        $service = $service_lxc['data']['service'];
+        $lxc_instance = $service_lxc['data']['lxc_instance'];
+        // -----------------------------------------------------------------------------
 
         $status = $lxc_instance->getStatus();
         if ($status['status'] != 'running') {
@@ -4299,22 +4402,18 @@ class puqProxmox extends Product
 
     public function controllerClient_getLxcConsole(Request $request): JsonResponse
     {
-        if ($this->product_data['type'] != 'lxc') {
+        // -----------------------------------------------------------------------------
+        $service_lxc = $this->getLxcInstances();
+        if ($service_lxc['status'] == 'error') {
             return response()->json([
                 'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not found')],
-            ], 412);
+                'errors' => $service_lxc['errors'],
+            ], $service_lxc['code'] ?? 500);
         }
 
-        $service = \App\Models\Service::find($this->service_uuid);
-        $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
-
-        if (!$lxc_instance) {
-            return response()->json([
-                'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not yet ready')],
-            ], 412);
-        }
+        $service = $service_lxc['data']['service'];
+        $lxc_instance = $service_lxc['data']['lxc_instance'];
+        // -----------------------------------------------------------------------------
 
         $status = $lxc_instance->getStatus();
         if ($status['status'] != 'running') {
@@ -4341,22 +4440,18 @@ class puqProxmox extends Product
 
     public function controllerClient_getUsernamePassword(Request $request): JsonResponse
     {
-        if ($this->product_data['type'] != 'lxc') {
+        // -----------------------------------------------------------------------------
+        $service_lxc = $this->getLxcInstances();
+        if ($service_lxc['status'] == 'error') {
             return response()->json([
                 'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not found')],
-            ], 412);
+                'errors' => $service_lxc['errors'],
+            ], $service_lxc['code'] ?? 500);
         }
 
-        $service = \App\Models\Service::find($this->service_uuid);
-        $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
-
-        if (!$lxc_instance) {
-            return response()->json([
-                'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not yet ready')],
-            ], 412);
-        }
+        $service = $service_lxc['data']['service'];
+        $lxc_instance = $service_lxc['data']['lxc_instance'];
+        // -----------------------------------------------------------------------------
 
         if (!empty($this->service_data['show_password_once'])) {
             $data = [
@@ -4377,22 +4472,18 @@ class puqProxmox extends Product
 
     public function controllerClient_getLxcResetPasswords(Request $request): JsonResponse
     {
-        if ($this->product_data['type'] != 'lxc') {
+        // -----------------------------------------------------------------------------
+        $service_lxc = $this->getLxcInstances();
+        if ($service_lxc['status'] == 'error') {
             return response()->json([
                 'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not found')],
-            ], 412);
+                'errors' => $service_lxc['errors'],
+            ], $service_lxc['code'] ?? 500);
         }
 
-        $service = \App\Models\Service::find($this->service_uuid);
-        $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
-
-        if (!$lxc_instance) {
-            return response()->json([
-                'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not yet ready')],
-            ], 412);
-        }
+        $service = $service_lxc['data']['service'];
+        $lxc_instance = $service_lxc['data']['lxc_instance'];
+        // -----------------------------------------------------------------------------
 
         $status = $lxc_instance->getStatus();
         if (empty($status) or $status['status'] != 'running') {
@@ -4431,19 +4522,21 @@ class puqProxmox extends Product
 
     public function controllerClient_getLxcRrdData(Request $request): JsonResponse
     {
-        if ($this->product_data['type'] != 'lxc') {
+        // -----------------------------------------------------------------------------
+        $service_lxc = $this->getLxcInstances();
+        if ($service_lxc['status'] == 'error') {
             return response()->json([
                 'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not found')],
-            ], 412);
+                'errors' => $service_lxc['errors'],
+            ], $service_lxc['code'] ?? 500);
         }
 
+        $service = $service_lxc['data']['service'];
+        $lxc_instance = $service_lxc['data']['lxc_instance'];
+        // -----------------------------------------------------------------------------
+
         $timeframe = $request->input('timeframe') ?? 'hour';
-        $service = \App\Models\Service::find($this->service_uuid);
-        $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
-        if ($lxc_instance) {
-            $data = $lxc_instance->getRrdData($timeframe);
-        }
+        $data = $lxc_instance->getRrdData($timeframe);
 
         return response()->json([
             'status' => 'success',
@@ -4466,22 +4559,18 @@ class puqProxmox extends Product
 
     public function controllerClient_getLxcBackupSchedule(Request $request): JsonResponse
     {
-        if ($this->product_data['type'] != 'lxc') {
+        // -----------------------------------------------------------------------------
+        $service_lxc = $this->getLxcInstances();
+        if ($service_lxc['status'] == 'error') {
             return response()->json([
                 'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not found')],
-            ], 412);
+                'errors' => $service_lxc['errors'],
+            ], $service_lxc['code'] ?? 500);
         }
 
-        $service = \App\Models\Service::find($this->service_uuid);
-
-        $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
-        if (!$lxc_instance) {
-            return response()->json([
-                'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not yet ready')],
-            ], 412);
-        }
+        $service = $service_lxc['data']['service'];
+        $lxc_instance = $service_lxc['data']['lxc_instance'];
+        // -----------------------------------------------------------------------------
 
         $backup_schedule = $lxc_instance->getBackupSchedule();
 
@@ -4493,22 +4582,18 @@ class puqProxmox extends Product
 
     public function controllerClient_postLxcBackupSchedule(Request $request): JsonResponse
     {
-        if ($this->product_data['type'] != 'lxc') {
+        // -----------------------------------------------------------------------------
+        $service_lxc = $this->getLxcInstances();
+        if ($service_lxc['status'] == 'error') {
             return response()->json([
                 'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not found')],
-            ], 412);
+                'errors' => $service_lxc['errors'],
+            ], $service_lxc['code'] ?? 500);
         }
 
-        $service = \App\Models\Service::find($this->service_uuid);
-
-        $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
-        if (!$lxc_instance) {
-            return response()->json([
-                'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not yet ready')],
-            ], 412);
-        }
+        $service = $service_lxc['data']['service'];
+        $lxc_instance = $service_lxc['data']['lxc_instance'];
+        // -----------------------------------------------------------------------------
 
         $days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
         $schedule = [];
@@ -4536,22 +4621,18 @@ class puqProxmox extends Product
 
     public function controllerClient_getLxcBackups(Request $request): JsonResponse
     {
-        if ($this->product_data['type'] != 'lxc') {
+        // -----------------------------------------------------------------------------
+        $service_lxc = $this->getLxcInstances();
+        if ($service_lxc['status'] == 'error') {
             return response()->json([
                 'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not found')],
-            ], 412);
+                'errors' => $service_lxc['errors'],
+            ], $service_lxc['code'] ?? 500);
         }
 
-        $service = \App\Models\Service::find($this->service_uuid);
-
-        $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
-        if (!$lxc_instance) {
-            return response()->json([
-                'status' => 'success',
-                'data' => [],
-            ], 200);
-        }
+        $service = $service_lxc['data']['service'];
+        $lxc_instance = $service_lxc['data']['lxc_instance'];
+        // -----------------------------------------------------------------------------
 
         $backups_raw = $lxc_instance->getBackups();
         if ($backups_raw['status'] == 'error') {
@@ -4586,22 +4667,18 @@ class puqProxmox extends Product
 
     public function controllerClient_postLxcBackupDelete(Request $request): JsonResponse
     {
-        if ($this->product_data['type'] != 'lxc') {
+        // -----------------------------------------------------------------------------
+        $service_lxc = $this->getLxcInstances();
+        if ($service_lxc['status'] == 'error') {
             return response()->json([
                 'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not found')],
-            ], 412);
+                'errors' => $service_lxc['errors'],
+            ], $service_lxc['code'] ?? 500);
         }
 
-        $service = \App\Models\Service::find($this->service_uuid);
-
-        $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
-        if (!$lxc_instance) {
-            return response()->json([
-                'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not yet ready')],
-            ], 412);
-        }
+        $service = $service_lxc['data']['service'];
+        $lxc_instance = $service_lxc['data']['lxc_instance'];
+        // -----------------------------------------------------------------------------
 
         $delete = $lxc_instance->deleteFile((int) $request->input('date'), (int) $request->input('size'));
 
@@ -4620,22 +4697,18 @@ class puqProxmox extends Product
 
     public function controllerClient_getLxcBackupsInfo(Request $request): JsonResponse
     {
-        if ($this->product_data['type'] != 'lxc') {
+        // -----------------------------------------------------------------------------
+        $service_lxc = $this->getLxcInstances();
+        if ($service_lxc['status'] == 'error') {
             return response()->json([
                 'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not found')],
-            ], 412);
+                'errors' => $service_lxc['errors'],
+            ], $service_lxc['code'] ?? 500);
         }
 
-        $service = \App\Models\Service::find($this->service_uuid);
-
-        $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
-        if (!$lxc_instance) {
-            return response()->json([
-                'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not yet ready')],
-            ], 412);
-        }
+        $service = $service_lxc['data']['service'];
+        $lxc_instance = $service_lxc['data']['lxc_instance'];
+        // -----------------------------------------------------------------------------
 
         $status = $lxc_instance->getStatus();
         $backups_raw = $lxc_instance->getBackups();
@@ -4654,12 +4727,18 @@ class puqProxmox extends Product
 
     public function controllerClient_postLxcBackupNow(Request $request): JsonResponse
     {
-        if ($this->product_data['type'] != 'lxc') {
+        // -----------------------------------------------------------------------------
+        $service_lxc = $this->getLxcInstances();
+        if ($service_lxc['status'] == 'error') {
             return response()->json([
                 'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not found')],
-            ], 412);
+                'errors' => $service_lxc['errors'],
+            ], $service_lxc['code'] ?? 500);
         }
+
+        $service = $service_lxc['data']['service'];
+        $lxc_instance = $service_lxc['data']['lxc_instance'];
+        // -----------------------------------------------------------------------------
 
         $validator = Validator::make($request->all(), [
             'note' => ['required', 'string', 'max:250', 'regex:/^[A-Za-z0-9\s\-_]+$/'],
@@ -4673,16 +4752,6 @@ class puqProxmox extends Product
             return response()->json([
                 'message' => $validator->errors(),
             ], 422);
-        }
-
-        $service = \App\Models\Service::find($this->service_uuid);
-
-        $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
-        if (!$lxc_instance) {
-            return response()->json([
-                'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not yet ready')],
-            ], 412);
         }
 
         $status = $lxc_instance->getStatus();
@@ -4719,22 +4788,18 @@ class puqProxmox extends Product
 
     public function controllerClient_postLxcBackupRestore(Request $request): JsonResponse
     {
-        if ($this->product_data['type'] != 'lxc') {
+        // -----------------------------------------------------------------------------
+        $service_lxc = $this->getLxcInstances();
+        if ($service_lxc['status'] == 'error') {
             return response()->json([
                 'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not found')],
-            ], 412);
+                'errors' => $service_lxc['errors'],
+            ], $service_lxc['code'] ?? 500);
         }
 
-        $service = \App\Models\Service::find($this->service_uuid);
-
-        $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
-        if (!$lxc_instance) {
-            return response()->json([
-                'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not yet ready')],
-            ], 412);
-        }
+        $service = $service_lxc['data']['service'];
+        $lxc_instance = $service_lxc['data']['lxc_instance'];
+        // -----------------------------------------------------------------------------
 
         $status = $lxc_instance->getStatus();
 
@@ -4775,22 +4840,18 @@ class puqProxmox extends Product
 
     public function controllerClient_getPublicNetworks(Request $request): JsonResponse
     {
-        if ($this->product_data['type'] != 'lxc') {
+        // -----------------------------------------------------------------------------
+        $service_lxc = $this->getLxcInstances();
+        if ($service_lxc['status'] == 'error') {
             return response()->json([
                 'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not found')],
-            ], 412);
+                'errors' => $service_lxc['errors'],
+            ], $service_lxc['code'] ?? 500);
         }
 
-        $service = \App\Models\Service::find($this->service_uuid);
-
-        $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
-        if (!$lxc_instance) {
-            return response()->json([
-                'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not yet ready')],
-            ], 412);
-        }
+        $service = $service_lxc['data']['service'];
+        $lxc_instance = $service_lxc['data']['lxc_instance'];
+        // -----------------------------------------------------------------------------
 
         $networks = $lxc_instance->getPublicNetworks();
 
@@ -4802,22 +4863,18 @@ class puqProxmox extends Product
 
     public function controllerClient_getPrivateNetworks(Request $request): JsonResponse
     {
-        if ($this->product_data['type'] != 'lxc') {
+        // -----------------------------------------------------------------------------
+        $service_lxc = $this->getLxcInstances();
+        if ($service_lxc['status'] == 'error') {
             return response()->json([
                 'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not found')],
-            ], 412);
+                'errors' => $service_lxc['errors'],
+            ], $service_lxc['code'] ?? 500);
         }
 
-        $service = \App\Models\Service::find($this->service_uuid);
-
-        $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
-        if (!$lxc_instance) {
-            return response()->json([
-                'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not yet ready')],
-            ], 412);
-        }
+        $service = $service_lxc['data']['service'];
+        $lxc_instance = $service_lxc['data']['lxc_instance'];
+        // -----------------------------------------------------------------------------
 
         $networks = $lxc_instance->getPrivateNetworks();
 
@@ -4829,12 +4886,18 @@ class puqProxmox extends Product
 
     public function controllerClient_postLxcPublicNetworks(Request $request): JsonResponse
     {
-        if ($this->product_data['type'] != 'lxc') {
+        // -----------------------------------------------------------------------------
+        $service_lxc = $this->getLxcInstances();
+        if ($service_lxc['status'] == 'error') {
             return response()->json([
                 'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not found')],
-            ], 412);
+                'errors' => $service_lxc['errors'],
+            ], $service_lxc['code'] ?? 500);
         }
+
+        $service = $service_lxc['data']['service'];
+        $lxc_instance = $service_lxc['data']['lxc_instance'];
+        // -----------------------------------------------------------------------------
 
         $validator = Validator::make($request->all(), [
             'ipv4_rdns' => [
@@ -4862,16 +4925,6 @@ class puqProxmox extends Product
             ], 422);
         }
 
-        $service = \App\Models\Service::find($this->service_uuid);
-
-        $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
-        if (!$lxc_instance) {
-            return response()->json([
-                'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not yet ready')],
-            ], 412);
-        }
-
         $lxc_instance->setRdns($request->input('ipv4_rdns'), $request->input('ipv6_rdns'));
 
         $lxc_instance->updateRDNS();
@@ -4897,22 +4950,18 @@ class puqProxmox extends Product
 
     public function controllerClient_getLxcFirewallPolicies(Request $request): JsonResponse
     {
-        if ($this->product_data['type'] != 'lxc') {
+        // -----------------------------------------------------------------------------
+        $service_lxc = $this->getLxcInstances();
+        if ($service_lxc['status'] == 'error') {
             return response()->json([
                 'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not found')],
-            ], 412);
+                'errors' => $service_lxc['errors'],
+            ], $service_lxc['code'] ?? 500);
         }
 
-        $service = \App\Models\Service::find($this->service_uuid);
-
-        $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
-        if (!$lxc_instance) {
-            return response()->json([
-                'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not yet ready')],
-            ], 412);
-        }
+        $service = $service_lxc['data']['service'];
+        $lxc_instance = $service_lxc['data']['lxc_instance'];
+        // -----------------------------------------------------------------------------
 
         $firewall_policies = $lxc_instance->getFirewallPolicies();
 
@@ -4924,12 +4973,18 @@ class puqProxmox extends Product
 
     public function controllerClient_postLxcFirewallPolicies(Request $request): JsonResponse
     {
-        if ($this->product_data['type'] != 'lxc') {
+        // -----------------------------------------------------------------------------
+        $service_lxc = $this->getLxcInstances();
+        if ($service_lxc['status'] == 'error') {
             return response()->json([
                 'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not found')],
-            ], 412);
+                'errors' => $service_lxc['errors'],
+            ], $service_lxc['code'] ?? 500);
         }
+
+        $service = $service_lxc['data']['service'];
+        $lxc_instance = $service_lxc['data']['lxc_instance'];
+        // -----------------------------------------------------------------------------
 
         $validator = Validator::make($request->all(), [
             'policy_in' => ['required', 'string', 'in:ACCEPT,REJECT,DROP'],
@@ -4945,16 +5000,6 @@ class puqProxmox extends Product
             return response()->json([
                 'message' => $validator->errors(),
             ], 422);
-        }
-
-        $service = \App\Models\Service::find($this->service_uuid);
-
-        $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
-        if (!$lxc_instance) {
-            return response()->json([
-                'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not yet ready')],
-            ], 412);
         }
 
         $set_firewall_options = $lxc_instance->setFirewallOptions($request->input('policy_in'),
@@ -4975,22 +5020,18 @@ class puqProxmox extends Product
 
     public function controllerClient_getLxcFirewallRules(Request $request): JsonResponse
     {
-        if ($this->product_data['type'] != 'lxc') {
+        // -----------------------------------------------------------------------------
+        $service_lxc = $this->getLxcInstances();
+        if ($service_lxc['status'] == 'error') {
             return response()->json([
                 'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not found')],
-            ], 412);
+                'errors' => $service_lxc['errors'],
+            ], $service_lxc['code'] ?? 500);
         }
 
-        $service = \App\Models\Service::find($this->service_uuid);
-
-        $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
-        if (!$lxc_instance) {
-            return response()->json([
-                'status' => 'success',
-                'data' => [],
-            ], 200);
-        }
+        $service = $service_lxc['data']['service'];
+        $lxc_instance = $service_lxc['data']['lxc_instance'];
+        // -----------------------------------------------------------------------------
 
         $firewall_rules_raw = $lxc_instance->getFirewallRules();
 
@@ -5030,22 +5071,18 @@ class puqProxmox extends Product
 
     public function controllerClient_postLxcFirewallRuleUpdateOrder(Request $request): JsonResponse
     {
-        if ($this->product_data['type'] != 'lxc') {
+        // -----------------------------------------------------------------------------
+        $service_lxc = $this->getLxcInstances();
+        if ($service_lxc['status'] == 'error') {
             return response()->json([
                 'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not found')],
-            ], 412);
+                'errors' => $service_lxc['errors'],
+            ], $service_lxc['code'] ?? 500);
         }
 
-        $service = \App\Models\Service::find($this->service_uuid);
-
-        $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
-        if (!$lxc_instance) {
-            return response()->json([
-                'status' => 'success',
-                'data' => [],
-            ], 200);
-        }
+        $service = $service_lxc['data']['service'];
+        $lxc_instance = $service_lxc['data']['lxc_instance'];
+        // -----------------------------------------------------------------------------
 
         $data = [
             'pos' => $request->input('pos') ?? 0,
@@ -5068,22 +5105,18 @@ class puqProxmox extends Product
 
     public function controllerClient_postLxcFirewallRuleDelete(Request $request): JsonResponse
     {
-        if ($this->product_data['type'] != 'lxc') {
+        // -----------------------------------------------------------------------------
+        $service_lxc = $this->getLxcInstances();
+        if ($service_lxc['status'] == 'error') {
             return response()->json([
                 'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not found')],
-            ], 412);
+                'errors' => $service_lxc['errors'],
+            ], $service_lxc['code'] ?? 500);
         }
 
-        $service = \App\Models\Service::find($this->service_uuid);
-
-        $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
-        if (!$lxc_instance) {
-            return response()->json([
-                'status' => 'success',
-                'data' => [],
-            ], 200);
-        }
+        $service = $service_lxc['data']['service'];
+        $lxc_instance = $service_lxc['data']['lxc_instance'];
+        // -----------------------------------------------------------------------------
 
         $data = [
             'pos' => $request->input('pos') ?? 0,
@@ -5105,12 +5138,18 @@ class puqProxmox extends Product
 
     public function controllerClient_postLxcFirewallRuleCreate(Request $request): JsonResponse
     {
-        if ($this->product_data['type'] != 'lxc') {
+        // -----------------------------------------------------------------------------
+        $service_lxc = $this->getLxcInstances();
+        if ($service_lxc['status'] == 'error') {
             return response()->json([
                 'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not found')],
-            ], 412);
+                'errors' => $service_lxc['errors'],
+            ], $service_lxc['code'] ?? 500);
         }
+
+        $service = $service_lxc['data']['service'];
+        $lxc_instance = $service_lxc['data']['lxc_instance'];
+        // -----------------------------------------------------------------------------
 
         $validator = Validator::make($request->all(), [
             'action' => ['required', 'string', 'in:ACCEPT,REJECT,DROP'],
@@ -5168,15 +5207,6 @@ class puqProxmox extends Product
             ], 422);
         }
 
-        $service = \App\Models\Service::find($this->service_uuid);
-        $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
-        if (!$lxc_instance) {
-            return response()->json([
-                'status' => 'success',
-                'data' => [],
-            ], 200);
-        }
-
         $data = [
             'action' => $request->input('action'),
             'type' => $request->input('type'),
@@ -5232,12 +5262,18 @@ class puqProxmox extends Product
 
     public function controllerClient_getLxcRebuildInfo(Request $request): JsonResponse
     {
-        if ($this->product_data['type'] != 'lxc') {
+        // -----------------------------------------------------------------------------
+        $service_lxc = $this->getLxcInstances();
+        if ($service_lxc['status'] == 'error') {
             return response()->json([
                 'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not found')],
-            ], 412);
+                'errors' => $service_lxc['errors'],
+            ], $service_lxc['code'] ?? 500);
         }
+
+        $service = $service_lxc['data']['service'];
+        $lxc_instance = $service_lxc['data']['lxc_instance'];
+        // -----------------------------------------------------------------------------
 
         $client = app('client');
         $currency = $client->currency;
@@ -5245,13 +5281,6 @@ class puqProxmox extends Product
         $product = $service->product;
         $lxc_os_templates = PuqPmLxcOsTemplate::query()->get();
 
-        $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
-        if (!$lxc_instance) {
-            return response()->json([
-                'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not yet ready')],
-            ], 412);
-        }
         $images = [];
         $status = $lxc_instance->getStatus();
 
@@ -5318,12 +5347,18 @@ class puqProxmox extends Product
 
     public function controllerClient_postLxcRebuildNow(Request $request): JsonResponse
     {
-        if ($this->product_data['type'] != 'lxc') {
+        // -----------------------------------------------------------------------------
+        $service_lxc = $this->getLxcInstances();
+        if ($service_lxc['status'] == 'error') {
             return response()->json([
                 'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not found')],
-            ], 412);
+                'errors' => $service_lxc['errors'],
+            ], $service_lxc['code'] ?? 500);
         }
+
+        $service = $service_lxc['data']['service'];
+        $lxc_instance = $service_lxc['data']['lxc_instance'];
+        // -----------------------------------------------------------------------------
 
         if ($request->input('protect') != 'REINSTALL') {
             return response()->json([
@@ -5332,15 +5367,7 @@ class puqProxmox extends Product
             ], 412);
         }
 
-        $service = \App\Models\Service::find($this->service_uuid);
         $product = $service->product;
-        $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
-        if (!$lxc_instance) {
-            return response()->json([
-                'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not yet ready')],
-            ], 412);
-        }
 
         $status = $lxc_instance->getStatus();
 
@@ -5412,22 +5439,18 @@ class puqProxmox extends Product
 
     public function controllerClient_getLxcRescaleOptions(Request $request): JsonResponse
     {
-        if ($this->product_data['type'] != 'lxc') {
+        // -----------------------------------------------------------------------------
+        $service_lxc = $this->getLxcInstances();
+        if ($service_lxc['status'] == 'error') {
             return response()->json([
                 'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not found')],
-            ], 412);
+                'errors' => $service_lxc['errors'],
+            ], $service_lxc['code'] ?? 500);
         }
 
-        $service = \App\Models\Service::find($this->service_uuid);
-        $product = $service->product;
-        $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
-        if (!$lxc_instance) {
-            return response()->json([
-                'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not yet ready')],
-            ], 412);
-        }
+        $service = $service_lxc['data']['service'];
+        $lxc_instance = $service_lxc['data']['lxc_instance'];
+        // -----------------------------------------------------------------------------
 
         $service_price = $service->price;
         $currency = $service_price->currency;
@@ -5499,22 +5522,18 @@ class puqProxmox extends Product
 
     public function controllerClient_getLxcRescaleCalculateSummary(Request $request): JsonResponse
     {
-        if ($this->product_data['type'] != 'lxc') {
+        // -----------------------------------------------------------------------------
+        $service_lxc = $this->getLxcInstances();
+        if ($service_lxc['status'] == 'error') {
             return response()->json([
                 'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not found')],
-            ], 412);
+                'errors' => $service_lxc['errors'],
+            ], $service_lxc['code'] ?? 500);
         }
 
-        $service = \App\Models\Service::find($this->service_uuid);
-        $product = $service->product;
-        $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
-        if (!$lxc_instance) {
-            return response()->json([
-                'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not yet ready')],
-            ], 412);
-        }
+        $service = $service_lxc['data']['service'];
+        $lxc_instance = $service_lxc['data']['lxc_instance'];
+        // -----------------------------------------------------------------------------
 
         $service_price = $service->price;
         $currency = $service_price->currency;
@@ -5601,21 +5620,18 @@ class puqProxmox extends Product
 
     public function controllerClient_postLxcRescale(Request $request): JsonResponse
     {
-        if ($this->product_data['type'] != 'lxc') {
+        // -----------------------------------------------------------------------------
+        $service_lxc = $this->getLxcInstances();
+        if ($service_lxc['status'] == 'error') {
             return response()->json([
                 'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not found')],
-            ], 412);
+                'errors' => $service_lxc['errors'],
+            ], $service_lxc['code'] ?? 500);
         }
 
-        $service = \App\Models\Service::find($this->service_uuid);
-        $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
-        if (!$lxc_instance) {
-            return response()->json([
-                'status' => 'error',
-                'errors' => [__('Product.puqProxmox.LXC not yet ready')],
-            ], 412);
-        }
+        $service = $service_lxc['data']['service'];
+        $lxc_instance = $service_lxc['data']['lxc_instance'];
+        // -----------------------------------------------------------------------------
 
         $options = [];
 
@@ -5679,6 +5695,7 @@ class puqProxmox extends Product
         ], 200);
     }
 
+    //------------------------------------------------------------------------------------------------------
     // APP Deploy ------------------------------------------------------------------------------------------
     public function controllerClient_getAppDeployStatus(Request $request): JsonResponse
     {
@@ -5688,7 +5705,7 @@ class puqProxmox extends Product
         ];
 
         // -----------------------------------------------------------------------------
-        $service_lxc_app = $this->getLxcAppInstances();
+        $service_lxc_app = $this->getLxcAppInstances(true);
         if ($service_lxc_app['status'] == 'error') {
             return response()->json([
                 'status' => 'success',
@@ -5781,7 +5798,7 @@ class puqProxmox extends Product
         $functions = $app_instance->getFunctionsClientArea();
         foreach ($functions as $function) {
             $action = $request->input('action');
-            if($function['action'] == $action) {
+            if ($function['action'] == $action) {
                 $data = [
                     'module' => $app_instance,
                     'method' => 'postAppControl',        // The method name that should be executed inside the job
@@ -6393,7 +6410,55 @@ class puqProxmox extends Product
     }
 
 
-    private function getLxcAppInstances(): array
+    // Helping
+
+    private function getLxcInstances(bool $deploy = false): array
+    {
+
+        if ($this->product_data['type'] !== 'lxc') {
+            return [
+                'status' => 'error',
+                'errors' => [__('Product.puqProxmox.LXC not found')],
+                'code' => 412,
+            ];
+        }
+
+        $service = \App\Models\Service::find($this->service_uuid);
+
+        $lxc_instance = PuqPmLxcInstance::query()
+            ->where('service_uuid', $service->uuid)
+            ->first();
+
+
+        if (empty($lxc_instance)) {
+            return [
+                'status' => 'error',
+                'errors' => [__('Product.puqProxmox.LXC not found')],
+                'code' => 412,
+            ];
+        }
+        if (!$deploy) {
+            $deploy_status = $lxc_instance->getDeployStatus();
+
+            if ($deploy_status['status'] != 'success') {
+                return [
+                    'status' => 'error',
+                    'errors' => [__('Product.puqProxmox.LXC not found')],
+                    'code' => 412,
+                ];
+            }
+        }
+
+        return [
+            'status' => 'success',
+            'data' => [
+                'service' => $service,
+                'lxc_instance' => $lxc_instance,
+            ],
+        ];
+    }
+
+    private function getLxcAppInstances(bool $deploy = false): array
     {
 
         if ($this->product_data['type'] !== 'app') {
@@ -6420,6 +6485,18 @@ class puqProxmox extends Product
                 'errors' => [__('Product.puqProxmox.APP not found')],
                 'code' => 412,
             ];
+        }
+
+        if (!$deploy) {
+            $deploy_status = $app_instance->getDeployStatus();
+
+            if ($deploy_status['status'] != 'success') {
+                return [
+                    'status' => 'error',
+                    'errors' => [__('Product.puqProxmox.APP not found')],
+                    'code' => 412,
+                ];
+            }
         }
 
         return [

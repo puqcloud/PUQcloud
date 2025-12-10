@@ -293,6 +293,7 @@ class PuqPmAppInstance extends Model
         $main_domain = $this->getEndpointMainDomain();
         $lxc_instance_info = $puq_pm_lxc_instance->getInfo();
 
+        $this->createSslCertificates();
         $ssl_certificate = $this->findSslCertificate();
         $endpoints = [];
 
@@ -477,11 +478,13 @@ BASH;
     }
 
 
-    protected function findSslCertificate(): ?SslCertificate
+    protected function findSslCertificate(bool $onlyActive = true): ?SslCertificate
     {
         $domain = $this->getEndpointMainDomain() ?? '';
         $aliases = $this->getDomains();
         $aliases = array_values(array_filter($aliases, fn($d) => $d !== $domain));
+
+        $statusFilter = $onlyActive ? ['active'] : ['active', 'pending', 'processing'];
 
         if (empty($aliases)) {
             $parts = explode('.', $domain);
@@ -490,7 +493,8 @@ BASH;
 
             $wildcard = SslCertificate::query()
                 ->where('domain', $wildcardDomain)
-                ->where('status', 'active')
+                ->whereIn('status', $statusFilter)
+                ->where('wildcard', true)
                 ->orderByDesc('expires_at')
                 ->first();
 
@@ -501,7 +505,7 @@ BASH;
 
         $certificates = SslCertificate::query()
             ->where('domain', $domain)
-            ->where('status', 'active')
+            ->whereIn('status', $statusFilter)
             ->orderByDesc('expires_at')
             ->get();
 
@@ -534,7 +538,7 @@ BASH;
             ];
         }
 
-        $ssl_certificate = $this->findSslCertificate();
+        $ssl_certificate = $this->findSslCertificate(false);
 
         if ($ssl_certificate) {
             return [
@@ -680,11 +684,12 @@ BASH;
     public function webProxyDeploy(): array
     {
         // --- Config ---
-        $maxAttempts = 200;     // how many attempts
+        $maxAttempts = 20;     // how many attempts
         $sleepSeconds = 10;     // wait time between attempts
 
         for ($i = 0; $i < $maxAttempts; $i++) {
 
+            $this->createSslCertificates();
             $ssl_certificate = $this->findSslCertificate();
 
             if ($ssl_certificate) {

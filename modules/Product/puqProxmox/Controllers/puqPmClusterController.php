@@ -492,7 +492,7 @@ class puqPmClusterController extends Controller
 
         return response()->json([
             'status' => 'error',
-            'errors' => [$test_connection['error']],
+            'errors' => $test_connection['errors'],
         ], 502);
     }
 
@@ -1134,7 +1134,7 @@ class puqPmClusterController extends Controller
         if ($response['status'] == 'error') {
             return response()->json([
                 'status' => 'error',
-                'errors' => [$response['error']],
+                'errors' => $response['errors'],
             ], 502);
         }
 
@@ -1164,7 +1164,7 @@ class puqPmClusterController extends Controller
         if ($response['status'] == 'error') {
             return response()->json([
                 'status' => 'error',
-                'errors' => [$response['error']],
+                'errors' => $response['errors'],
             ], 502);
         }
 
@@ -1194,7 +1194,7 @@ class puqPmClusterController extends Controller
         if ($response['status'] == 'error') {
             return response()->json([
                 'status' => 'error',
-                'errors' => [$response['error']],
+                'errors' => $response['errors'],
             ], 502);
         }
 
@@ -1224,7 +1224,7 @@ class puqPmClusterController extends Controller
         if ($response['status'] == 'error') {
             return response()->json([
                 'status' => 'error',
-                'errors' => [$response['error']],
+                'errors' => $response['errors'],
             ], 502);
         }
 

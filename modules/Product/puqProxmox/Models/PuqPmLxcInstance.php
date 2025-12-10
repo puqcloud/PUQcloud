@@ -157,6 +157,105 @@ class PuqPmLxcInstance extends Model
             ->where('model', self::class);
     }
 
+    // ----------------------------
+    // DEPLOY FIELD METHODS
+    // ----------------------------
+
+    // Set deploy status
+    public function setDeployStatus(string $status): void
+    {
+        if (!$this->uuid) {
+            return;
+        }
+        self::where('uuid', $this->uuid)->update(['deploy_status' => $status]);
+    }
+
+    // Set deploy progress (0-100)
+    public function setDeployProgress(int $progress): void
+    {
+        if (!$this->uuid) {
+            return;
+        }
+        self::where('uuid', $this->uuid)->update(['deploy_progress' => $progress]);
+    }
+
+    // Set deploy start and finish times
+    public function setDeployStarted(): void
+    {
+        if (!$this->uuid) {
+            return;
+        }
+        self::where('uuid', $this->uuid)->update(['deploy_started_at' => now()]);
+    }
+
+    public function setDeployFinished(): void
+    {
+        if (!$this->uuid) {
+            return;
+        }
+        self::where('uuid', $this->uuid)->update(['deploy_finished_at' => now()]);
+    }
+
+    // Set current deploy step
+    public function setDeployStep(string $step): void
+    {
+        if (!$this->uuid) {
+            return;
+        }
+        self::where('uuid', $this->uuid)->update(['deploy_current_step' => $step]);
+    }
+
+    // Set deploy error
+    public function setDeployError(string $error): void
+    {
+        if (!$this->uuid) {
+            return;
+        }
+        self::where('uuid', $this->uuid)->update(['deploy_error' => $error]);
+    }
+
+    // Append log line with timestamp safely
+    public function appendDeployLog(string $line): void
+    {
+        if (!$this->uuid) {
+            return;
+        }
+
+        $timestamp = now()->format('Y-m-d H:i:s');
+        $newLogLine = "[$timestamp] $line\n";
+
+        self::where('uuid', $this->uuid)->update([
+            'deploy_logs' => \DB::raw("CONCAT(IFNULL(deploy_logs, ''), ".\DB::getPdo()->quote($newLogLine).")"),
+        ]);
+    }
+
+    public function getDeployStatus(): array
+    {
+        $fresh = self::find($this->uuid);
+
+        if (!$fresh) {
+            return [
+                'status' => null,
+                'progress' => null,
+                'started_at' => null,
+                'finished_at' => null,
+                'current_step' => null,
+                'error' => null,
+                'logs' => null,
+            ];
+        }
+
+        return [
+            'status' => $fresh->deploy_status,
+            'progress' => $fresh->deploy_progress,
+            'started_at' => $fresh->deploy_started_at,
+            'finished_at' => $fresh->deploy_finished_at,
+            'current_step' => $fresh->deploy_current_step,
+            'error' => $fresh->deploy_error,
+            'logs' => $fresh->deploy_logs,
+        ];
+    }
+
     public function buildFeatures(): string
     {
         $p = $this->puqPmLxcPreset;
@@ -1019,6 +1118,12 @@ class PuqPmLxcInstance extends Model
         }
 
         return $stop;
+    }
+
+    public function reboot(): array
+    {
+        $this->stop();
+        return $this->start();
     }
 
     public function console(): array
