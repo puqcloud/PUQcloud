@@ -43,7 +43,8 @@
                 'general' => __('Product.puqProxmox.General'),
                 'cluster_groups' => __('Product.puqProxmox.Cluster Groups'),
                 'os_templates' => __('Product.puqProxmox.OS Templates'),
-            ];
+                'env_variables' => __('Product.puqProxmox.Environment Variables'),
+                ];
         @endphp
 
         @foreach($tabs as $key => $label)

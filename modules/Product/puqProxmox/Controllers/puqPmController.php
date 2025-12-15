@@ -24,6 +24,9 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Modules\Product\puqProxmox\Models\PuqPmLxcInstance;
+use Modules\Product\puqProxmox\Models\PuqPmSshPublicKey;
+use Yajra\DataTables\DataTables;
 
 class puqPmController extends Controller
 {
@@ -115,4 +118,63 @@ class puqPmController extends Controller
             ],
         ]);
     }
+
+
+
+    public function lxcInstances(Request $request): View
+    {
+        $title = __('Product.puqProxmox.LXC Instances');
+
+        return view_admin_module('Product', 'puqProxmox', 'admin_area.other.lxc_instances', compact('title'));
+    }
+
+    public function getLxcInstances(Request $request): JsonResponse
+    {
+        $query = PuqPmLxcInstance::query()->orderByDesc('created_at');
+
+        return response()->json([
+            'data' => DataTables::of($query)
+                ->filter(function ($query) use ($request) {
+                    if ($request->has('search') && !empty($request->search['value'])) {
+                        $search = $request->search['value'];
+                        $query->where(function ($q) use ($search) {
+                            $q->where('uuid', 'like', "%{$search}%")
+                                ->orWhere('hostname', 'like', "%{$search}%")
+                                ->orWhere('vmid', 'like', "%{$search}%")
+                                ->orWhereHas('service', function($q2) use ($search) {
+                                    $q2->where('client_label', 'like', "%{$search}%")
+                                        ->orWhereHas('product', function($q3) use ($search) {
+                                            $q3->where('key', 'like', "%{$search}%");
+                                        });
+                                })
+                                ->orWhereHas('status', function($q4) use ($search) {
+                                    $q4->where('status', 'like', "%{$search}%");
+                                });
+                        });
+                    }
+                })
+
+                ->addColumn('service', function ($model) {
+                    return $model->service?->toArray();
+                })
+                ->addColumn('urls', function ($model) {
+                    $urls = [];
+                    return $urls;
+                })
+                ->make(true),
+        ], 200);
+
+    }
+
+
+    public function appInstances(Request $request): View
+    {
+        $title = __('Product.puqProxmox.APP Instances');
+
+        return view_admin_module('Product', 'puqProxmox', 'admin_area.other.app_instances', compact('title'));
+    }
+
+
+
+
 }

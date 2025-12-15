@@ -24,16 +24,20 @@
 @section('content')
     @include('modules.Product.puqProxmox.views.admin_area.cluster_groups.cluster_group_header')
 
-    <div id="container">
-        <div class="card mb-3">
-            <div class="card-body">
-                <form id="clusterGroupForm" action="" novalidate="novalidate">
+    <form id="clusterGroupForm" action="" novalidate="novalidate">
+
+        <div id="container">
+            <div class="card mb-3">
+                <div class="card-body">
+
+
                     <div class="row">
                         <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6 mb-3">
                             <label for="name" class="form-label">
                                 <i class="fa fa-tag me-1 text-primary"></i> {{ __('Product.puqProxmox.Name') }}
                             </label>
-                            <input type="text" class="form-control" id="name" name="name" placeholder="Example: LXC EU Plan A">
+                            <input type="text" class="form-control" id="name" name="name"
+                                   placeholder="Example: LXC EU Plan A">
                         </div>
 
                         <div class="col-xl-2 col-lg-6 col-md-6 col-sm-6 mb-3">
@@ -68,7 +72,8 @@
                             <label for="data_center" class="form-label">
                                 <i class="fa fa-database me-1 text-primary"></i> {{ __('Product.puqProxmox.Data Center') }}
                             </label>
-                            <input type="text" class="form-control" id="data_center" name="data_center" placeholder="ex: DC-1 Frankfurt">
+                            <input type="text" class="form-control" id="data_center" name="data_center"
+                                   placeholder="ex: DC-1 Frankfurt">
                         </div>
 
                         <div class="col-md-6 mb-3">
@@ -83,14 +88,17 @@
                             <label for="local_private_network" class="form-label">
                                 <i class="fa fa-tag me-1 text-primary"></i> {{ __('Product.puqProxmox.Local Private Network (CIDR)') }}
                             </label>
-                            <input type="text" class="form-control" id="local_private_network" name="local_private_network" placeholder="Example: 192.168.0.0/24">
+                            <input type="text" class="form-control" id="local_private_network"
+                                   name="local_private_network" placeholder="Example: 192.168.0.0/24">
                         </div>
                     </div>
-
-                </form>
+                </div>
             </div>
         </div>
-    </div>
+
+        @include('modules.Product.puqProxmox.views.admin_area.cluster_groups.env-variables')
+
+    </form>
 @endsection
 
 @section('js')
@@ -99,7 +107,7 @@
         $(document).ready(function () {
 
             function loadFormData() {
-                blockUI('container');
+                blockUI('clusterGroupForm');
 
                 PUQajax('{{ route('admin.api.Product.puqProxmox.cluster_group.get', $uuid) }}', {}, 50, null, 'GET')
                     .then(function (response) {
@@ -109,6 +117,8 @@
                         $("#local_private_network").val(response.data?.local_private_network);
 
                         $("#description").val(response.data?.description).textareaAutoSize().trigger('autosize');
+
+                        $("#env_variables").val(JSON.stringify(response.data?.env_variables || []));
 
                         var $element_country = $("#country_uuid");
                         initializeSelect2($element_country, '{{route('admin.api.countries.select.get')}}', response.data.country_data, 'GET', 1000, {});
@@ -137,7 +147,7 @@
                             updateStateOptions();
                         });
 
-                        unblockUI('container');
+                        unblockUI('clusterGroupForm');
                     })
                     .catch(function (error) {
                         console.error('Error loading form data:', error);
@@ -148,7 +158,6 @@
                 event.preventDefault();
                 const $form = $("#clusterGroupForm");
                 const formData = serializeForm($form);
-                console.log(formData);
 
                 PUQajax('{{ route('admin.api.Product.puqProxmox.cluster_group.put', $uuid) }}', formData, 1000, $(this), 'PUT', $form)
                     .then(function (response) {
@@ -169,3 +178,4 @@
         });
     </script>
 @endsection
+

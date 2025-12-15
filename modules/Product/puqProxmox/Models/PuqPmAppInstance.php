@@ -431,7 +431,18 @@ BASH;
             $script = $puq_pm_script->script;
         }
 
-        return $puq_pm_lxc_instance->runSshScriptOnLxc($script, $puq_pm_script);
+        $install_script = $puq_pm_lxc_instance->runSshScriptOnLxc($script, $puq_pm_script);
+
+
+        if (trim($install_script['data']) !== 'success') {
+            return [
+                'status' => 'error',
+                'errors' => ['Install script failed'],
+                'data' => $install_script['data'],
+            ];
+        }
+
+        return $install_script;
     }
 
     public function getDiskStatus(bool $force = false): void
@@ -751,7 +762,6 @@ BASH;
     }
 
     // Client Area
-
     public function getAppInfoClientArea(): array
     {
         $puq_pm_lxc_instance = $this->puqPmLxcInstance;
@@ -844,7 +854,6 @@ BASH;
 
     }
 
-
     public function getFunctionsClientArea(): array
     {
         $functions = [];
@@ -870,7 +879,6 @@ BASH;
         return $functions;
     }
 
-
     public function getAppControlClientArea(): array
     {
         return [
@@ -879,6 +887,4 @@ BASH;
             'env_variables' => $this->getEnvVariablesClientArea(),
         ];
     }
-
-
 }

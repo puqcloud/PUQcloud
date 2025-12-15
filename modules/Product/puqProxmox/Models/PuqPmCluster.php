@@ -49,7 +49,11 @@ class PuqPmCluster extends Model
 
         'vncwebproxy_domain',
         'vncwebproxy_api_key',
+        'env_variables',
+    ];
 
+    protected $casts = [
+        'env_variables' => 'array',
     ];
 
     protected static function boot(): void
@@ -62,7 +66,7 @@ class PuqPmCluster extends Model
 
     public function puqPmClusterGroup(): BelongsTo
     {
-        return $this->belongsTo(puqPmClusterGroup::class, 'puq_pm_cluster_group_uuid', 'uuid');
+        return $this->belongsTo(PuqPmClusterGroup::class, 'puq_pm_cluster_group_uuid', 'uuid');
     }
 
     public function puqPmAccessServers(): HasMany
@@ -103,6 +107,16 @@ class PuqPmCluster extends Model
     public function puqPmLxcInstances(): HasMany
     {
         return $this->hasMany(PuqPmLxcInstance::class, 'puq_pm_cluster_uuid', 'uuid');
+    }
+
+    public function getEnvironmentMacros(): array
+    {
+        $macros = getSystemMacros();
+//        $macros[] = ['name' => 'MAIN_DOMAIN', 'description' => 'Main Domain of APP'];
+//        $macros[] = ['name' => 'LXC_MOUNT_POINT', 'description' => 'Path to the mount point in the LXC container'];
+//        $macros[] = ['name' => 'LXC_IP', 'description' => 'Main IP address of LXC container'];
+
+        return $macros;
     }
 
     public function getUseAccounts(): int
@@ -318,8 +332,15 @@ class PuqPmCluster extends Model
             );
         }
 
+        if (!empty($remoteStorageIds)) {
+            PuqPmStorage::where('puq_pm_cluster_uuid', $this->uuid)
+                ->whereNotIn('id', $remoteStorageIds)
+                ->update(['status' => 'lost']);
+        }
+
         return ['status' => 'success', 'data' => $data];
     }
+
 
     public function getSyncClusterLxc(array $data = []): array
     {

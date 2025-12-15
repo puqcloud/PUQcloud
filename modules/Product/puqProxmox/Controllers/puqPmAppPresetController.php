@@ -693,7 +693,6 @@ class puqPmAppPresetController extends Controller
     }
 
     // App Endpoint Locations
-
     public function getAppEndpointAppEndpointLocations(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmAppEndpoint::find($uuid);
@@ -908,5 +907,4 @@ class puqPmAppPresetController extends Controller
             'message' => __('Product.puqProxmox.Deleted successfully'),
         ]);
     }
-
 }

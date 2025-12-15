@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 
 ---
+## [1.3.0] – 2025-12-15
+
+### Added
+
+- Proxmox Module (v1.0.1)
+    - Environment Variables Cluster Group level
+    - Environment Variables Cluster level
+    - Environment Variables LXC Preset level
+    - LXC Instances Page
+
+---
 
 ## [1.2.0] – 2025-12-10
 
@@ -12,7 +23,6 @@ All notable changes to this project will be documented in this file.
 - Proxmox Module (v1.0.1)
     - LXC deploy progress and monitoring
     - LXC controller function security protection by deploy status
-
 ---
 
 ## [1.1.1] – 2025-12-07

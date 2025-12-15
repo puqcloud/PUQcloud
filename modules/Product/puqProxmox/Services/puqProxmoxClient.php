@@ -271,7 +271,8 @@ class puqProxmoxClient
     {
         if ($node_ip) {
             $encodedScript = base64_encode($command);
-            $execCommand = "ssh -o StrictHostKeyChecking=no -o ServerAliveInterval=60 -o ServerAliveCountMax=5 root@{$node_ip} \"echo {$encodedScript} | base64 -d | bash\" 2>&1";
+            //$execCommand = "ssh -o StrictHostKeyChecking=no -o ServerAliveInterval=60 -o ServerAliveCountMax=5 root@{$node_ip} \"echo {$encodedScript} | base64 -d | bash\" 2>&1";
+            $execCommand = "ssh -q -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ServerAliveInterval=60 -o ServerAliveCountMax=5 root@{$node_ip} \"echo {$encodedScript} | base64 -d | bash\"";
         } else {
             $execCommand = $command;
         }
@@ -316,12 +317,6 @@ class puqProxmoxClient
                     'duration' => $duration,
                 ];
             }
-
-//            $this->logDebug('SSH Request - Command executed', [
-//                'execCommand' => $execCommand,
-//                'output' => $output,
-//                'duration' => $duration,
-//            ]);
 
             if ($jsonOutput) {
                 $decoded = json_decode($output, true);

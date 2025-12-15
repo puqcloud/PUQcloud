@@ -66,28 +66,29 @@ class puqPmLxcPresetController extends Controller
     public function lxcPresetTab(Request $request, $uuid, $tab): View|RedirectResponse
     {
 
-        $lxcPreset = PuqPmLxcPreset::findOrFail($uuid);
+        $lxc_reset = PuqPmLxcPreset::findOrFail($uuid);
 
         $validTabs = [
             'general',
             'cluster_groups',
             'os_templates',
+            'env_variables'
         ];
 
         if (!in_array($tab, $validTabs)) {
             return redirect()->route(
                 'admin.web.Product.puqProxmox.lxc_preset.tab',
-                ['uuid' => $lxcPreset->uuid, 'tab' => 'general']
+                ['uuid' => $lxc_reset->uuid, 'tab' => 'general']
             );
         }
 
-        $title = $lxcPreset->name;
+        $title = $lxc_reset->name;
 
         return view_admin_module(
             'Product',
             'puqProxmox',
             'admin_area.lxc_presets.lxc_preset_'.$tab,
-            compact('title', 'uuid', 'tab', 'lxcPreset')
+            compact('title', 'uuid', 'tab', 'lxc_reset')
         );
     }
 
@@ -324,6 +325,71 @@ class puqPmLxcPresetController extends Controller
             'data' => $model,
         ]);
     }
+
+    public function putLxcPresetEnvVariables(Request $request, $uuid): JsonResponse
+    {
+        $model = PuqPmLxcPreset::find($uuid);
+
+        if (empty($model)) {
+            return response()->json([
+                'errors' => [__('Product.puqProxmox.Not found')],
+            ], 404);
+        }
+
+        $toBool = fn(?string $val) => $val === 'yes';
+
+        $model->puq_pm_cluster_group_env_variables = $toBool($request->input('puq_pm_cluster_group_env_variables'));
+        $model->puq_pm_cluster_env_variables = $toBool($request->input('puq_pm_cluster_env_variables'));
+
+        $envVariables = $request->input('env_variables');
+        $decodedEnv = [];
+
+        if (!empty($envVariables)) {
+            $decodedEnv = json_decode($envVariables, true);
+
+            if (json_last_error() !== JSON_ERROR_NONE || !is_array($decodedEnv)) {
+                return response()->json([
+                    'message' => ['env_variables' => [__('Product.puqProxmox.Environment Variables must be valid JSON array')]],
+                ], 422);
+            }
+
+            $keys = [];
+            foreach ($decodedEnv as $index => $item) {
+                $key = $item['key'] ?? null;
+                if (empty($key)) {
+                    return response()->json([
+                        'message' => [
+                            'env_variables' => [
+                                __('Product.puqProxmox.Environment Variable key is required at index :index',
+                                    ['index' => $index]),
+                            ],
+                        ],
+                    ], 422);
+                }
+                if (in_array($key, $keys)) {
+                    return response()->json([
+                        'message' => [
+                            'env_variables' => [
+                                __('Product.puqProxmox.Duplicate Environment Variable key ":key"', ['key' => $key]),
+                            ],
+                        ],
+                    ], 422);
+                }
+                $keys[] = $key;
+            }
+        }
+        $model->env_variables = $decodedEnv;
+
+        $model->save();
+        $model->refresh();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => __('Product.puqProxmox.Updated successfully'),
+            'data' => $model,
+        ]);
+    }
+
 
     public function deleteLxcPreset(Request $request, $uuid): JsonResponse
     {

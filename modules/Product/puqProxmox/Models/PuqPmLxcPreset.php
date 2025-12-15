@@ -75,11 +75,15 @@ class PuqPmLxcPreset extends Model
         'firewall_log_level_in', 'firewall_log_level_out', 'firewall_policy_in', 'firewall_policy_out',
 
         'ha_managed', 'unprivileged', 'nesting', 'fuse', 'keyctl', 'mknod', 'mount_nfs', 'mount_cifs',
-        'env',
+
+        'puq_pm_cluster_group_env_variables',
+        'puq_pm_cluster_env_variables',
+
+        'env_variables',
     ];
 
     protected $casts = [
-        'env' => 'array',
+        'env_variables' => 'array',
     ];
 
     protected static function boot(): void
@@ -116,13 +120,23 @@ class PuqPmLxcPreset extends Model
 
     // --------------------------------------------------------------------------------
 
+    public function getEnvironmentMacros(): array
+    {
+        $macros = getSystemMacros();
+//        $macros[] = ['name' => 'MAIN_DOMAIN', 'description' => 'Main Domain of APP'];
+//        $macros[] = ['name' => 'LXC_MOUNT_POINT', 'description' => 'Path to the mount point in the LXC container'];
+//        $macros[] = ['name' => 'LXC_IP', 'description' => 'Main IP address of LXC container'];
+
+        return $macros;
+    }
+
     private function getTagsByLocation(string $location): ?array
     {
         $puq_pm_cluster_group = PuqPmClusterGroup::getByLocation($location);
         $puq_pm_lxc_preset_cluster_group = $this->puqPmLxcPresetClusterGroups()->where('puq_pm_cluster_group_uuid',
             $puq_pm_cluster_group->uuid)->first();
 
-        if (! $puq_pm_lxc_preset_cluster_group) {
+        if (!$puq_pm_lxc_preset_cluster_group) {
             return null;
         }
 
@@ -194,7 +208,7 @@ class PuqPmLxcPreset extends Model
         $i = 1;
 
         while (true) {
-            $candidate = $base . $i;
+            $candidate = $base.$i;
 
             if (!PuqPmLxcInstance::where('hostname', $candidate)->exists()) {
                 return $candidate;
@@ -212,7 +226,7 @@ class PuqPmLxcPreset extends Model
         $client = $service->client;
 
         $puq_pm_cluster_group = PuqPmClusterGroup::getByLocation($location);
-        if (! $puq_pm_cluster_group) {
+        if (!$puq_pm_cluster_group) {
             return [
                 'status' => 'error',
                 'errors' => ['No available cluster group for the location: '.$location],
@@ -221,7 +235,7 @@ class PuqPmLxcPreset extends Model
 
         $puq_pm_lxc_os_template = $this->puqPmLxcOsTemplates()->where('uuid',
             $product_options['os_template_uuid'])->first();
-        if (! $puq_pm_lxc_os_template) {
+        if (!$puq_pm_lxc_os_template) {
             return [
                 'status' => 'error',
                 'errors' => ['OS template is not available'],
@@ -344,7 +358,7 @@ class PuqPmLxcPreset extends Model
                 $mac_ipv4 = $macPoolIPv4->getMac($excludeMacs);
                 $excludeMacs[] = $mac_ipv4;
 
-                if (! $mac_ipv4) {
+                if (!$mac_ipv4) {
                     DB::rollBack();
 
                     return [
@@ -352,7 +366,7 @@ class PuqPmLxcPreset extends Model
                         'errors' => ["No free MAC in MAC pool '{$macPoolIPv4->name}' for IPv4"],
                     ];
                 }
-                if (! $ip_ipv4) {
+                if (!$ip_ipv4) {
                     DB::rollBack();
 
                     return [
@@ -368,7 +382,7 @@ class PuqPmLxcPreset extends Model
                 $macPoolIPv6 = $ipv6_public_network->puqPmMacPool;
                 $ipPoolIPv6 = $ipv6_public_network->puqPmIpPool;
 
-                if (! $product_options['ipv4_public_network']) {
+                if (!$product_options['ipv4_public_network']) {
                     $needSeparateIPv6 = true;
                 } else {
                     if (
@@ -388,7 +402,7 @@ class PuqPmLxcPreset extends Model
                         $ip_ipv6 = 'dhcp';
                     }
 
-                    if (! $mac_ipv6) {
+                    if (!$mac_ipv6) {
                         DB::rollBack();
 
                         return [
@@ -396,7 +410,7 @@ class PuqPmLxcPreset extends Model
                             'errors' => ["No free MAC in MAC pool '{$macPoolIPv6->name}' for IPv6"],
                         ];
                     }
-                    if (! $ip_ipv6) {
+                    if (!$ip_ipv6) {
                         DB::rollBack();
 
                         return [
@@ -410,7 +424,7 @@ class PuqPmLxcPreset extends Model
                     } else {
                         $ip_ipv6 = 'dhcp';
                     }
-                    if (! $ip_ipv6) {
+                    if (!$ip_ipv6) {
                         DB::rollBack();
 
                         return [
@@ -448,6 +462,8 @@ class PuqPmLxcPreset extends Model
             $puqPmLxcInstance->mp_puq_pm_storage_uuid = $mp_puq_pm_storage->uuid ?? null;
             $puqPmLxcInstance->backup_puq_pm_storage_uuid = $backup_puq_pm_storage->uuid ?? null;
 
+            $puqPmLxcInstance->env_variables = $this->getEnvironmentVariables($puq_pm_cluster);
+
             $puqPmLxcInstance->save();
 
             if ($product_options['ipv4_public_network']) {
@@ -461,7 +477,7 @@ class PuqPmLxcPreset extends Model
                 $puq_pm_lxc_instance_net->ipv4 = $ip_ipv4 == 'dhcp' ? null : $ip_ipv4;
                 $puq_pm_lxc_instance_net->rdns_v4 = $puqPmLxcInstance->hostname.'.'.$puq_pm_dns_zone->name;
 
-                if ($product_options['ipv6_public_network'] && ! $needSeparateIPv6) {
+                if ($product_options['ipv6_public_network'] && !$needSeparateIPv6) {
                     $puq_pm_lxc_instance_net->puq_pm_ipv6_pool_uuid = $ipPoolIPv6->uuid ?? null;
                     $puq_pm_lxc_instance_net->ipv6 = $ip_ipv6 == 'dhcp' ? null : $ip_ipv6;
                     $puq_pm_lxc_instance_net->rdns_v6 = $puqPmLxcInstance->hostname.'.'.$puq_pm_dns_zone->name;
@@ -483,7 +499,7 @@ class PuqPmLxcPreset extends Model
                 }
             }
 
-            if (! $product_options['ipv4_public_network'] && $product_options['ipv6_public_network']) {
+            if (!$product_options['ipv4_public_network'] && $product_options['ipv6_public_network']) {
                 $puq_pm_lxc_instance_net = new PuqPmLxcInstanceNet;
                 $puq_pm_lxc_instance_net->name = $this->pn_name.'v6';
                 $puq_pm_lxc_instance_net->puq_pm_lxc_instance_uuid = $puqPmLxcInstance->uuid;
@@ -506,9 +522,9 @@ class PuqPmLxcPreset extends Model
                     ->where('client_uuid', $client->uuid)
                     ->where('puq_pm_cluster_group_uuid', $puq_pm_cluster_group->uuid)
                     ->first();
-                if (! $puq_pm_client_private_network) {
+                if (!$puq_pm_client_private_network) {
                     $bridge_vlan_tag = $local_private_network->getLocalBridgeVlanTag($puq_pm_cluster_group->uuid);
-                    if (! $bridge_vlan_tag) {
+                    if (!$bridge_vlan_tag) {
                         DB::rollBack();
 
                         return [
@@ -523,7 +539,7 @@ class PuqPmLxcPreset extends Model
                 }
                 $ipv4_cidr = $puq_pm_client_private_network->getIPv4();
 
-                if (! $ipv4_cidr) {
+                if (!$ipv4_cidr) {
                     DB::rollBack();
 
                     return [
@@ -554,10 +570,10 @@ class PuqPmLxcPreset extends Model
                     ->where('client_uuid', $client->uuid)
                     ->first();
 
-                if (! $puq_pm_client_private_network) {
+                if (!$puq_pm_client_private_network) {
                     $bridge_vlan_tag = $global_private_network->getGlobalBridgeVlanTag();
 
-                    if (! $bridge_vlan_tag) {
+                    if (!$bridge_vlan_tag) {
                         DB::rollBack();
 
                         return [
@@ -573,7 +589,7 @@ class PuqPmLxcPreset extends Model
 
                 $ipv4_cidr = $puq_pm_client_private_network->getIPv4();
 
-                if (! $ipv4_cidr) {
+                if (!$ipv4_cidr) {
                     DB::rollBack();
 
                     return [
@@ -642,7 +658,7 @@ class PuqPmLxcPreset extends Model
         }
 
         foreach ($product_option_values as $value) {
-            if (! in_array($value, $used_values)) {
+            if (!in_array($value, $used_values)) {
                 $data[] = [
                     'cluster_group' => null,
                     'value' => $value,
@@ -678,7 +694,7 @@ class PuqPmLxcPreset extends Model
         }
 
         foreach ($product_option_values as $value) {
-            if (! in_array($value, $used_values)) {
+            if (!in_array($value, $used_values)) {
                 $data[] = [
                     'cluster_group' => null,
                     'value' => $value,
@@ -717,4 +733,61 @@ class PuqPmLxcPreset extends Model
 
         return $attributes;
     }
+
+    public function getEnvironmentVariables(PuqPmCluster $puq_pm_cluster): array
+    {
+        $env_variables = [];
+        $puq_pm_cluster_group = $puq_pm_cluster->puqPmClusterGroup;
+        $cluster_group_env_variables = $puq_pm_cluster_group->env_variables;
+
+        $cluster_env_variables = $puq_pm_cluster->env_variables;
+
+        $lxc_presets_env_variables = $this->env_variables;
+
+        if ($this->puq_pm_cluster_group_env_variables) {
+            foreach ($cluster_group_env_variables as $cluster_group_env_variable) {
+                $env_variables[$cluster_group_env_variable['key']] = $cluster_group_env_variable;
+            }
+        }
+
+        if ($this->puq_pm_cluster_env_variables) {
+            foreach ($cluster_env_variables as $cluster_env_variable) {
+                $env_variables[$cluster_env_variable['key']] = $cluster_env_variable;
+            }
+        }
+
+        foreach ($lxc_presets_env_variables as $lxc_presets_env_variable) {
+            $env_variables[$lxc_presets_env_variable['key']] = $lxc_presets_env_variable;
+        }
+
+        return $this->macroReplaceEnvVariables(array_values($env_variables));
+    }
+
+
+    public function macroReplace(string $pattern): string
+    {
+        $pattern = macroReplace($pattern);
+
+        $replacements = [
+            '{LXC_MOUNT_POINT}' => $this->mp,
+        ];
+
+        $result = str_replace(array_keys($replacements), array_values($replacements), $pattern);
+
+        return $result;
+    }
+
+    public function macroReplaceEnvVariables(array $env_variables): array
+    {
+        $new_env_variables = [];
+        foreach ($env_variables as $item) {
+            $new_env_variables[] = [
+                'key' => $item['key'],
+                'value' => $this->macroReplace($item['value']),
+            ];
+        }
+
+        return $new_env_variables;
+    }
+
 }

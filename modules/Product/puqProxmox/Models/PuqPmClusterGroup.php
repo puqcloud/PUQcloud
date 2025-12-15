@@ -42,6 +42,11 @@ class PuqPmClusterGroup extends Model
         'region_uuid',
         'data_center',
         'local_private_network',
+        'env_variables',
+    ];
+
+    protected $casts = [
+        'env_variables' => 'array',
     ];
 
     protected static function boot(): void
@@ -70,6 +75,17 @@ class PuqPmClusterGroup extends Model
     public function puqPmLxcPresetClusterGroups(): HasMany
     {
         return $this->hasMany(PuqPmLxcPresetClusterGroup::class, 'puq_pm_cluster_group_uuid', 'uuid');
+    }
+
+
+    public function getEnvironmentMacros(): array
+    {
+        $macros = getSystemMacros();
+//        $macros[] = ['name' => 'MAIN_DOMAIN', 'description' => 'Main Domain of APP'];
+//        $macros[] = ['name' => 'LXC_MOUNT_POINT', 'description' => 'Path to the mount point in the LXC container'];
+//        $macros[] = ['name' => 'LXC_IP', 'description' => 'Main IP address of LXC container'];
+
+        return $macros;
     }
 
     public function getLocation(): string

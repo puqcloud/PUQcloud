@@ -765,4 +765,12 @@ return [
     'LXC deployment is pending' => 'LXC deployment is pending',
     'LXC deployment is running' => 'LXC deployment is running',
     'LXC deployed successfully' => 'LXC deployed successfully',
+
+    'Include Cluster Group Environment Variables' => 'Include Cluster Group Environment Variables',
+    'Include Cluster Environment Variables' => 'Include Cluster Environment Variables',
+    'Apply environment variables from the cluster group level' => 'Apply environment variables from the cluster group level',
+    'Apply environment variables from the cluster level' => 'Apply environment variables from the cluster level',
+    'LXC Instances' => 'LXC Instances',
+    'APP Instances' => 'APP Instances',
+    '' => '',
 ];

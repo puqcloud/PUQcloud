@@ -3,7 +3,7 @@
 return [
     'name' => 'PUQ Proxmox',
     'description' => 'This is Proxmox Product Module',
-    'version' => '1.0.1',
+    'version' => '1.0.2',
     'author' => 'Ruslan Polovyi',
     'email' => 'info@puqcloud.com',
     'website' => 'https://puqcloud.com/',

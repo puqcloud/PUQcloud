@@ -153,7 +153,6 @@ class puqPmClusterGroupController extends Controller
         ]);
     }
 
-
     public function clusterGroupTab(Request $request, $uuid, $tab): View|RedirectResponse
     {
 
@@ -249,6 +248,45 @@ class puqPmClusterGroupController extends Controller
         $model->region_uuid = $request->input('region_uuid');
         $model->fill_type = $request->input('fill_type');
         $model->local_private_network = $request->input('local_private_network');
+
+        $envVariables = $request->input('env_variables');
+        $decodedEnv = [];
+
+        if (!empty($envVariables)) {
+            $decodedEnv = json_decode($envVariables, true);
+
+            if (json_last_error() !== JSON_ERROR_NONE || !is_array($decodedEnv)) {
+                return response()->json([
+                    'message' => ['env_variables' => [__('Product.puqProxmox.Environment Variables must be valid JSON array')]],
+                ], 422);
+            }
+
+            $keys = [];
+            foreach ($decodedEnv as $index => $item) {
+                $key = $item['key'] ?? null;
+                if (empty($key)) {
+                    return response()->json([
+                        'message' => [
+                            'env_variables' => [
+                                __('Product.puqProxmox.Environment Variable key is required at index :index',
+                                    ['index' => $index]),
+                            ],
+                        ],
+                    ], 422);
+                }
+                if (in_array($key, $keys)) {
+                    return response()->json([
+                        'message' => [
+                            'env_variables' => [
+                                __('Product.puqProxmox.Duplicate Environment Variable key ":key"', ['key' => $key]),
+                            ],
+                        ],
+                    ], 422);
+                }
+                $keys[] = $key;
+            }
+        }
+        $model->env_variables = $decodedEnv;
 
         $model->save();
         $model->refresh();

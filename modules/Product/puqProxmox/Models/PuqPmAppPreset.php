@@ -52,7 +52,7 @@ class PuqPmAppPreset extends Model
         'env_variables' => 'array',
     ];
 
-    public function getEnvironmentVariables(): array
+    public function getEnvironmentMacros(): array
     {
         $macros = getSystemMacros();
         $macros[] = ['name' => 'MAIN_DOMAIN', 'description' => 'Main Domain of APP'];

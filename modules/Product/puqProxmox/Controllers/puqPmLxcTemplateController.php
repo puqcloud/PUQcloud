@@ -306,7 +306,4 @@ class puqPmLxcTemplateController extends Controller
         ]);
     }
 
-
-
-
 }

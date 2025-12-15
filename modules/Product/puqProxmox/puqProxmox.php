@@ -68,6 +68,8 @@ class puqProxmox extends Product
                     $table->uuid('region_uuid')->nullable();
                     $table->string('data_center')->nullable();
                     $table->string('local_private_network')->default('172.16.0.0/24'); // will bee default for client's local private network in this location
+                    $table->json('env_variables')->nullable();
+
                     $table->timestamps();
                 });
 
@@ -102,6 +104,7 @@ class puqProxmox extends Product
 
                     $table->string('vncwebproxy_domain')->nullable();
                     $table->string('vncwebproxy_api_key')->nullable();
+                    $table->json('env_variables')->nullable();
 
                     $table->timestamps();
                 });
@@ -413,7 +416,7 @@ class puqProxmox extends Product
                     $table->boolean('firewall_ndp')->default(false);
                     $table->boolean('firewall_radv')->default(false);
 
-                    $table->boolean('ha-managed ')->default(false);
+                    $table->boolean('ha_managed')->default(false);
                     $table->boolean('unprivileged')->default(true);
                     $table->boolean('nesting')->default(true);
                     $table->boolean('fuse')->default(false);
@@ -422,7 +425,10 @@ class puqProxmox extends Product
                     $table->boolean('mount_nfs')->default(false);
                     $table->boolean('mount_cifs')->default(false);
 
-                    $table->longText('env')->nullable(); // json
+                    $table->boolean('puq_pm_cluster_group_env_variables')->default(false);
+                    $table->boolean('puq_pm_cluster_env_variables')->default(false);
+
+                    $table->json('env_variables')->nullable();
 
                     $table->timestamps();
                 });
@@ -568,7 +574,7 @@ class puqProxmox extends Product
                     $table->string('firewall_policy_out')->nullable()->default('ACCEPT');
                     $table->longText('firewall_rules')->nullable(); // json
 
-                    $table->longText('env')->nullable(); // json
+                    $table->json('env_variables')->nullable();
 
                     $table->timestamps();
                 });
@@ -855,6 +861,39 @@ class puqProxmox extends Product
                 if (Schema::hasColumn('puq_pm_app_instances', 'deploy_error')) {
                     $table->longText('deploy_error')->nullable()->change();
                 }
+            });
+
+            $tables = [
+                'puq_pm_cluster_groups',
+                'puq_pm_clusters',
+                'puq_pm_lxc_presets',
+                'puq_pm_lxc_instances',
+            ];
+
+            foreach ($tables as $tableName) {
+                Schema::table($tableName, function (Blueprint $table) use ($tableName) {
+
+                    if (Schema::hasColumn($tableName, 'env')) {
+                        $table->dropColumn('env');
+                    }
+
+                    if (!Schema::hasColumn($tableName, 'env_variables')) {
+                        $table->json('env_variables')->nullable();
+                    }
+
+                });
+            }
+
+            Schema::table('puq_pm_lxc_presets', function (Blueprint $table) {
+
+                if (!Schema::hasColumn('puq_pm_lxc_presets', 'puq_pm_cluster_group_env_variables')) {
+                    $table->boolean('puq_pm_cluster_group_env_variables')->default(false);
+                }
+
+                if (!Schema::hasColumn('puq_pm_lxc_presets', 'puq_pm_cluster_env_variables')) {
+                    $table->boolean('puq_pm_cluster_env_variables')->default(false);
+                }
+
             });
 
             $this->logInfo('activate', 'Success');
@@ -1589,8 +1628,10 @@ class puqProxmox extends Product
             // ---------------------------------------------------------
             $cluster_sync = $runStep('Cluster Sync', function () use ($lxc_instance) {
                 $puq_pm_cluster = $lxc_instance->puqPmCluster;
+                $lxc_instance->fresh();
                 $lxc_instance->refresh();
                 $puq_pm_cluster->getClusterResources(true);
+                $lxc_instance->start();
 
                 return ['status' => 'success'];
             }, 40);
@@ -1841,6 +1882,7 @@ class puqProxmox extends Product
                 $app_instance->refresh();
                 $app_instance->fresh();
                 $puq_pm_cluster->getClusterResources(true);
+                $lxc_instance->start();
 
                 return ['status' => 'success'];
             }, 40);
@@ -2655,6 +2697,20 @@ class puqProxmox extends Product
                 'permission' => 'configuration',
             ],
 
+            [
+                'title' => 'LXC Instances',
+                'link' => 'lxc_instances',
+                'active_links' => ['lxc_instances'],
+                'permission' => 'configuration',
+            ],
+
+//            [
+//                'title' => 'APP Instances',
+//                'link' => 'app_instances',
+//                'active_links' => ['app_instances'],
+//                'permission' => 'configuration',
+//            ],
+
         ];
     }
 
@@ -2850,6 +2906,22 @@ class puqProxmox extends Product
                 'controller' => 'puqPmController@settings',
             ],
 
+            // Other
+            [
+                'method' => 'get',
+                'uri' => 'lxc_instances',
+                'permission' => 'configuration',
+                'name' => 'lxc_instances',
+                'controller' => 'puqPmController@lxcInstances',
+            ],
+//            [
+//                'method' => 'get',
+//                'uri' => 'app_instances',
+//                'permission' => 'configuration',
+//                'name' => 'app_instances',
+//                'controller' => 'puqPmController@appInstances',
+//            ],
+
         ];
     }
 
@@ -2927,6 +2999,13 @@ class puqProxmox extends Product
                 'permission' => 'configuration',
                 'name' => 'cluster.put',
                 'controller' => 'puqPmClusterController@putCluster',
+            ],
+            [
+                'method' => 'put',
+                'uri' => 'cluster/{uuid}/env_variables',
+                'permission' => 'configuration',
+                'name' => 'cluster.env_variables.put',
+                'controller' => 'puqPmClusterController@putClusterEnvVariables',
             ],
             [
                 'method' => 'get',
@@ -3294,6 +3373,13 @@ class puqProxmox extends Product
                 'controller' => 'puqPmLxcPresetController@putLxcPreset',
             ],
             [
+                'method' => 'put',
+                'uri' => 'lxc_preset/{uuid}/env_variables',
+                'permission' => 'configuration',
+                'name' => 'lxc_preset.env_variables.put',
+                'controller' => 'puqPmLxcPresetController@putLxcPresetEnvVariables',
+            ],
+            [
                 'method' => 'delete',
                 'uri' => 'lxc_preset/{uuid}',
                 'permission' => 'configuration',
@@ -3358,7 +3444,6 @@ class puqProxmox extends Product
                 'name' => 'puq_pm_lxc_instance.reboot.put',
                 'controller' => 'puqPmLxcInstanceController@putReboot',
             ],
-
 
             // LXC Preset Cluster Groups
             [
@@ -3981,6 +4066,17 @@ class puqProxmox extends Product
                 'name' => 'certificate_authorities.select.get',
                 'controller' => 'puqPmController@getCertificateAuthoritiesSelect',
             ],
+
+            // Other
+            [
+                'method' => 'get',
+                'uri' => 'lxc_instances',
+                'permission' => 'configuration',
+                'name' => 'lxc_instances.get',
+                'controller' => 'puqPmController@getLxcInstances',
+            ],
+
+
         ];
     }
 
@@ -4023,7 +4119,7 @@ class puqProxmox extends Product
                 'queue' => ['LxcCreate'],
                 'balance' => 'auto',
                 'autoScalingStrategy' => 'time',
-                'maxProcesses' => 10,
+                'maxProcesses' => 4,
                 'maxTime' => 0,
                 'maxJobs' => 0,
                 'memory' => 128,
@@ -4036,7 +4132,7 @@ class puqProxmox extends Product
                 'queue' => ['AppCreate'],
                 'balance' => 'auto',
                 'autoScalingStrategy' => 'time',
-                'maxProcesses' => 10,
+                'maxProcesses' => 4,
                 'maxTime' => 0,
                 'maxJobs' => 0,
                 'memory' => 128,
@@ -4062,7 +4158,7 @@ class puqProxmox extends Product
                 'queue' => ['Cluster'],
                 'balance' => 'auto',
                 'autoScalingStrategy' => 'time',
-                'maxProcesses' => 10,
+                'maxProcesses' => 4,
                 'maxTime' => 0,
                 'maxJobs' => 0,
                 'memory' => 128,
@@ -4088,7 +4184,7 @@ class puqProxmox extends Product
                 'queue' => ['AppSync'],
                 'balance' => 'auto',
                 'autoScalingStrategy' => 'time',
-                'maxProcesses' => 10,
+                'maxProcesses' => 4,
                 'maxTime' => 0,
                 'maxJobs' => 0,
                 'memory' => 128,
@@ -4208,9 +4304,8 @@ class puqProxmox extends Product
         $service_lxc = $this->getLxcInstances(true);
         if ($service_lxc['status'] == 'error') {
             return response()->json([
-                'status' => 'error',
-                'errors' => $service_lxc['errors'],
-            ], $service_lxc['code'] ?? 500);
+                'status' => 'success',
+            ], 200);
         }
 
         $service = $service_lxc['data']['service'];
@@ -6411,7 +6506,6 @@ class puqProxmox extends Product
 
 
     // Helping
-
     private function getLxcInstances(bool $deploy = false): array
     {
 

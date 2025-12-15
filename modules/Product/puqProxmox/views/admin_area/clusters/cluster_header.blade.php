@@ -45,6 +45,7 @@
                 'storages' => __('Product.puqProxmox.Storages'),
                 'public_networks' => __('Product.puqProxmox.Public Networks'),
                 'private_networks' => __('Product.puqProxmox.Private Networks'),
+                'env_variables' => __('Product.puqProxmox.Environment Variables'),
             ];
         @endphp
 

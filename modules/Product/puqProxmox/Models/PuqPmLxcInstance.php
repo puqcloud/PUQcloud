@@ -64,14 +64,14 @@ class PuqPmLxcInstance extends Model
         'firewall_policy_in',
         'firewall_policy_out',
 
-        'env',
+        'env_variables',
     ];
 
     protected $casts = [
         'status' => 'array',
         'backup_schedule' => 'array',
         'firewall_rules' => 'array',
-        'env' => 'array',
+        'env_variables' => 'array',
     ];
 
     protected $guarded = ['status'];
@@ -319,6 +319,12 @@ class PuqPmLxcInstance extends Model
             'unprivileged' => $puq_pm_lxc_preset->unprivileged,
         ];
 
+        if (!empty($this->env_variables)) {
+            $data['env'] = collect($this->env_variables)
+                ->map(fn($item) => "{$item['key']}={$item['value']}")
+                ->implode("\0");
+        }
+
         $features = $this->buildFeatures();
 
         if (!empty($features)) {
@@ -371,9 +377,6 @@ class PuqPmLxcInstance extends Model
                 ->where('uuid',
                     $service_data['puq_pm_ssh_public_key_uuid'] ?? '')->first();
         }
-//        if (!$ssh_public_key) {
-//            $ssh_public_key = PuqPmSshPublicKey::query()->where('client_uuid', $service->client_uuid)->first();
-//        }
 
         $puq_pm_lxc_os_template = $puq_pm_lxc_preset->puqPmLxcOsTemplates()->where('uuid',
             $this->puq_pm_lxc_os_template_uuid)->first();
@@ -402,7 +405,6 @@ class PuqPmLxcInstance extends Model
         $description .= 'lxc_instance_uuid: '.$this->uuid.PHP_EOL.PHP_EOL;
         $description .= $note;
 
-
         $data['description'] = $description;
 
         $data['ostemplate'] = "{$os_template_storage->name}:vztmpl/".$this->addExtensionIfMissing($puq_pm_lxc_template->name);
@@ -412,7 +414,6 @@ class PuqPmLxcInstance extends Model
         if (!empty($ssh_public_key)) {
             $data['ssh-public-keys'] = $ssh_public_key->public_key;
         }
-
 
         $features = null;
         $start = null;
@@ -1064,11 +1065,11 @@ class PuqPmLxcInstance extends Model
         $start = $puq_pm_cluster->startLxc($status['node'], $status['vmid']);
 
         if ($start['status'] === 'success') {
-            $maxTries = 30;
+            $maxTries = 600;
             $tries = 0;
 
             do {
-                sleep(1);
+                sleep(5);
                 $puq_pm_cluster->getClusterResources(true);
                 $status = $this->getStatus() ?? [];
                 $tries++;
@@ -1099,7 +1100,7 @@ class PuqPmLxcInstance extends Model
         $stop = $puq_pm_cluster->stopLxc($status['node'], $status['vmid']);
 
         if ($stop['status'] === 'success') {
-            $maxTries = 30;
+            $maxTries = 60;
             $tries = 0;
 
             do {
@@ -1123,6 +1124,7 @@ class PuqPmLxcInstance extends Model
     public function reboot(): array
     {
         $this->stop();
+
         return $this->start();
     }
 

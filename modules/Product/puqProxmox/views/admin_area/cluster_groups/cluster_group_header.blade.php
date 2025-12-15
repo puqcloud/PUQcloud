@@ -41,7 +41,7 @@
         @php
             $tabs = [
                 'general' => __('Product.puqProxmox.General'),
-                'actions' => __('Product.puqProxmox.Actions'),
+//                'actions' => __('Product.puqProxmox.Actions'),
             ];
         @endphp
 

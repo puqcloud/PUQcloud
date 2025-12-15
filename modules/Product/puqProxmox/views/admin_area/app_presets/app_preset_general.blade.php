@@ -159,7 +159,7 @@
                                 class="fas fa-list me-1"></i>{{ __('Product.puqProxmox.Available Variables') }}
                         </div>
                         <div class="d-flex flex-column gap-2 small">
-                            @foreach($app_preset->getEnvironmentVariables() as $var)
+                            @foreach($app_preset->getEnvironmentMacros() as $var)
                                 <div class="d-flex justify-content-between align-items-start">
                                     <a href="#" class="insert-variable text-decoration-none"
                                        data-value="{{ '{' . $var['name'] . '}' }}">

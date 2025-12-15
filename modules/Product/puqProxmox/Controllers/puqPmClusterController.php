@@ -90,6 +90,7 @@ class puqPmClusterController extends Controller
             'storages',
             'public_networks',
             'private_networks',
+            'env_variables'
         ];
 
         if (!in_array($tab, $validTabs)) {
@@ -217,6 +218,65 @@ class puqPmClusterController extends Controller
         if ($request->input('disable') == 'yes') {
             $model->disable = true;
         }
+
+        $model->save();
+        $model->refresh();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => __('Product.puqProxmox.Updated successfully'),
+            'data' => $model,
+        ]);
+    }
+
+    public function putClusterEnvVariables(Request $request, $uuid): JsonResponse
+    {
+        $model = PuqPmCluster::find($uuid);
+
+        if (empty($model)) {
+            return response()->json([
+                'errors' => [__('Product.puqProxmox.Not found')],
+            ], 404);
+        }
+
+        $envVariables = $request->input('env_variables');
+        $decodedEnv = [];
+
+        if (!empty($envVariables)) {
+            $decodedEnv = json_decode($envVariables, true);
+
+            if (json_last_error() !== JSON_ERROR_NONE || !is_array($decodedEnv)) {
+                return response()->json([
+                    'message' => ['env_variables' => [__('Product.puqProxmox.Environment Variables must be valid JSON array')]],
+                ], 422);
+            }
+
+            $keys = [];
+            foreach ($decodedEnv as $index => $item) {
+                $key = $item['key'] ?? null;
+                if (empty($key)) {
+                    return response()->json([
+                        'message' => [
+                            'env_variables' => [
+                                __('Product.puqProxmox.Environment Variable key is required at index :index',
+                                    ['index' => $index]),
+                            ],
+                        ],
+                    ], 422);
+                }
+                if (in_array($key, $keys)) {
+                    return response()->json([
+                        'message' => [
+                            'env_variables' => [
+                                __('Product.puqProxmox.Duplicate Environment Variable key ":key"', ['key' => $key]),
+                            ],
+                        ],
+                    ], 422);
+                }
+                $keys[] = $key;
+            }
+        }
+        $model->env_variables = $decodedEnv;
 
         $model->save();
         $model->refresh();
