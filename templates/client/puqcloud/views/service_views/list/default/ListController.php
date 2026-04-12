@@ -33,6 +33,9 @@ class ListController
             'suspended_reason',
             'create_error',
             'termination_request',
+            'billing_mode',
+            'billing_timestamp',
+            'hourly_billing',
         ];
 
         $query = Service::clientServicesByGroup($client, $product_group->uuid)->whereIn('status', ['pending', 'active', 'suspended']);
@@ -61,19 +64,28 @@ class ListController
                 return $product->images['icon'] ?? '';
             })
             ->addColumn('price', function ($service) {
+                // Same format puqVPNCP list uses — a pre-formatted string like
+                // "$ 12.50 USD / Monthly". Frontend renders billing_mode / hourly_billing
+                // as separate badges below the price.
                 $price = $service->price;
                 $currency = $price->currency;
                 $price_total = $service->getPriceTotal();
 
-                return [
-                    'code' => $currency->code ?? '',
-                    'prefix' => $currency->prefix ?? '',
-                    'suffix' => $currency->suffix ?? '',
-                    'amount' => $price_total['base'],
-                    'amount_str' => formatCurrency($price_total['base'], $currency, $currency->code),
-                    'period' => $price->period,
-                    'hourly_billing' => $service->product->hourly_billing,
-                ];
+                return $currency->prefix.' '.number_format($price_total['base'], 2).' '.$currency->suffix
+                    .' / '.__('main.'.$price->period);
+            })
+            ->addColumn('billing_mode', function ($service) {
+                return $service->billing_mode;
+            })
+            ->addColumn('billing_timestamp', function ($service) {
+                // Formatted (Y-m-d H:i:s) billing timestamp — used by the frontend as
+                // the "Paid until" value for invoice-mode services.
+                return $service->billing_timestamp
+                    ? \Carbon\Carbon::parse($service->billing_timestamp)->format('Y-m-d H:i:s')
+                    : null;
+            })
+            ->addColumn('hourly_billing', function ($service) {
+                return (bool) ($service->product->hourly_billing ?? false);
             })
             ->addColumn('termination_time', function ($service) {
                 return $service->getTerminationTime();

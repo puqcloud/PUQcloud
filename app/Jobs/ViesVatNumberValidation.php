@@ -37,11 +37,11 @@ class ViesVatNumberValidation implements ShouldQueue
 
     public $maxExceptions = 2;
 
-    public $client_uuid = '';
+    public string $client_uuid = '';
 
-    public $tags = [];
+    public array $tags = [];
 
-    public function __construct($data, $tags)
+    public function __construct(array $data, array $tags)
     {
         $this->client_uuid = $data['client_uuid'];
         $this->tags = $tags;

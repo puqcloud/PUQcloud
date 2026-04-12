@@ -1,0 +1,7 @@
+{
+    "name": "Admin Service Invoice Created",
+    "category": "staffOperational",
+    "custom": false,
+    "subject": "New Service Billing Invoice",
+    "text_mini": "Service billing invoice #{{ $invoice->number }} created for client {{ $invoice->client_firstname }} {{ $invoice->client_lastname }}"
+}

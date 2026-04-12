@@ -24,7 +24,7 @@
                              style="border-bottom-right-radius: 5px; border-bottom-left-radius: 5px;">
                             <div class="w-100">
                                 <div class="w-100 mt-3 mb-3">
-                                    <a href="{{route('client.web.panel.login')}}" class="btn-wide btn btn-primary btn-lg btn-warning w-100">
+                                    <a href="{{route('client.web.panel.login')}}" class="btn-wide btn btn-warning btn-lg w-100">
                                         {{ __('main.CONTINUE') }}
                                     </a>
                                 </div>
@@ -37,7 +37,7 @@
                                style="text-shadow: 0 2px 2px rgba(0,0,0,0.9);">
                                 {{ __('main.Do you already have an account?') }}
                             </p>
-                            <a class="btn-lg btn btn-light btn-wide btn-lg btn-link"
+                            <a class="btn btn-light btn-wide btn-lg"
                                href="{{route('client.web.panel.login')}}">
                                 {{ __('main.Login now') }}
                             </a>

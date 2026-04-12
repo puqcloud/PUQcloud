@@ -26,6 +26,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use OpenApi\Attributes as OA;
 
 class PanelController extends Controller
 {
@@ -36,6 +37,34 @@ class PanelController extends Controller
         return view_client('dashboard.dashboard', compact('title'));
     }
 
+    #[OA\Get(
+        path: 'client.api.languages.select.get',
+        description: 'Returns a list of languages for select2 dropdown.',
+        summary: 'Get languages select list',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Panel'],
+        parameters: [
+            new OA\Parameter(
+                name: 'term',
+                description: 'Search query',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'string')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Languages select list returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getLanguagesSelect(Request $request): JsonResponse
     {
         $languages = [];
@@ -62,6 +91,48 @@ class PanelController extends Controller
         ], 200);
     }
 
+    #[OA\Get(
+        path: 'client.api.countries.select.get',
+        description: 'Returns a paginated list of countries for select2 dropdown.',
+        summary: 'Get countries select list',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Panel'],
+        parameters: [
+            new OA\Parameter(
+                name: 'q',
+                description: 'Search query',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'string')
+            ),
+            new OA\Parameter(
+                name: 'page',
+                description: 'Page number',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'integer')
+            ),
+            new OA\Parameter(
+                name: 'empty',
+                description: 'Include empty "No choice" option',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'string')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Countries select list returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getCountriesSelect(Request $request): JsonResponse
     {
         $search = $request->input('q');
@@ -109,6 +180,48 @@ class PanelController extends Controller
         ]);
     }
 
+    #[OA\Get(
+        path: 'client.api.regions.select.get',
+        description: 'Returns a list of regions for select2 dropdown, filtered by country.',
+        summary: 'Get regions select list',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Panel'],
+        parameters: [
+            new OA\Parameter(
+                name: 'q',
+                description: 'Search query',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'string')
+            ),
+            new OA\Parameter(
+                name: 'selected_country_uuid',
+                description: 'UUID of the selected country',
+                in: 'query',
+                required: true,
+                schema: new OA\Schema(type: 'string')
+            ),
+            new OA\Parameter(
+                name: 'empty',
+                description: 'Include empty "No choice" option',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'string')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Regions select list returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getRegionsSelect(Request $request): JsonResponse
     {
         $key = $request->input('selected_country_uuid');
@@ -155,6 +268,36 @@ class PanelController extends Controller
         ], 200);
     }
 
+    #[OA\Get(
+        path: 'client.api.verification.get',
+        description: 'Sends a verification code to the default verified verification method.',
+        summary: 'Get verification code',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Panel'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Verification code sent successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string'),
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+            new OA\Response(
+                response: 404,
+                description: 'Default verification method not found or not verified',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'errors', type: 'array', items: new OA\Items(type: 'string')),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getVerification(Request $request): JsonResponse
     {
         $user = app('user');
@@ -298,6 +441,35 @@ class PanelController extends Controller
         return response()->json($result ?? [], 500);
     }
 
+    #[OA\Get(
+        path: 'client.api.dashboard.services.get',
+        description: 'Returns service counts grouped by status for the client dashboard.',
+        summary: 'Get dashboard services summary',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Panel'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Dashboard services summary returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string'),
+                        new OA\Property(
+                            property: 'data',
+                            properties: [
+                                new OA\Property(property: 'total', type: 'integer'),
+                                new OA\Property(property: 'active', type: 'integer'),
+                                new OA\Property(property: 'suspended', type: 'integer'),
+                                new OA\Property(property: 'termination_request', type: 'integer'),
+                            ],
+                            type: 'object'
+                        ),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function dashboardServicesApi(): JsonResponse
     {
         $client = app('client');
@@ -314,6 +486,26 @@ class PanelController extends Controller
         ]);
     }
 
+    #[OA\Get(
+        path: 'client.api.dashboard.calculate_recurring_payments_breakdown.get',
+        description: 'Returns a breakdown of recurring payments for the client dashboard.',
+        summary: 'Get recurring payments breakdown',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Panel'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Recurring payments breakdown returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string'),
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function dashboardCalculateRecurringPaymentsBreakdownApi(): JsonResponse
     {
         $client = app('client');

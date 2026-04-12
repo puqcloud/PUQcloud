@@ -92,6 +92,9 @@ class Admin extends Model implements Authenticatable, AuthorizableContract
         'language',
         'dashboard',
         'client_summary_dashboard',
+        'ip_address',
+        'start_use',
+        'stop_use',
     ];
 
     protected $casts = [
@@ -111,6 +114,15 @@ class Admin extends Model implements Authenticatable, AuthorizableContract
     public function adminSessionLog(): HasMany
     {
         return $this->hasMany(AdminSessionLog::class, 'admin_uuid', 'uuid');
+    }
+
+    public function adminApiKeys(): HasMany
+    {
+        return $this->hasMany(
+            AdminApiKey::class,
+            'admin_uuid',
+            'uuid'
+        );
     }
 
     public function getLanguageData(): array
@@ -173,7 +185,7 @@ class Admin extends Model implements Authenticatable, AuthorizableContract
                     }
                 }
             } else {
-                $permissionsArray = $group->permissions();
+                $permissionsArray = $group->adminPermissions();
                 if ($this->permissionExistsInArray($permissionsArray, $permissionName)) {
                     return true;
                 }
@@ -192,7 +204,7 @@ class Admin extends Model implements Authenticatable, AuthorizableContract
                     $permissions = array_merge($permissions, array_column($group2->adminPermissions(), 'key'));
                 }
             } else {
-                $permissions = array_merge($permissions, array_column($group->permissions(), 'key'));
+                $permissions = array_merge($permissions, array_column($group->adminPermissions(), 'key'));
             }
         }
         $permissions = array_unique($permissions);
@@ -244,7 +256,7 @@ class Admin extends Model implements Authenticatable, AuthorizableContract
                     }
                 }
             } else {
-                foreach ($group->permissions() as $permission) {
+                foreach ($group->adminPermissions() as $permission) {
                     $permissions[$permission['key']] = $permission;
                 }
             }
@@ -260,12 +272,12 @@ class Admin extends Model implements Authenticatable, AuthorizableContract
 
     public function updateIpAddress($ip): void
     {
-        $latestIp = $this->ips()->orderBy('created_at', 'desc')->first();
-
         $now = Carbon::now();
 
-        if ($latestIp && $latestIp->ip_address === $ip) {
-            $latestIp->update([
+        $existing = $this->ips()->where('ip_address', $ip)->first();
+
+        if ($existing) {
+            $existing->update([
                 'stop_use' => $now,
             ]);
         } else {
@@ -277,7 +289,7 @@ class Admin extends Model implements Authenticatable, AuthorizableContract
         }
     }
 
-    public function getHomeCompany(): HomeCompany
+    public function getHomeCompany(): ?HomeCompany
     {
         $home_company = HomeCompany::query()->where('default', true)->first();
 

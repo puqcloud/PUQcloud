@@ -25,6 +25,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Modules\Product\puqProxmox\Models\PuqPmClusterGroup;
+use OpenApi\Attributes as OA;
 use Yajra\DataTables\DataTables;
 
 class puqPmClusterGroupController extends Controller
@@ -36,6 +37,16 @@ class puqPmClusterGroupController extends Controller
         return view_admin_module('Product', 'puqProxmox', 'admin_area.cluster_groups.cluster_groups', compact('title'));
     }
 
+    #[OA\Get(
+        path: 'admin.api.Product.puqProxmox.cluster_groups.get',
+        description: 'Returns a list of cluster groups.',
+        summary: 'Get cluster groups list',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqProxmox'],
+        responses: [
+            new OA\Response(response: 200, description: 'Cluster groups list returned successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'data', type: 'object')], type: 'object')),
+        ]
+    )]
     public function getClusterGroups(Request $request): JsonResponse
     {
         $query = PuqPmClusterGroup::query();
@@ -82,6 +93,16 @@ class puqPmClusterGroupController extends Controller
         ], 200);
     }
 
+    #[OA\Get(
+        path: 'admin.api.Product.puqProxmox.cluster_groups.select.get',
+        description: 'Returns cluster groups for select dropdown.',
+        summary: 'Get cluster groups select',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqProxmox'],
+        responses: [
+            new OA\Response(response: 200, description: 'Cluster groups select returned successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'data', type: 'object')], type: 'object')),
+        ]
+    )]
     public function getClusterGroupsSelect(Request $request): JsonResponse
     {
         $search = $request->input('q');
@@ -110,6 +131,17 @@ class puqPmClusterGroupController extends Controller
         ], 200);
     }
 
+    #[OA\Post(
+        path: 'admin.api.Product.puqProxmox.cluster_group.post',
+        description: 'Creates a new cluster group.',
+        summary: 'Create cluster group',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqProxmox'],
+        requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(required: ['name', 'fill_type'], properties: [new OA\Property(property: 'name', type: 'string'), new OA\Property(property: 'fill_type', type: 'string')], type: 'object')),
+        responses: [
+            new OA\Response(response: 200, description: 'Cluster group created successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string'), new OA\Property(property: 'data', type: 'object')], type: 'object')),
+        ]
+    )]
     public function postClusterGroup(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
@@ -180,6 +212,19 @@ class puqPmClusterGroupController extends Controller
         );
     }
 
+    #[OA\Get(
+        path: 'admin.api.Product.puqProxmox.cluster_group.get',
+        description: 'Returns details of a specific cluster group.',
+        summary: 'Get cluster group details',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqProxmox'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'UUID of the cluster group', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Cluster group details returned successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'data', type: 'object')], type: 'object')),
+        ]
+    )]
     public function getClusterGroup(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmClusterGroup::find($uuid);
@@ -206,6 +251,20 @@ class puqPmClusterGroupController extends Controller
         ]);
     }
 
+    #[OA\Put(
+        path: 'admin.api.Product.puqProxmox.cluster_group.put',
+        description: 'Updates a specific cluster group.',
+        summary: 'Update cluster group',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqProxmox'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'UUID of the cluster group', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(type: 'object')),
+        responses: [
+            new OA\Response(response: 200, description: 'Cluster group updated successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string'), new OA\Property(property: 'data', type: 'object')], type: 'object')),
+        ]
+    )]
     public function putClusterGroup(Request $request, $uuid): JsonResponse
     {
         $validator = Validator::make($request->all(), [
@@ -298,6 +357,19 @@ class puqPmClusterGroupController extends Controller
         ]);
     }
 
+    #[OA\Delete(
+        path: 'admin.api.Product.puqProxmox.cluster_group.delete',
+        description: 'Deletes a specific cluster group.',
+        summary: 'Delete cluster group',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqProxmox'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'UUID of the cluster group', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Cluster group deleted successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string')], type: 'object')),
+        ]
+    )]
     public function deleteClusterGroup(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmClusterGroup::find($uuid);

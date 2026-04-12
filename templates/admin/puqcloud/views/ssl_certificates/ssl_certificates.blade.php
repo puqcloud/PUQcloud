@@ -40,6 +40,27 @@
                     <i class="fa fa-plus"></i>
                     {{__('main.Create')}}
                 </button>
+
+                <div class="mb-2 me-2 btn-group">
+                    <button type="button"
+                            class="btn-icon btn-outline-2x btn btn-outline-danger dropdown-toggle d-flex align-items-center"
+                            data-bs-toggle="dropdown">
+                        <i class="fas fa-trash-alt me-2"></i>
+                        {{ __('main.Bulk Delete') }}
+                    </button>
+                    <ul class="dropdown-menu p-2">
+                        <li>
+                            <button type="button" class="dropdown-item d-flex align-items-center" id="deleteExpired">
+                                <i class="fas fa-times-circle me-2 text-danger"></i> {{ __('main.Delete All Expired') }}
+                            </button>
+                        </li>
+                        <li>
+                            <button type="button" class="dropdown-item d-flex align-items-center" id="deleteDraft">
+                                <i class="fas fa-circle me-2 text-secondary"></i> {{ __('main.Delete All Draft') }}
+                            </button>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
     </div>
@@ -199,18 +220,9 @@
                 return $('<div>').text(text).html();
             }
 
-            $tableId.on('click', 'button.delete-btn', function (e) {
+            $dataTable.on('click', 'button.delete-btn', function (e) {
                 e.preventDefault();
-                var modelUrl = $(this).data('model-url');
-
-                if (confirm(translate('Are you sure you want to delete this record?'))) {
-                    PUQajax(modelUrl, null, 3000, $(this), 'DELETE')
-                        .then(function (response) {
-                            if (response.status === "success") {
-                                $dataTable.ajax.reload(null, false);
-                            }
-                        });
-                }
+                handleDelete($dataTable, this);
             });
 
             $('#universalModal').on('show.bs.modal', function (event) {
@@ -258,6 +270,30 @@
                         event.preventDefault();
                     }
                 });
+            });
+
+            $('#deleteExpired').on('click', function (event) {
+                event.preventDefault();
+                if (confirm(translate('Are you sure you want to delete all expired certificates?'))) {
+                    PUQajax('{{ route('admin.api.ssl_certificates.delete_expired.delete') }}', null, 3000, $(this), 'DELETE')
+                        .then(function (response) {
+                            if (response.status === "success") {
+                                $dataTable.ajax.reload(null, false);
+                            }
+                        });
+                }
+            });
+
+            $('#deleteDraft').on('click', function (event) {
+                event.preventDefault();
+                if (confirm(translate('Are you sure you want to delete all draft certificates?'))) {
+                    PUQajax('{{ route('admin.api.ssl_certificates.delete_draft.delete') }}', null, 3000, $(this), 'DELETE')
+                        .then(function (response) {
+                            if (response.status === "success") {
+                                $dataTable.ajax.reload(null, false);
+                            }
+                        });
+                }
             });
 
             $('#modalSaveButton').on('click', function (event) {

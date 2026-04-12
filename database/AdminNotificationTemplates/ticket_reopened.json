@@ -1,0 +1,7 @@
+{
+    "name": "Ticket Reopened",
+    "category": "staffOperational",
+    "custom": false,
+    "subject": "[Ticket #{{ $ticket->number }}] Reopened: {{ $ticket->subject }}",
+    "text_mini": "Ticket #{{ $ticket->number }} has been reopened by {{ $ticket->name ?? $ticket->email }}."
+}

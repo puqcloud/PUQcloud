@@ -21,6 +21,7 @@ use App\Models\Task;
 use App\Services\TranslationService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Redis;
 
 class SystemDeleteAllTasks extends Command
@@ -38,20 +39,29 @@ class SystemDeleteAllTasks extends Command
 
     public function handle()
     {
-        $prefix = config('horizon.prefix');
-
-        $cursor = null;
-        do {
-            [$cursor, $keys] = Redis::scan($cursor, 'MATCH', $prefix.'*', 'COUNT', 1000);
-            if (!empty($keys)) {
-                Redis::del($keys);
-            }
-        } while ($cursor != 0);
-
-        $tasks = Task::all();
-        foreach ($tasks as $task) {
-            $task->deleteHorizonJob();
+        $lock = Cache::lock('system:delete-all-tasks', 3600);
+        if (! $lock->get()) {
+            return;
         }
-        Task::truncate();
+
+        try {
+            $prefix = config('horizon.prefix');
+
+            $cursor = null;
+            do {
+                [$cursor, $keys] = Redis::scan($cursor, 'MATCH', $prefix.'*', 'COUNT', 1000);
+                if (!empty($keys)) {
+                    Redis::del($keys);
+                }
+            } while ($cursor != 0);
+
+            $tasks = Task::all();
+            foreach ($tasks as $task) {
+                $task->deleteHorizonJob();
+            }
+            Task::truncate();
+        } finally {
+            $lock->release();
+        }
     }
 }

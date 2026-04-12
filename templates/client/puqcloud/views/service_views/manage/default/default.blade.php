@@ -1,4 +1,4 @@
 @if($tab == 'general')
-    @include(config('template.client.view') . '.service_views.manage.'.$product_group->manage_template.'.general.general')
+    @include($serviceViewBase . '.general.general')
 @endif
-@include(config('template.client.view') . '.service_views.manage.'.$product_group->manage_template.'.header')
+@include($serviceViewBase . '.header')

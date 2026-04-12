@@ -57,7 +57,7 @@
 
         $(document).ready(function () {
 
-            var $paymentGatewaysTable;
+            var $dataTable;
 
             function setupPaymentGatewaysTable() {
                 var $tableId = $('#payment_gateways');
@@ -98,7 +98,7 @@
                         render: function (data, type, row) {
                             var btn = '';
                             if (row.urls.edit) {
-                                btn = btn + renderEditButton(row.urls.edit);
+                                btn = btn + renderEditLink(row.urls.edit);
                             }
                             if (row.urls.delete) {
                                 btn = btn + renderDeleteButton(row.urls.delete);
@@ -107,7 +107,7 @@
                         }
                     },
                 ];
-                $paymentGatewaysTable = initializeDataTable($tableId, ajaxUrl, columnsConfig, DataTableAddData, {order: [[3, 'asc']]});
+                $dataTable = initializeDataTable($tableId, ajaxUrl, columnsConfig, DataTableAddData, {order: [[3, 'asc']]});
 
                 function DataTableAddData() {
                     return {};
@@ -168,17 +168,12 @@
                     PUQajax('{{route('admin.api.home_company.payment_gateway.post',$uuid)}}', formData, 500, $(this), 'POST', $form)
                         .then(function (response) {
                             $('#universalModal').modal('hide');
-                            $paymentGatewaysTable.ajax.reload(null, false);
+                            $dataTable.ajax.reload(null, false);
                         });
                 }
             });
 
-            $paymentGatewaysTable.on('click', 'button.edit-btn', function (e) {
-                e.preventDefault();
-                window.location.href = $(this).data('model-url');
-            });
-
-            $paymentGatewaysTable.on('click', '.move-up, .move-down', function () {
+            $dataTable.on('click', '.move-up, .move-down', function () {
                 var $button = $(this);
                 var groupUUID = $button.data('uuid');
                 var currentOrder = parseInt($button.data('order'), 10);
@@ -191,23 +186,14 @@
                 PUQajax('{{ route('admin.api.payment_gateway.update_order.post') }}', data, 50, $button, 'POST')
                     .then(function (response) {
                         if (response.status === "success") {
-                            $paymentGatewaysTable.ajax.reload(null, false);
+                            $dataTable.ajax.reload(null, false);
                         }
                     });
             });
 
-            $paymentGatewaysTable.on('click', 'button.delete-btn', function (e) {
+            $dataTable.on('click', 'button.delete-btn', function (e) {
                 e.preventDefault();
-                var modelUrl = $(this).data('model-url');
-
-                if (confirm(translate('Are you sure you want to delete this record?'))) {
-                    PUQajax(modelUrl, null, 3000, $(this), 'DELETE')
-                        .then(function (response) {
-                            if (response.status === "success") {
-                                $paymentGatewaysTable.ajax.reload(null, false);
-                            }
-                        });
-                }
+                handleDelete($dataTable, this);
             });
 
         });

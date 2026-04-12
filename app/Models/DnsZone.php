@@ -17,6 +17,7 @@
 
 namespace App\Models;
 
+use App\Traits\ModelActivityLogger;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -27,6 +28,7 @@ use Illuminate\Support\Str;
 class DnsZone extends Model
 {
     use HasFactory;
+    use ModelActivityLogger;
 
     protected $primaryKey = 'uuid';
 
@@ -94,7 +96,7 @@ class DnsZone extends Model
     {
         return [
             'servers' => $this->dnsServerGroup->ns_domains ?? [],
-            'ttl' => $this->dnsServerGroup->dns_ttl ?? 3600,
+            'ttl' => $this->dnsServerGroup->ns_ttl ?? 3600,
         ];
     }
 
@@ -350,6 +352,186 @@ class DnsZone extends Model
         }
     }
 
+    public function importJson(array $jsonData, string $mode = 'add'): array
+    {
+        $success = 0;
+        $errors = 0;
+
+        if ($mode === 'replace') {
+            $this->dnsRecords()->delete();
+        }
+
+        if (isset($jsonData['soa'])) {
+            $soa = $jsonData['soa'];
+            if (isset($soa['admin'])) {
+                $this->soa_admin_email = $soa['admin'];
+            }
+            if (isset($soa['refresh'])) {
+                $this->soa_refresh = (int) $soa['refresh'];
+            }
+            if (isset($soa['retry'])) {
+                $this->soa_retry = (int) $soa['retry'];
+            }
+            if (isset($soa['expire'])) {
+                $this->soa_expire = (int) $soa['expire'];
+            }
+            if (isset($soa['minimum'])) {
+                $this->soa_minimum = (int) $soa['minimum'];
+            }
+            if (isset($soa['ttl'])) {
+                $this->soa_ttl = (int) $soa['ttl'];
+            }
+            $this->save();
+        }
+
+        foreach ($jsonData['records'] ?? [] as $record) {
+            if (empty($record['type']) || empty($record['name'])) {
+                $errors++;
+                continue;
+            }
+
+            $result = $this->createUpdateRecord($record, null, true, true);
+            if ($result['status'] === 'error') {
+                $errors++;
+            } else {
+                $success++;
+            }
+        }
+
+        $this->reloadZone();
+
+        return [
+            'status' => 'success',
+            'data' => ['success' => $success, 'errors' => $errors],
+        ];
+    }
+
+    public function importBind(string $bindContent, string $mode = 'add'): array
+    {
+        $success = 0;
+        $errors = 0;
+
+        if ($mode === 'replace') {
+            $this->dnsRecords()->delete();
+        }
+
+        $lines = explode("\n", $bindContent);
+        $defaultTtl = $this->soa_ttl ?? 3600;
+        $inSoa = false;
+
+        foreach ($lines as $line) {
+            $line = trim($line);
+
+            if ($line === '' || str_starts_with($line, ';')) {
+                continue;
+            }
+
+            // $TTL directive
+            if (preg_match('/^\$TTL\s+(\d+)/i', $line, $m)) {
+                $defaultTtl = (int) $m[1];
+                $this->soa_ttl = $defaultTtl;
+                $this->save();
+                continue;
+            }
+
+            // Skip $ORIGIN and other directives
+            if (str_starts_with($line, '$')) {
+                continue;
+            }
+
+            // SOA record (multiline)
+            if (preg_match('/\bSOA\b/i', $line)) {
+                $inSoa = true;
+                // Parse SOA admin email from the line
+                if (preg_match('/SOA\s+\S+\s+(\S+)/i', $line, $soaMatch)) {
+                    $email = rtrim($soaMatch[1], '.');
+                    $this->soa_admin_email = preg_replace('/\./', '@', $email, 1);
+                    $this->save();
+                }
+                continue;
+            }
+
+            if ($inSoa) {
+                if (str_contains($line, ')')) {
+                    $inSoa = false;
+                }
+                // Try parsing SOA numeric values
+                if (preg_match('/^\s*(\d+)\s*;\s*(Serial|Refresh|Retry|Expire|Minimum)/i', $line, $soaVal)) {
+                    $field = strtolower($soaVal[2]);
+                    $value = (int) $soaVal[1];
+                    if ($field === 'refresh') $this->soa_refresh = $value;
+                    elseif ($field === 'retry') $this->soa_retry = $value;
+                    elseif ($field === 'expire') $this->soa_expire = $value;
+                    elseif ($field === 'minimum') $this->soa_minimum = $value;
+                    $this->save();
+                }
+                continue;
+            }
+
+            // Parse regular record: name [ttl] [IN] type content
+            // Remove inline comments
+            $line = preg_replace('/\s*;.*$/', '', $line);
+            if (trim($line) === '') {
+                continue;
+            }
+
+            $parts = preg_split('/\s+/', $line);
+            if (count($parts) < 3) {
+                continue;
+            }
+
+            $name = $parts[0];
+            $idx = 1;
+            $ttl = $defaultTtl;
+
+            // Check if next part is TTL (numeric)
+            if (isset($parts[$idx]) && is_numeric($parts[$idx])) {
+                $ttl = (int) $parts[$idx];
+                $idx++;
+            }
+
+            // Skip 'IN' class
+            if (isset($parts[$idx]) && strtoupper($parts[$idx]) === 'IN') {
+                $idx++;
+            }
+
+            if (! isset($parts[$idx])) {
+                continue;
+            }
+
+            $type = strtoupper($parts[$idx]);
+            $idx++;
+
+            // Skip SOA and NS records (NS managed by server group)
+            if (in_array($type, ['SOA', 'NS'])) {
+                continue;
+            }
+
+            $content = implode(' ', array_slice($parts, $idx));
+
+            $record = [
+                'name' => $name,
+                'type' => $type,
+                'ttl' => $ttl,
+                'content' => $content,
+            ];
+
+            $result = $this->createUpdateRecord($record, null, true, true);
+            if ($result['status'] === 'error') {
+                $errors++;
+            } else {
+                $success++;
+            }
+        }
+
+        $this->reloadZone();
+
+        return [
+            'status' => 'success',
+            'data' => ['success' => $success, 'errors' => $errors],
+        ];
+    }
+
     public function reloadZone(): array
     {
         $this->dnsRecords()->update(['description' => null]);
@@ -445,6 +627,34 @@ class DnsZone extends Model
                     'code' => 412,
                 ];
             }
+
+            $existingOther = $this->dnsRecords()
+                ->where('name', $data['name'])
+                ->where('type', '<>', 'CNAME')
+                ->where('uuid', '<>', $uuid)
+                ->exists();
+
+            if ($existingOther) {
+                return [
+                    'status' => 'error',
+                    'errors' => [__('error.CNAME record cannot coexist with other record types on the same name')],
+                    'code' => 412,
+                ];
+            }
+        } else {
+            $existingCname = $this->dnsRecords()
+                ->where('type', 'CNAME')
+                ->where('name', $data['name'])
+                ->where('uuid', '<>', $uuid)
+                ->exists();
+
+            if ($existingCname) {
+                return [
+                    'status' => 'error',
+                    'errors' => [__('error.Cannot add record: a CNAME record already exists for this name')],
+                    'code' => 412,
+                ];
+            }
         }
 
         // ----------------------------------------------------------------------
@@ -510,12 +720,16 @@ class DnsZone extends Model
         }
         $content = $build_record['data']['content'];
 
-        $exist = $this->dnsRecords()
+        $existQuery = $this->dnsRecords()
             ->where('type', $data['type'])
             ->where('name', $data['name'])
-            ->where('content', $content)
-            ->where('uuid', '<>', $uuid)
-            ->exists();
+            ->where('content', $content);
+
+        if ($uuid) {
+            $existQuery->where('uuid', '<>', $uuid);
+        }
+
+        $exist = $existQuery->exists();
 
         if ($exist) {
             return [
@@ -997,22 +1211,21 @@ class DnsZone extends Model
                 'string',
                 function ($attribute, $value, $fail) {
                     if (!preg_match('/^([a-z0-9-]+\.)+[a-z]{2,}$/i', $value)) {
-                        $fail(__('Invalid target for ALIAS record'));
+                        $fail(__('error.Invalid target for ALIAS record'));
                     }
                 },
             ],
         ];
 
         $messages = [
-            'type.required' => __('Type is required'),
-            'type.in' => __('Invalid type selected'),
-            'name.required' => __('Name is required'),
-            'ttl.required' => __('TTL is required'),
-            'ttl.integer' => __('TTL must be an integer'),
-            'ttl.min' => __('TTL must be at least 30'),
-            'target.required' => __('Target is required'),
-            'target.string' => __('Target must be a valid string'),
-            'Invalid target for ALIAS record' => __('Invalid target for ALIAS record'),
+            'type.required' => __('error.Type is required'),
+            'type.in' => __('error.Invalid type selected'),
+            'name.required' => __('error.Name is required'),
+            'ttl.required' => __('error.TTL is required'),
+            'ttl.integer' => __('error.TTL must be an integer'),
+            'ttl.min' => __('error.TTL must be at least 30'),
+            'target.required' => __('error.Target is required'),
+            'target.string' => __('error.Target must be a valid string'),
         ];
 
         $validator = Validator::make($data, $rules, $messages);
@@ -1069,17 +1282,14 @@ class DnsZone extends Model
         ];
 
         $messages = [
-            'type.required' => __('Type is required'),
-            'type.in' => __('Invalid type selected'),
-            'name.required' => __('Name is required'),
-            'ttl.required' => __('TTL is required'),
-            'ttl.integer' => __('TTL must be an integer'),
-            'ttl.min' => __('TTL must be at least 30'),
-            'NS record cannot be used on the root domain' => __('NS record cannot be used on the root domain'),
-            'The name must be a valid subdomain prefix' => __('The name must be a valid subdomain prefix'),
-            'ns.required' => __('NS target is required'),
-            'ns.string' => __('NS target must be a valid string'),
-            'Invalid NS target' => __('Invalid NS target'),
+            'type.required' => __('error.Type is required'),
+            'type.in' => __('error.Invalid type selected'),
+            'name.required' => __('error.Name is required'),
+            'ttl.required' => __('error.TTL is required'),
+            'ttl.integer' => __('error.TTL must be an integer'),
+            'ttl.min' => __('error.TTL must be at least 30'),
+            'target.required' => __('error.Target is required'),
+            'target.string' => __('error.Target must be a valid string'),
         ];
 
         $validator = Validator::make($data, $rules, $messages);

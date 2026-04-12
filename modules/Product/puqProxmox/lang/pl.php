@@ -765,4 +765,7 @@ return [
     'LXC deployment is pending' => 'Wdrażanie LXC w toku',
     'LXC deployment is running' => 'Wdrażanie LXC trwa',
     'LXC deployed successfully' => 'LXC został pomyślnie wdrożony',
+
+    'Product Options' => 'Opcje produktów',
+    'Product options description' => 'Lista grup opcji i opcji, które moduł puqProxmox oczekuje pod stałymi kluczami. Kliknij "Utwórz brakujące", aby wygenerować to, czego jeszcze nie ma. Opcje Lokalizacji i Szablonu OS są generowane dynamicznie z grup klastrów i szablonów LXC OS.',
 ];

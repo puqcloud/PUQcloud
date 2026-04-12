@@ -15,6 +15,15 @@
  * Do not remove this header.
  */
 
+/*
+ * WEB Routes:
+ *   GET   {admin_path}/login                      -> loginForm()                [admin.web.login]
+ *
+ * API Routes:
+ *   POST  {admin_path}/api/login                  -> login()                    [admin.api.login]
+ *   GET   logout                                  -> logout()                   [admin.api.logout]
+ */
+
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
@@ -23,6 +32,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Date;
+use OpenApi\Attributes as OA;
 
 class AdminAuthController extends Controller
 {
@@ -92,6 +102,26 @@ class AdminAuthController extends Controller
 
     }
 
+    #[OA\Get(
+        path: 'admin.api.logout',
+        description: 'Logs out the currently authenticated admin and returns a redirect URL.',
+        summary: 'Logout admin',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Auth'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Logged out successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'message', type: 'string', example: 'Logout out successfully'),
+                        new OA\Property(property: 'redirect', type: 'string'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function logout(): JsonResponse
     {
         if (Auth::guard('admin')->check()) {

@@ -75,55 +75,112 @@ class Transaction extends Model
                 $model->transaction_date = now();
             }
 
-            $balance = ClientBalance::lockForUpdate()->find($model->client_uuid);
-            if ($balance) {
-                $model->balance_before = $balance->balance;
-                $model->balance_after = $balance->balance + $model->amount_net;
-            } else {
-                $model->balance_before = 0.00;
-                $model->balance_after = $model->amount_net;
-            }
-
-            $client = Client::with('currency')->find($model->client_uuid);
-            $model->currency_code = optional($client->currency)->code ?? 'USD';
-
             if (! $model->fees) {
                 $model->fees = 0.00;
             }
+
+            // Set currency_code with a single query instead of loading two Eloquent models
+            $model->currency_code = DB::table('clients')
+                ->join('currencies', 'clients.currency_uuid', '=', 'currencies.uuid')
+                ->where('clients.uuid', $model->client_uuid)
+                ->value('currencies.code') ?? 'USD';
+
+            // Set placeholder values — will be recalculated under lock in `created`
+            $model->balance_before = 0.00;
+            $model->balance_after = $model->amount_net;
         });
 
         static::created(function ($model) {
 
             DB::transaction(function () use ($model) {
+                // Check billing_purpose inside transaction to prevent race conditions
+                $skipBalance = false;
+                if ($model->relation_model === 'App\\Models\\Invoice' && $model->relation_model_uuid) {
+                    $billingPurpose = DB::table('invoices')
+                        ->where('uuid', $model->relation_model_uuid)
+                        ->value('billing_purpose');
+
+                    if (in_array($billingPurpose, ['service_billing', 'standalone'])) {
+                        $skipBalance = true;
+                    }
+                }
+
                 $balance = ClientBalance::lockForUpdate()->find($model->client_uuid);
 
                 if (! $balance) {
-                    ClientBalance::withoutEvents(function () use ($model) {
-                        ClientBalance::create([
-                            'client_uuid' => $model->client_uuid,
-                            'balance' => $model->amount_net,
-                        ]);
-                    });
+                    if (! $skipBalance) {
+                        ClientBalance::withoutEvents(function () use ($model) {
+                            ClientBalance::create([
+                                'client_uuid' => $model->client_uuid,
+                                'balance' => $model->amount_net,
+                            ]);
+                        });
+                    } else {
+                        // Ensure ClientBalance record exists even if we skip balance update
+                        ClientBalance::withoutEvents(function () use ($model) {
+                            ClientBalance::create([
+                                'client_uuid' => $model->client_uuid,
+                                'balance' => 0,
+                            ]);
+                        });
+                    }
+
+                    $currentBalance = $skipBalance ? 0 : $model->amount_net;
+                    DB::table('transactions')->where('uuid', $model->uuid)->update([
+                        'balance_before' => 0.00,
+                        'balance_after' => $currentBalance,
+                    ]);
+
+                    logActivity(
+                        'info',
+                        'Client:'.$model->client_uuid.' balance initialized. Balance: '.$currentBalance.' '.$model->currency_code.($skipBalance ? ' (service billing - balance unchanged)' : ''),
+                        'balance_update',
+                        null,
+                        null,
+                        null,
+                        $model->client_uuid
+                    );
                 } else {
-                    ClientBalance::withoutEvents(function () use ($balance, $model) {
-                        $balance->balance += $model->amount_net;
-                        $balance->save();
-                    });
+                    $balanceBefore = $balance->balance;
+
+                    if (! $skipBalance) {
+                        $balanceAfter = $balance->balance + $model->amount_net;
+                        ClientBalance::withoutEvents(function () use ($balance, $model) {
+                            $balance->balance += $model->amount_net;
+                            $balance->save();
+                        });
+                    } else {
+                        $balanceAfter = $balance->balance;
+                    }
+
+                    DB::table('transactions')->where('uuid', $model->uuid)->update([
+                        'balance_before' => $balanceBefore,
+                        'balance_after' => $balanceAfter,
+                    ]);
+
+                    logActivity(
+                        'info',
+                        'Client:'.$model->client_uuid.' balance updated. Before: '.$balanceBefore.' After: '.$balanceAfter.' '.$model->currency_code.' (Transaction: '.$model->uuid.')'.($skipBalance ? ' (service billing - balance unchanged)' : ''),
+                        'balance_update',
+                        null,
+                        null,
+                        null,
+                        $model->client_uuid
+                    );
                 }
             });
 
-            if (! $model->fees) {
-                $model->fees = 0.00;
-            }
             logActivity(
                 'info',
-                'Transaction:'.$model->uuid.' created. Amount Net: '.$model->amount_net.' '.$model->currency->code.' Amount Gross: '.$model->amount_gross.' '.$model->currency->code.' Fees: '.$model->fees.' '.$model->currency->code,
+                'Transaction:'.$model->uuid.' created. Amount Net: '.$model->amount_net.' '.$model->currency_code.' Amount Gross: '.$model->amount_gross.' '.$model->currency_code.' Fees: '.$model->fees.' '.$model->currency_code,
                 $model->type,
                 null,
                 null,
                 null,
                 $model->client_uuid
             );
+
+            app(\App\Services\HookService::class)->callHooks('TransactionCreated', ['transaction' => $model]);
         });
     }
 

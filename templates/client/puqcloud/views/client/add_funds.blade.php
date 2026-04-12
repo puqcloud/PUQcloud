@@ -86,7 +86,7 @@
 
                         <div class="text-center">
                             <button id="top_up_button"
-                                    class="btn-wide mb-2 me-2 btn btn-outline-2x btn-outline-success btn-lg" i>
+                                    class="btn-wide mb-2 me-2 btn btn-outline-2x btn-outline-success btn-lg">
                                 <i class="fa fa-money-bill btn-icon-wrapper"></i> {{ __('main.Top Up Now') }}
                             </button>
                         </div>

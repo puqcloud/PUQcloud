@@ -69,15 +69,6 @@ class SettingService
     }
 
 
-    private static function isValidKey($key): bool
-    {
-        if (str_contains($key, '.')) {
-            return (bool) config('settings.'.$key);
-        }
-
-        return true;
-    }
-
     public static function getValuesByGroup($group): array
     {
         $general_settings = [];

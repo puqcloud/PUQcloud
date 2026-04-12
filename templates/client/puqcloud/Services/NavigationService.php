@@ -213,6 +213,79 @@ use App\Models\User;
             ];
         }
 
+        // Unpaid service billing and proration invoices
+        $unpaidInvoices = \Illuminate\Support\Facades\DB::table('invoices')
+            ->where('client_uuid', $client->uuid)
+            ->whereIn('billing_purpose', ['service_billing', 'service_proration'])
+            ->where('status', 'unpaid')
+            ->select('uuid', 'number', 'total', 'due_date', 'currency_code', 'created_at')
+            ->get();
+
+        foreach ($unpaidInvoices as $invoice) {
+            $id++;
+            $isOverdue = \Carbon\Carbon::parse($invoice->due_date)->isPast();
+            $incidents[] = [
+                'id' => $id,
+                'type' => $isOverdue ? 'danger' : 'warning',
+                'title' => $isOverdue
+                    ? __('main.Invoice Overdue') . ' #' . $invoice->number
+                    : __('main.Invoice Awaiting Payment') . ' #' . $invoice->number,
+                'description' => __('main.You have an unpaid invoice for :amount :currency. Please make the payment to avoid service suspension.', [
+                    'amount' => number_format($invoice->total, 2),
+                    'currency' => $invoice->currency_code,
+                ]),
+                'created' => $invoice->created_at,
+                'updated' => $invoice->due_date,
+                'url' => route('client.web.panel.client.invoice.details', $invoice->uuid),
+            ];
+        }
+
+        // Ticket incidents
+        try {
+            $clientUuid = $client->uuid ?? null;
+            if ($clientUuid) {
+                $openTickets = \App\Models\Ticket::where('client_uuid', $clientUuid)
+                    ->whereHas('status', function ($q) {
+                        $q->where('include_in_active', true);
+                    })
+                    ->count();
+
+                if ($openTickets > 0) {
+                    $awaitingReply = \App\Models\Ticket::where('client_uuid', $clientUuid)
+                        ->whereHas('status', function ($q) {
+                            $q->where('title', 'Answered');
+                        })
+                        ->count();
+
+                    $customerReply = \App\Models\Ticket::where('client_uuid', $clientUuid)
+                        ->whereHas('status', function ($q) {
+                            $q->where('title', 'Customer-Reply')->orWhere('title', 'Open');
+                        })
+                        ->count();
+
+                    if ($awaitingReply > 0) {
+                        $incidents[] = [
+                            'type' => 'success',
+                            'title' => __('main.Support Tickets'),
+                            'description' => __('main.You have :count ticket(s) with staff reply', ['count' => $awaitingReply]),
+                            'url' => route('client.web.panel.support.tickets'),
+                        ];
+                    }
+
+                    if ($customerReply > 0) {
+                        $incidents[] = [
+                            'type' => 'warning',
+                            'title' => __('main.Support Tickets'),
+                            'description' => __('main.You have :count ticket(s) awaiting response', ['count' => $customerReply]),
+                            'url' => route('client.web.panel.support.tickets'),
+                        ];
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            // Silently skip if tickets table doesn't exist yet
+        }
+
         return $incidents;
     }
 }

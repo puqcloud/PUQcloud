@@ -1,0 +1,7 @@
+{
+    "name": "Client Billing Mode Changed",
+    "category": "clientOperational",
+    "custom": false,
+    "subject": "Billing Mode Changed",
+    "text_mini": "Billing mode for service {{ $service->admin_label }} changed to {{ $new_mode }}"
+}

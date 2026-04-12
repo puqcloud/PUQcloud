@@ -492,26 +492,31 @@ class SslCertificate extends Model
                 try {
                     $this->signature_algorithm = $this->getSignatureName($cert);
                 } catch (\Throwable $e) {
+                    \Log::warning('SSL: ' . $e->getMessage());
                 }
 
                 try {
                     $this->public_key_algorithm = $x509->getPublicKey()->getLoadedFormat();
                 } catch (\Throwable $e) {
+                    \Log::warning('SSL: ' . $e->getMessage());
                 }
 
                 try {
                     $this->issuer = $x509->getIssuerDN(true);
                 } catch (\Throwable $e) {
+                    \Log::warning('SSL: ' . $e->getMessage());
                 }
 
                 try {
                     $this->serial_number_hex = $this->getCertSerialNumberHex($cert);
                 } catch (\Throwable $e) {
+                    \Log::warning('SSL: ' . $e->getMessage());
                 }
 
                 try {
                     $this->serial_number_dec = $this->getCertSerialNumberDec($cert);
                 } catch (\Throwable $e) {
+                    \Log::warning('SSL: ' . $e->getMessage());
                 }
 
                 try {
@@ -551,11 +556,13 @@ class SslCertificate extends Model
                 try {
                     $this->issued_at = $this->getCertDate($cert, 'notBefore');
                 } catch (\Throwable $e) {
+                    \Log::warning('SSL: ' . $e->getMessage());
                 }
 
                 try {
                     $this->expires_at = $this->getCertDate($cert, 'notAfter');
                 } catch (\Throwable $e) {
+                    \Log::warning('SSL: ' . $e->getMessage());
                 }
             }
         }

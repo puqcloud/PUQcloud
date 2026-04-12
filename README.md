@@ -12,10 +12,12 @@ Built on [Laravel](https://laravel.com), it includes full billing, provisioning,
 - ✅ **Modular Architecture** — Easily extendable with custom modules.
 - 🚀 **Service Automation** — Automatic deployment and full lifecycle management.
 - 💳 **Advanced Billing System** — Invoices, proformas, credit balance, multi-currency, tax by region.
-- 🛍️ **Product Catalog & eCommerce** — Sell hosting, SaaS, LXC, services, and physical items.
+- 🛍️ **Product Catalog & eCommerce** — Sell hosting, SaaS, LXC, VPN, services, and physical items.
+- 🎫 **Ticket System** — Full helpdesk with departments, SLA tracking, canned responses, auto-close, email import, and activity timeline.
 - 🛠️ **Helpdesk & Support Tools** — Free or paid support (Remote Hands).
 - 🧾 **Multi-company Support** — Multiple home companies with separate tax profiles.
 - 🌍 **Internationalization** — Taxes, currencies, languages per client country.
+- 🔑 **VPN Hosting** — Sell VPN services powered by [PUQ VPNCP](https://puqvpncp.com).
 - 🏗️ **Cluster Architecture**
     - Master nodes management
     - Worker nodes
@@ -93,6 +95,19 @@ Repository:
 🔗 https://github.com/puqcloud/vncwebproxy
 
 These tools allow secure, modular console access for both LXC and APP containers.
+
+---
+
+## 🔑 PUQ VPNCP Integration
+
+PUQcloud integrates with [PUQ VPNCP](https://puqvpncp.com) — our standalone VPN Control Panel — to sell VPN services as products. Requires **PUQ VPNCP version 2.0 or higher**.
+
+- Automatic provisioning, suspension, and termination of VPN accounts
+- Per-server and per-server-group management with bandwidth tracking
+- Location-based ordering with upgrade/downgrade support
+- Full client area integration (credentials, connection status, traffic usage)
+
+🌐 [puqvpncp.com](https://puqvpncp.com) | 📚 [Documentation](https://puqvpncp.com/doc/)
 
 ---
 

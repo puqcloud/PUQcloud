@@ -16,17 +16,33 @@
  */
 
 use App\Http\Controllers\Admin\AdminAddOnsController;
+use App\Http\Controllers\Admin\AdminAdminApiKeysController;
 use App\Http\Controllers\Admin\AdminAdminsController;
+use App\Http\Controllers\Admin\AdminApiDocumentationController;
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\AdminAutomationController;
+use App\Http\Controllers\Admin\AdminClientActivityController;
+use App\Http\Controllers\Admin\AdminClientAddressesController;
+use App\Http\Controllers\Admin\AdminClientFinanceController;
 use App\Http\Controllers\Admin\AdminClientsController;
+use App\Http\Controllers\Admin\AdminClientUsersController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\AdminDnsManagerController;
-use App\Http\Controllers\Admin\AdminFinanceController;
+use App\Http\Controllers\Admin\AdminHomeCompaniesController;
+use App\Http\Controllers\Admin\AdminInvoicesController;
+use App\Http\Controllers\Admin\AdminPaymentGatewaysController;
+use App\Http\Controllers\Admin\AdminTaxRulesController;
+use App\Http\Controllers\Admin\AdminTicketDepartmentsController;
+use App\Http\Controllers\Admin\AdminTicketsController;
+use App\Http\Controllers\Admin\AdminTicketStatusesController;
+use App\Http\Controllers\Admin\AdminTransactionsController;
 use App\Http\Controllers\Admin\AdminGroupsController;
 use App\Http\Controllers\Admin\AdminLogController;
 use App\Http\Controllers\Admin\AdminMyAccountController;
 use App\Http\Controllers\Admin\AdminNotificationsController;
+use App\Http\Controllers\Admin\AdminProductAttributesController;
+use App\Http\Controllers\Admin\AdminProductGroupsController;
+use App\Http\Controllers\Admin\AdminProductOptionsController;
 use App\Http\Controllers\Admin\AdminProductsController;
 use App\Http\Controllers\Admin\AdminServicesController;
 use App\Http\Controllers\Admin\AdminSettingsController;
@@ -62,6 +78,9 @@ Route::get('languages/select', [AdminController::class, 'getLanguagesSelect'])->
 // admins --------------------------------------------------------------------------------------------------------------
 Route::get('admins', [AdminAdminsController::class, 'getAdmins'])->name('admins.get')
     ->middleware('ApiPermission:admins-view');
+Route::get('admins/select', [AdminAdminsController::class, 'getAdminsSelect'])->name('admins.select.get')
+    ->middleware('ApiPermission:admins-view');
+
 Route::get('admin/{uuid}', [AdminAdminsController::class, 'getAdmin'])->name('admin.get')
     ->middleware('ApiPermission:admins-view');
 Route::post('admin', [AdminAdminsController::class, 'postAdmin'])->name('admin.post')
@@ -125,6 +144,18 @@ Route::get('dashboard/widget', [AdminWidgetsController::class, 'getDashboardWidg
 Route::get('dashboard', [AdminWidgetsController::class, 'getDashboard'])->name('dashboard.get');
 Route::put('dashboard', [AdminWidgetsController::class, 'putDashboard'])->name('dashboard.put');
 
+// admin api keys --------------------------------------------------------------------------------------------------------------
+Route::get('admin_api_keys', [AdminAdminApiKeysController::class, 'getAdminApiKeys'])->name('admin_api_keys.get')
+    ->middleware('ApiPermission:admin-api-keys-view');
+Route::get('admin_api_key/{uuid}', [AdminAdminApiKeysController::class, 'getAdminApiKey'])->name('admin_api_key.get')
+    ->middleware('ApiPermission:admin-api-keys-view');
+Route::post('admin_api_key', [AdminAdminApiKeysController::class, 'postAdminApiKey'])->name('admin_api_key.post')
+    ->middleware('ApiPermission:admin-api-keys-create');
+Route::put('admin_api_key/{uuid}', [AdminAdminApiKeysController::class, 'putAdminApiKey'])->name('admin_api_key.put')
+    ->middleware('ApiPermission:admin-api-keys-edit');
+Route::delete('admin_api_key/{uuid}', [AdminAdminApiKeysController::class, 'deleteAdminApiKey'])->name('admin_api_key.delete')
+    ->middleware('ApiPermission:admin-api-keys-delete');
+
 // notification_senders ------------------------------------------------------------------------------------------------
 Route::get('notification_senders',
     [AdminNotificationsController::class, 'getNotificationSenders'])->name('notification_senders.get')
@@ -186,6 +217,10 @@ Route::post('notification_rule',
 Route::get('notification_rule/{uuid}',
     [AdminNotificationsController::class, 'getNotificationRule'])->name('notification_rule.get')
     ->middleware('ApiPermission:notification-rules-management');
+Route::put('notification_rule/mass_update', [
+    AdminNotificationsController::class, 'putNotificationMassUpdateRules',
+])->name('notification_rule.mass_update.put')
+    ->middleware('ApiPermission:notification-rules-management');
 Route::put('notification_rule/{uuid}',
     [AdminNotificationsController::class, 'putNotificationRule'])->name('notification_rule.put')
     ->middleware('ApiPermission:notification-rules-management');
@@ -204,7 +239,6 @@ Route::get('notification_histories',
 Route::get('notification_history/{uuid}',
     [AdminNotificationsController::class, 'getNotificationHistory'])->name('notification_history.get')
     ->middleware('ApiPermission:notification-history-view');
-
 
 // dns_server_groups --------------------------------------------------------------------------------------------------
 Route::get('dns_server_groups', [AdminDnsManagerController::class, 'getDnsServerGroups'])->name('dns_server_groups.get')
@@ -268,6 +302,13 @@ Route::get('dns_zone/{uuid}/export/bind', [AdminDnsManagerController::class, 'ge
 Route::get('dns_zone/{uuid}/export/json', [AdminDnsManagerController::class, 'getDnsZoneExportJson'])->name('dns_zone.export.json.get')
     ->middleware('ApiPermission:dns-manager-dns-zones');
 
+Route::post('dns_zone/{uuid}/import/bind', [AdminDnsManagerController::class, 'postDnsZoneImportBind'])->name('dns_zone.import.bind.post')
+    ->middleware('ApiPermission:dns-manager-dns-zones');
+Route::post('dns_zone/{uuid}/import/json', [AdminDnsManagerController::class, 'postDnsZoneImportJson'])->name('dns_zone.import.json.post')
+    ->middleware('ApiPermission:dns-manager-dns-zones');
+
+Route::delete('dns_zone/{uuid}/dns_records/bulk', [AdminDnsManagerController::class, 'deleteDnsZoneDnsRecordsBulk'])->name('dns_zone.dns_records.bulk_delete')
+    ->middleware('ApiPermission:dns-manager-dns-records');
 
 // dns_zones dns_records ------------------------------------------------------------------------------------------------
 Route::get('dns_zone/{uuid}/dns_records', [AdminDnsManagerController::class, 'getDnsZoneDnsRecords'])->name('dns_zone.dns_records.get')
@@ -285,17 +326,126 @@ Route::delete('dns_zone/{uuid}/dns_record/{r_uuid}', [AdminDnsManagerController:
 Route::get('dns_server_modules/select',
     [AdminDnsManagerController::class, 'getDnsServerModulesSelect'])->name('dns_server_modules.select.get')
     ->middleware('ApiPermission:dns-manager-dns-servers');
-
 Route::get('dns_servers/select',
     [AdminDnsManagerController::class, 'getDnsServersSelect'])->name('dns_servers.select.get')
     ->middleware('ApiPermission:dns-manager-dns-servers');
-
 Route::get('dns_server_groups/select',
     [AdminDnsManagerController::class, 'getDnsServerGroupsSelect'])->name('dns_server_groups.select.get')
     ->middleware('ApiPermission:dns-manager-dns-zones');
-
 Route::get('dns_zones/select',
     [AdminDnsManagerController::class, 'getDnsZonesSelect'])->name('dns_zones.select.get');
+
+Route::post('dns_zone/{uuid}/clone', [AdminDnsManagerController::class, 'postDnsZoneClone'])->name('dns_zone.clone.post')
+    ->middleware('ApiPermission:dns-manager-dns-zones');
+Route::post('dns_zone/{uuid}/save_as_template', [AdminDnsManagerController::class, 'postDnsZoneTemplateFromZone'])->name('dns_zone.save_as_template.post')
+    ->middleware('ApiPermission:dns-manager-dns-zones');
+
+// DNS Zone Templates
+Route::get('dns_zone_templates', [AdminDnsManagerController::class, 'getDnsZoneTemplates'])->name('dns_zone_templates.get')
+    ->middleware('ApiPermission:dns-manager-dns-zones');
+Route::post('dns_zone_template', [AdminDnsManagerController::class, 'postDnsZoneTemplate'])->name('dns_zone_template.post')
+    ->middleware('ApiPermission:dns-manager-dns-zones');
+Route::get('dns_zone_template/{uuid}', [AdminDnsManagerController::class, 'getDnsZoneTemplate'])->name('dns_zone_template.get')
+    ->middleware('ApiPermission:dns-manager-dns-zones');
+Route::put('dns_zone_template/{uuid}', [AdminDnsManagerController::class, 'putDnsZoneTemplate'])->name('dns_zone_template.put')
+    ->middleware('ApiPermission:dns-manager-dns-zones');
+Route::delete('dns_zone_template/{uuid}', [AdminDnsManagerController::class, 'deleteDnsZoneTemplate'])->name('dns_zone_template.delete')
+    ->middleware('ApiPermission:dns-manager-dns-zones');
+Route::get('dns_zone_templates/select', [AdminDnsManagerController::class, 'getDnsZoneTemplatesSelect'])->name('dns_zone_templates.select.get')
+    ->middleware('ApiPermission:dns-manager-dns-zones');
+
+// Support Tickets -----------------------------------------------------------------------------------------------------------------
+
+// ticket departments
+Route::get('ticket_departments', [AdminTicketDepartmentsController::class, 'getTicketDepartments'])->name('ticket_departments.get')
+    ->middleware('ApiPermission:tickets-departments');
+Route::post('ticket_department', [AdminTicketDepartmentsController::class, 'postTicketDepartment'])->name('ticket_department.post')
+    ->middleware('ApiPermission:tickets-departments');
+Route::get('ticket_department/{uuid}', [AdminTicketDepartmentsController::class, 'getTicketDepartment'])->name('ticket_department.get')
+    ->middleware('ApiPermission:tickets-departments');
+Route::put('ticket_department/{uuid}', [AdminTicketDepartmentsController::class, 'putTicketDepartment'])->name('ticket_department.put')
+    ->middleware('ApiPermission:tickets-departments');
+Route::delete('ticket_department/{uuid}', [AdminTicketDepartmentsController::class, 'deleteTicketDepartment'])->name('ticket_department.delete')
+    ->middleware('ApiPermission:tickets-departments');
+Route::get('ticket_departments/select', [AdminTicketDepartmentsController::class, 'getTicketDepartmentsSelect'])->name('ticket_departments.select.get');
+Route::post('ticket_department/{uuid}/test_mail', [AdminTicketDepartmentsController::class, 'testMailConnection'])->name('ticket_department.test_mail.post')
+    ->middleware('ApiPermission:tickets-departments');
+
+// ticket statuses
+Route::get('ticket_statuses', [AdminTicketStatusesController::class, 'getTicketStatuses'])->name('ticket_statuses.get')
+    ->middleware('ApiPermission:tickets-statuses');
+Route::post('ticket_status', [AdminTicketStatusesController::class, 'postTicketStatus'])->name('ticket_status.post')
+    ->middleware('ApiPermission:tickets-statuses');
+Route::get('ticket_status/{uuid}', [AdminTicketStatusesController::class, 'getTicketStatus'])->name('ticket_status.get')
+    ->middleware('ApiPermission:tickets-statuses');
+Route::put('ticket_status/{uuid}', [AdminTicketStatusesController::class, 'putTicketStatus'])->name('ticket_status.put')
+    ->middleware('ApiPermission:tickets-statuses');
+Route::delete('ticket_status/{uuid}', [AdminTicketStatusesController::class, 'deleteTicketStatus'])->name('ticket_status.delete')
+    ->middleware('ApiPermission:tickets-statuses');
+Route::get('ticket_statuses/select', [AdminTicketStatusesController::class, 'getTicketStatusesSelect'])->name('ticket_statuses.select.get');
+
+// tickets
+Route::get('tickets', [AdminTicketsController::class, 'getTickets'])->name('tickets.get')
+    ->middleware('ApiPermission:tickets-view');
+Route::post('ticket', [AdminTicketsController::class, 'postTicket'])->name('ticket.post')
+    ->middleware('ApiPermission:tickets-create');
+Route::get('ticket/{uuid}', [AdminTicketsController::class, 'getTicket'])->name('ticket.get')
+    ->middleware('ApiPermission:tickets-view');
+Route::put('ticket/{uuid}', [AdminTicketsController::class, 'putTicket'])->name('ticket.put')
+    ->middleware('ApiPermission:tickets-edit');
+Route::delete('ticket/{uuid}', [AdminTicketsController::class, 'deleteTicket'])->name('ticket.delete')
+    ->middleware('ApiPermission:tickets-delete');
+Route::post('ticket/{uuid}/reply', [AdminTicketsController::class, 'postTicketReply'])->name('ticket.reply.post')
+    ->middleware('ApiPermission:tickets-edit');
+Route::post('ticket/{uuid}/note', [AdminTicketsController::class, 'postTicketNote'])->name('ticket.note.post')
+    ->middleware('ApiPermission:tickets-edit');
+Route::post('ticket/{uuid}/merge', [AdminTicketsController::class, 'postTicketMerge'])->name('ticket.merge.post')
+    ->middleware('ApiPermission:tickets-edit');
+Route::get('ticket/{uuid}/replies', [AdminTicketsController::class, 'getTicketReplies'])->name('ticket.replies.get')
+    ->middleware('ApiPermission:tickets-view');
+Route::put('ticket_reply/{uuid}', [AdminTicketsController::class, 'putTicketReply'])->name('ticket_reply.put')
+    ->middleware('ApiPermission:tickets-edit');
+Route::post('ticket_reply/attachment', [AdminTicketsController::class, 'postTicketReplyAttachment'])->name('ticket_reply.attachment.post')
+    ->middleware('ApiPermission:tickets-edit');
+Route::delete('ticket_reply/attachment/{uuid}', [AdminTicketsController::class, 'deleteTicketReplyAttachment'])->name('ticket_reply.attachment.delete')
+    ->middleware('ApiPermission:tickets-edit');
+Route::post('ticket/{uuid}/publish', [AdminTicketsController::class, 'publishTicket'])->name('ticket.publish.post')
+    ->middleware('ApiPermission:tickets-create');
+Route::post('ticket/attachment', [AdminTicketsController::class, 'postTicketAttachment'])->name('ticket.attachment.post')
+    ->middleware('ApiPermission:tickets-edit');
+Route::delete('ticket/attachment/{uuid}', [AdminTicketsController::class, 'deleteTicketAttachment'])->name('ticket.attachment.delete')
+    ->middleware('ApiPermission:tickets-edit');
+Route::get('ticket/attachment/{uuid}', [AdminTicketsController::class, 'getTicketReplyAttachmentDownload'])->name('ticket.attachment.get')
+    ->middleware('ApiPermission:tickets-view');
+Route::get('ticket/{uuid}/activity', [AdminTicketsController::class, 'getTicketActivity'])->name('ticket.activity.get')
+    ->middleware('ApiPermission:tickets-view');
+Route::post('tickets/bulk_action', [AdminTicketsController::class, 'postBulkAction'])->name('tickets.bulk_action.post')
+    ->middleware('ApiPermission:tickets-edit');
+
+// ticket canned responses
+Route::get('ticket_canned_responses', [\App\Http\Controllers\Admin\AdminTicketCannedResponsesController::class, 'getTicketCannedResponses'])->name('ticket_canned_responses.get')
+    ->middleware('ApiPermission:tickets-edit');
+Route::post('ticket_canned_response', [\App\Http\Controllers\Admin\AdminTicketCannedResponsesController::class, 'postTicketCannedResponse'])->name('ticket_canned_response.post')
+    ->middleware('ApiPermission:tickets-edit');
+Route::get('ticket_canned_response/{uuid}', [\App\Http\Controllers\Admin\AdminTicketCannedResponsesController::class, 'getTicketCannedResponse'])->name('ticket_canned_response.get')
+    ->middleware('ApiPermission:tickets-edit');
+Route::put('ticket_canned_response/{uuid}', [\App\Http\Controllers\Admin\AdminTicketCannedResponsesController::class, 'putTicketCannedResponse'])->name('ticket_canned_response.put')
+    ->middleware('ApiPermission:tickets-edit');
+Route::delete('ticket_canned_response/{uuid}', [\App\Http\Controllers\Admin\AdminTicketCannedResponsesController::class, 'deleteTicketCannedResponse'])->name('ticket_canned_response.delete')
+    ->middleware('ApiPermission:tickets-edit');
+Route::get('ticket_canned_responses/select', [\App\Http\Controllers\Admin\AdminTicketCannedResponsesController::class, 'getTicketCannedResponsesSelect'])->name('ticket_canned_responses.select.get');
+
+// ticket email blacklist
+Route::get('ticket_email_blacklist', [\App\Http\Controllers\Admin\AdminTicketEmailBlacklistController::class, 'getTicketEmailBlacklist'])->name('ticket_email_blacklist.get')
+    ->middleware('ApiPermission:tickets-edit');
+Route::post('ticket_email_blacklist', [\App\Http\Controllers\Admin\AdminTicketEmailBlacklistController::class, 'postTicketEmailBlacklist'])->name('ticket_email_blacklist.post')
+    ->middleware('ApiPermission:tickets-edit');
+Route::delete('ticket_email_blacklist/{uuid}', [\App\Http\Controllers\Admin\AdminTicketEmailBlacklistController::class, 'deleteTicketEmailBlacklist'])->name('ticket_email_blacklist.delete')
+    ->middleware('ApiPermission:tickets-edit');
+
+// client tickets (admin viewing client's tickets)
+Route::get('client/{uuid}/tickets', [AdminTicketsController::class, 'getClientTickets'])->name('client.tickets.get')
+    ->middleware('ApiPermission:tickets-view');
 
 // certificate_authorities --------------------------------------------------------------------------------------------------------
 Route::get('certificate_authorities', [AdminSslManagerController::class, 'getCertificateAuthorities'])->name('certificate_authorities.get')
@@ -331,6 +481,10 @@ Route::get('ssl_certificate/{uuid}/generate_csr', [AdminSslManagerController::cl
 Route::put('ssl_certificate/{uuid}/status', [AdminSslManagerController::class, 'putSslCertificateStatus'])->name('ssl_certificate.status.put')
     ->middleware('ApiPermission:ssl-manager-ssl-certificates');
 
+Route::delete('ssl_certificates/delete_expired', [AdminSslManagerController::class, 'deleteSslCertificatesExpired'])->name('ssl_certificates.delete_expired.delete')
+    ->middleware('ApiPermission:ssl-manager-ssl-certificates');
+Route::delete('ssl_certificates/delete_draft', [AdminSslManagerController::class, 'deleteSslCertificatesDraft'])->name('ssl_certificates.delete_draft.delete')
+    ->middleware('ApiPermission:ssl-manager-ssl-certificates');
 
 // SSL Manager
 Route::get('certificate_authority_modules/select',
@@ -340,7 +494,6 @@ Route::get('certificate_authority_modules/select',
 Route::get('certificate_authorities/select',
     [AdminSslManagerController::class, 'getCertificateAuthoritiesSelect'])->name('certificate_authorities.select.get')
     ->middleware('ApiPermission:ssl-manager-ssl-certificates');
-
 
 // general_settings ----------------------------------------------------------------------------------------------------
 Route::get('general_settings', [AdminSettingsController::class, 'getGeneralSettings'])->name('general_settings.get')
@@ -373,65 +526,73 @@ Route::post('client', [AdminClientsController::class, 'postClient'])->name('clie
     ->middleware('WebPermission:clients-create');
 Route::put('client/{uuid}', [AdminClientsController::class, 'putClient'])->name('client.put')
     ->middleware('WebPermission:clients-edit');
-Route::delete('client/{uuid}', [AdminClientsController::class, 'deleteClient'])->name('client.delete')
-    ->middleware('WebPermission:clients-delete');
+// Route::delete('client/{uuid}', [AdminClientsController::class, 'deleteClient'])->name('client.delete')
+//    ->middleware('WebPermission:clients-delete');
 
 Route::get('client/{uuid}/addresses',
-    [AdminClientsController::class, 'getClientAddresses'])->name('client.addresses.get')
+    [AdminClientAddressesController::class, 'getClientAddresses'])->name('client.addresses.get')
     ->middleware('WebPermission:clients-view');
+
 Route::post('client/{client_uuid}/address',
-    [AdminClientsController::class, 'postClientAddress'])->name('client.address.post')
+    [AdminClientAddressesController::class, 'postClientAddress'])->name('client.address.post')
     ->middleware('WebPermission:clients-edit');
 Route::put('client/{client_uuid}/address/{address_uuid}',
-    [AdminClientsController::class, 'putClientAddress'])->name('client.address.put')
+    [AdminClientAddressesController::class, 'putClientAddress'])->name('client.address.put')
     ->middleware('WebPermission:clients-edit');
 Route::get('client/{client_uuid}/address/{address_uuid}',
-    [AdminClientsController::class, 'getClientAddress'])->name('client.address.get')
+    [AdminClientAddressesController::class, 'getClientAddress'])->name('client.address.get')
     ->middleware('WebPermission:clients-edit');
 Route::delete('client/{client_uuid}/address/{address_uuid}',
-    [AdminClientsController::class, 'deleteClientAddress'])->name('client.address.delete')
+    [AdminClientAddressesController::class, 'deleteClientAddress'])->name('client.address.delete')
     ->middleware('WebPermission:clients-edit');
 
-Route::get('client/{uuid}/users', [AdminClientsController::class, 'getClientUsers'])->name('client.users.get')
+Route::get('client/{uuid}/users', [AdminClientUsersController::class, 'getClientUsers'])->name('client.users.get')
     ->middleware('WebPermission:clients-view');
 Route::post('client/{uuid}/user/associate',
-    [AdminClientsController::class, 'postClientUserAssociate'])->name('client.user.associate.post')
+    [AdminClientUsersController::class, 'postClientUserAssociate'])->name('client.user.associate.post')
     ->middleware('WebPermission:clients-edit');
 Route::get('client/{client_uuid}/user/{user_uuid}',
-    [AdminClientsController::class, 'getClientUser'])->name('client.user.get')
+    [AdminClientUsersController::class, 'getClientUser'])->name('client.user.get')
     ->middleware('WebPermission:clients-edit');
 Route::put('client/{client_uuid}/user/{user_uuid}',
-    [AdminClientsController::class, 'putClientUser'])->name('client.user.put')
+    [AdminClientUsersController::class, 'putClientUser'])->name('client.user.put')
     ->middleware('WebPermission:clients-edit');
 Route::delete('client/{client_uuid}/user/{user_uuid}',
-    [AdminClientsController::class, 'deleteClientUserAssociate'])->name('client.user.delete')
+    [AdminClientUsersController::class, 'deleteClientUserAssociate'])->name('client.user.delete')
     ->middleware('WebPermission:clients-edit');
 
-Route::get('client/{uuid}/services', [AdminClientsController::class, 'getClientServices'])->name('client.services.get')
+Route::get('client/{uuid}/services', [AdminClientFinanceController::class, 'getClientServices'])->name('client.services.get')
     ->middleware('WebPermission:clients-view');
 
 Route::get('client/{uuid}/services/select',
-    [AdminClientsController::class, 'getServicesSelect'])->name('client.services.select.get')
+    [AdminClientFinanceController::class, 'getServicesSelect'])->name('client.services.select.get')
     ->middleware('WebPermission:clients-view');
 
 Route::get('client/{uuid}/transactions',
-    [AdminClientsController::class, 'getClientTransactions'])->name('client.transactions.get')
-    ->middleware('WebPermission:finance-view');
-Route::get('client/{uuid}/transaction/{t_uuid}',
-    [AdminClientsController::class, 'getClientTransaction'])->name('client.transaction.get')
+    [AdminClientFinanceController::class, 'getClientTransactions'])->name('client.transactions.get')
     ->middleware('WebPermission:finance-view');
 Route::post('client/{uuid}/transaction',
-    [AdminClientsController::class, 'postClientTransaction'])->name('client.transaction.post')
+    [AdminClientFinanceController::class, 'postClientTransaction'])->name('client.transaction.post')
     ->middleware('WebPermission:finance-edit');
 
-Route::get('client/{uuid}/invoices', [AdminClientsController::class, 'getClientInvoices'])->name('client.invoices.get')
+Route::get('client/{uuid}/invoices', [AdminClientFinanceController::class, 'getClientInvoices'])->name('client.invoices.get')
     ->middleware('WebPermission:finance-view');
-// Route::get('client/{uuid}/invoice/{i_uuid}', [AdminClientsController::class, 'getClientInvoice'])->name('client.invoice.get')
-//    ->middleware('WebPermission:finance-view');
+
+Route::get('client/{uuid}/notifications', [AdminClientActivityController::class, 'getClientNotifications'])->name('client.notifications.get')
+    ->middleware('WebPermission:notification-history-view');
+
+Route::get('client/{uuid}/activity_logs', [AdminClientActivityController::class, 'getClientActivityLogs'])->name('client.activity_logs.get')
+    ->middleware('WebPermission:activity-log-view');
+
 Route::post('client/{uuid}/invoice/proforma/add_funds', [
-    AdminClientsController::class, 'postClientInvoiceProformaAddFunds',
+    AdminClientFinanceController::class, 'postClientInvoiceProformaAddFunds',
 ])->name('client.invoice.proforma.add_funds.post')
     ->middleware('WebPermission:finance-edit');
+
+Route::post('client/{uuid}/invoice/standalone', [
+    AdminClientFinanceController::class, 'postClientInvoiceStandalone',
+])->name('client.invoice.standalone.post')
+    ->middleware('WebPermission:finance-create');
 
 Route::get('client/{uuid}/summary/widgets',
     [AdminWidgetsController::class, 'getClientSummaryWidgets'])->name('client.summary.widgets.get');
@@ -472,6 +633,20 @@ Route::post('add_ons/module/{uuid}/update',
 Route::delete('add_ons/module/{uuid}/delete',
     [AdminAddOnsController::class, 'postModuleDelete'])->name('add_ons.module.delete.delete')
     ->middleware('WebPermission:add-ons-modules-management');
+
+// API Documentation ---------------------------------------------------------------------------------------------------
+
+Route::get('api_documentations/admin/', [AdminApiDocumentationController::class, 'getAdminApiDocumentations'])->name('api_documentations.admin.get')
+    ->middleware('WebPermission:api-documentation-admin');
+
+Route::get('api_documentation/admin/{module}/{name}', [AdminApiDocumentationController::class, 'getAdminApiDocumentation'])->name('api_documentation.admin.swagger.get')
+    ->middleware('WebPermission:api-documentation-admin');
+
+Route::get('api_documentations/client/', [AdminApiDocumentationController::class, 'getClientApiDocumentations'])->name('api_documentations.client.get')
+    ->middleware('WebPermission:api-documentation-client');
+
+Route::get('api_documentation/client/{module}/{name}', [AdminApiDocumentationController::class, 'getClientApiDocumentation'])->name('api_documentation.client.swagger.get')
+    ->middleware('WebPermission:api-documentation-client');
 
 // Products ------------------------------------------------------------------------------------------------------------
 Route::get('products', [AdminProductsController::class, 'getProducts'])->name('products.get')
@@ -536,35 +711,35 @@ Route::get('product/{uuid}/modules/select',
     ->middleware('WebPermission:products-management');
 
 // Product groups ------------------------------------------------------------------------------------------------------
-Route::get('product_groups', [AdminProductsController::class, 'getProductGroups'])->name('product_groups.get')
+Route::get('product_groups', [AdminProductGroupsController::class, 'getProductGroups'])->name('product_groups.get')
     ->middleware('WebPermission:product-groups-management');
 Route::post('product_groups/update_order',
-    [AdminProductsController::class, 'postProductGroupsUpdateOrder'])->name('product_groups.update_order.post')
+    [AdminProductGroupsController::class, 'postProductGroupsUpdateOrder'])->name('product_groups.update_order.post')
     ->middleware('WebPermission:product-groups-management');
-Route::post('product_group', [AdminProductsController::class, 'postProductGroup'])->name('product_group.post')
+Route::post('product_group', [AdminProductGroupsController::class, 'postProductGroup'])->name('product_group.post')
     ->middleware('WebPermission:product-groups-management');
-Route::get('product_group/{uuid}', [AdminProductsController::class, 'getProductGroup'])->name('product_group.get')
+Route::get('product_group/{uuid}', [AdminProductGroupsController::class, 'getProductGroup'])->name('product_group.get')
     ->middleware('WebPermission:product-groups-management');
-Route::put('product_group/{uuid}', [AdminProductsController::class, 'putProductGroup'])->name('product_group.put')
+Route::put('product_group/{uuid}', [AdminProductGroupsController::class, 'putProductGroup'])->name('product_group.put')
     ->middleware('WebPermission:product-groups-management');
 Route::delete('product_group/{uuid}',
-    [AdminProductsController::class, 'deleteProductGroup'])->name('product_group.delete')
+    [AdminProductGroupsController::class, 'deleteProductGroup'])->name('product_group.delete')
     ->middleware('WebPermission:product-groups-management');
 Route::get('product_group/{uuid}/products',
-    [AdminProductsController::class, 'getProductGroupProducts'])->name('product_group_products.get')
+    [AdminProductGroupsController::class, 'getProductGroupProducts'])->name('product_group_products.get')
     ->middleware('WebPermission:product-groups-management');
 Route::get('product_group/{uuid}/products/select',
-    [AdminProductsController::class, 'getProductGroupProductsSelect'])->name('product_group_products.select.get')
+    [AdminProductGroupsController::class, 'getProductGroupProductsSelect'])->name('product_group_products.select.get')
     ->middleware('WebPermission:product-groups-management');
 Route::post('product_group/{uuid}/product',
-    [AdminProductsController::class, 'postProductGroupProduct'])->name('product_group_product.post')
+    [AdminProductGroupsController::class, 'postProductGroupProduct'])->name('product_group_product.post')
     ->middleware('WebPermission:product-groups-management');
 Route::post('product_group/{uuid}/products/update_order', [
-    AdminProductsController::class, 'postProductGroupProductsUpdateOrder',
+    AdminProductGroupsController::class, 'postProductGroupProductsUpdateOrder',
 ])->name('product_group_products.update_order.post')
     ->middleware('WebPermission:product-groups-management');
 Route::delete('product_group/{uuid}/product/{p_uuid}',
-    [AdminProductsController::class, 'deleteProductGroupProduct'])->name('product_group_product.delete')
+    [AdminProductGroupsController::class, 'deleteProductGroupProduct'])->name('product_group_product.delete')
     ->middleware('WebPermission:product-groups-management');
 
 Route::post('product_group/{uuid}/product_option_group/update_order', [
@@ -573,103 +748,109 @@ Route::post('product_group/{uuid}/product_option_group/update_order', [
     ->middleware('WebPermission:products-management');
 
 Route::get('product_group/list_templates/select',
-    [AdminProductsController::class, 'getListTemplatesSelect'])->name('product_group.list_templates.select.get')
+    [AdminProductGroupsController::class, 'getListTemplatesSelect'])->name('product_group.list_templates.select.get')
     ->middleware('WebPermission:products-management');
 Route::get('product_group/order_templates/select',
-    [AdminProductsController::class, 'getOrderTemplatesSelect'])->name('product_group.order_templates.select.get')
+    [AdminProductGroupsController::class, 'getOrderTemplatesSelect'])->name('product_group.order_templates.select.get')
     ->middleware('WebPermission:products-management');
 Route::get('product_group/manage_templates/select',
-    [AdminProductsController::class, 'getManageTemplatesSelect'])->name('product_group.manage_templates.select.get')
+    [AdminProductGroupsController::class, 'getManageTemplatesSelect'])->name('product_group.manage_templates.select.get')
+    ->middleware('WebPermission:products-management');
+Route::get('product_group/upgrade_templates/select',
+    [AdminProductGroupsController::class, 'getUpgradeTemplatesSelect'])->name('product_group.upgrade_templates.select.get')
+    ->middleware('WebPermission:products-management');
+Route::get('product_group/proration_templates/select',
+    [AdminProductGroupsController::class, 'getProrationTemplatesSelect'])->name('product_group.proration_templates.select.get')
     ->middleware('WebPermission:products-management');
 
 // Product attribute group ---------------------------------------------------------------------------------------------
 Route::get('product_attribute_groups',
-    [AdminProductsController::class, 'getProductAttributeGroups'])->name('product_attribute_groups.get')
+    [AdminProductAttributesController::class, 'getProductAttributeGroups'])->name('product_attribute_groups.get')
     ->middleware('WebPermission:product-attributes-management');
 Route::post('product_attribute_group',
-    [AdminProductsController::class, 'postProductAttributeGroup'])->name('product_attribute_group.post')
+    [AdminProductAttributesController::class, 'postProductAttributeGroup'])->name('product_attribute_group.post')
     ->middleware('WebPermission:product-groups-management');
 Route::get('product_attribute_group/{uuid}',
-    [AdminProductsController::class, 'getProductAttributeGroup'])->name('product_attribute_group.get')
+    [AdminProductAttributesController::class, 'getProductAttributeGroup'])->name('product_attribute_group.get')
     ->middleware('WebPermission:product-attributes-management');
 Route::put('product_attribute_group/{uuid}',
-    [AdminProductsController::class, 'putProductAttributeGroup'])->name('product_attribute_group.put')
+    [AdminProductAttributesController::class, 'putProductAttributeGroup'])->name('product_attribute_group.put')
     ->middleware('WebPermission:product-attributes-management');
 Route::delete('product_attribute_group/{uuid}',
-    [AdminProductsController::class, 'deleteProductAttributeGroup'])->name('product_attribute_group.delete')
+    [AdminProductAttributesController::class, 'deleteProductAttributeGroup'])->name('product_attribute_group.delete')
     ->middleware('WebPermission:product-attributes-management');
 
 // Product attribute ---------------------------------------------------------------------------------------------------
 Route::get('product_attribute_group/{uuid}/product_attributes', [
-    AdminProductsController::class, 'getProductAttributeGroupProductAttributes',
+    AdminProductAttributesController::class, 'getProductAttributeGroupProductAttributes',
 ])->name('product_attribute_group.product_attributes.get')
     ->middleware('WebPermission:product-attributes-management');
 Route::post('product_attribute_group/{uuid}/product_attribute', [
-    AdminProductsController::class, 'postProductAttributeGroupProductAttribute',
+    AdminProductAttributesController::class, 'postProductAttributeGroupProductAttribute',
 ])->name('product_attribute_group.product_attribute.post')
     ->middleware('WebPermission:product-groups-management');
 Route::get('product_attribute/{uuid}',
-    [AdminProductsController::class, 'getProductAttribute'])->name('product_attribute.get')
+    [AdminProductAttributesController::class, 'getProductAttribute'])->name('product_attribute.get')
     ->middleware('WebPermission:product-attributes-management');
 Route::put('product_attribute/{uuid}',
-    [AdminProductsController::class, 'putProductAttribute'])->name('product_attribute.put')
+    [AdminProductAttributesController::class, 'putProductAttribute'])->name('product_attribute.put')
     ->middleware('WebPermission:product-attributes-management');
 Route::delete('product_attribute/{uuid}',
-    [AdminProductsController::class, 'deleteProductAttribute'])->name('product_attribute.delete')
+    [AdminProductAttributesController::class, 'deleteProductAttribute'])->name('product_attribute.delete')
     ->middleware('WebPermission:product-attributes-management');
 
 // Product option group ---------------------------------------------------------------------------------------------
 Route::get('product_option_groups',
-    [AdminProductsController::class, 'getProductOptionGroups'])->name('product_option_groups.get')
+    [AdminProductOptionsController::class, 'getProductOptionGroups'])->name('product_option_groups.get')
     ->middleware('WebPermission:product-options-management');
 Route::post('product_option_group',
-    [AdminProductsController::class, 'postProductOptionGroup'])->name('product_option_group.post')
+    [AdminProductOptionsController::class, 'postProductOptionGroup'])->name('product_option_group.post')
     ->middleware('WebPermission:product-groups-management');
 Route::get('product_option_group/{uuid}',
-    [AdminProductsController::class, 'getProductOptionGroup'])->name('product_option_group.get')
+    [AdminProductOptionsController::class, 'getProductOptionGroup'])->name('product_option_group.get')
     ->middleware('WebPermission:product-options-management');
 Route::put('product_option_group/{uuid}',
-    [AdminProductsController::class, 'putProductOptionGroup'])->name('product_option_group.put')
+    [AdminProductOptionsController::class, 'putProductOptionGroup'])->name('product_option_group.put')
     ->middleware('WebPermission:product-options-management');
 Route::delete('product_option_group/{uuid}',
-    [AdminProductsController::class, 'deleteProductOptionGroup'])->name('product_option_group.delete')
+    [AdminProductOptionsController::class, 'deleteProductOptionGroup'])->name('product_option_group.delete')
     ->middleware('WebPermission:product-options-management');
 
 // Product option ---------------------------------------------------------------------------------------------------
 Route::get('product_option_group/{uuid}/product_options', [
-    AdminProductsController::class, 'getProductOptionGroupProductOptions',
+    AdminProductOptionsController::class, 'getProductOptionGroupProductOptions',
 ])->name('product_option_group.product_options.get')
     ->middleware('WebPermission:product-options-management');
 Route::post('product_option_group/{uuid}/product_option', [
-    AdminProductsController::class, 'postProductOptionGroupProductOption',
+    AdminProductOptionsController::class, 'postProductOptionGroupProductOption',
 ])->name('product_option_group.product_option.post')
     ->middleware('WebPermission:product-groups-management');
-Route::get('product_option/{uuid}', [AdminProductsController::class, 'getProductOption'])->name('product_option.get')
+Route::get('product_option/{uuid}', [AdminProductOptionsController::class, 'getProductOption'])->name('product_option.get')
     ->middleware('WebPermission:product-options-management');
-Route::put('product_option/{uuid}', [AdminProductsController::class, 'putProductOption'])->name('product_option.put')
+Route::put('product_option/{uuid}', [AdminProductOptionsController::class, 'putProductOption'])->name('product_option.put')
     ->middleware('WebPermission:product-options-management');
 Route::delete('product_option/{uuid}',
-    [AdminProductsController::class, 'deleteProductOption'])->name('product_option.delete')
+    [AdminProductOptionsController::class, 'deleteProductOption'])->name('product_option.delete')
     ->middleware('WebPermission:product-options-management');
 
 Route::get('product_option/{uuid}/price',
-    [AdminProductsController::class, 'getProductOptionPrices'])->name('product_option.prices.get')
+    [AdminProductOptionsController::class, 'getProductOptionPrices'])->name('product_option.prices.get')
     ->middleware('WebPermission:product-options-management');
 Route::get('product_option/{uuid}/price/{p_uuid}',
-    [AdminProductsController::class, 'getProductOptionPrice'])->name('product_option.price.get')
+    [AdminProductOptionsController::class, 'getProductOptionPrice'])->name('product_option.price.get')
     ->middleware('WebPermission:product-options-management');
 Route::post('product_option/{uuid}/price',
-    [AdminProductsController::class, 'postProductOptionPrice'])->name('product_option.price.post')
+    [AdminProductOptionsController::class, 'postProductOptionPrice'])->name('product_option.price.post')
     ->middleware('WebPermission:product-options-management');
 Route::put('product_option/{uuid}/price',
-    [AdminProductsController::class, 'putProductOptionPrice'])->name('product_option.price.put')
+    [AdminProductOptionsController::class, 'putProductOptionPrice'])->name('product_option.price.put')
     ->middleware('WebPermission:product-options-management');
 Route::delete('product_option/{uuid}/price/{p_uuid}',
-    [AdminProductsController::class, 'deleteProductOptionPrice'])->name('product_option.price.delete')
+    [AdminProductOptionsController::class, 'deleteProductOptionPrice'])->name('product_option.price.delete')
     ->middleware('WebPermission:product-options-management');
 
 Route::post('product_options/update_order',
-    [AdminProductsController::class, 'postProductOptionsUpdateOrder'])->name('product_options.update_order.post')
+    [AdminProductOptionsController::class, 'postProductOptionsUpdateOrder'])->name('product_options.update_order.post')
     ->middleware('WebPermission:product-options-management');
 
 // Service -------------------------------------------------------------------------------------------------------------
@@ -685,6 +866,8 @@ Route::post('service/{uuid}/action', [AdminServicesController::class, 'postServi
     ->middleware('WebPermission:clients-edit');
 Route::put('service/{uuid}/status', [AdminServicesController::class, 'putServiceStatus'])->name('service.status.put')
     ->middleware('WebPermission:clients-edit');
+Route::put('service/{uuid}/billing_mode', [AdminServicesController::class, 'putServiceBillingMode'])->name('service.billing_mode.put')
+    ->middleware('WebPermission:clients-edit');
 Route::get('service/{uuid}/module', [AdminServicesController::class, 'getServiceModule'])->name('service.module.get')
     ->middleware('WebPermission:clients-edit');
 
@@ -693,93 +876,114 @@ Route::get('product_option_groups/by_product',
     ->middleware('WebPermission:clients-edit');
 
 // Finance -------------------------------------------------------------------------------------------------------------
-Route::get('transactions', [AdminFinanceController::class, 'getTransactions'])->name('transactions.get')
+// Transactions
+Route::get('transactions', [AdminTransactionsController::class, 'getTransactions'])->name('transactions.get')
     ->middleware('WebPermission:finance-view');
 
-Route::get('home_companies', [AdminFinanceController::class, 'getHomeCompanies'])->name('home_companies.get')
+// Home Companies
+Route::get('home_companies', [AdminHomeCompaniesController::class, 'getHomeCompanies'])->name('home_companies.get')
     ->middleware('WebPermission:finance-view');
-Route::get('home_company/{uuid}', [AdminFinanceController::class, 'getHomeCompany'])->name('home_company.get')
+Route::get('home_company/{uuid}', [AdminHomeCompaniesController::class, 'getHomeCompany'])->name('home_company.get')
     ->middleware('WebPermission:finance-view');
-Route::post('home_company', [AdminFinanceController::class, 'postHomeCompany'])->name('home_company.post')
+Route::post('home_company', [AdminHomeCompaniesController::class, 'postHomeCompany'])->name('home_company.post')
     ->middleware('WebPermission:finance-create');
-Route::put('home_company/{uuid}', [AdminFinanceController::class, 'putHomeCompany'])->name('home_company.put')
+Route::put('home_company/{uuid}', [AdminHomeCompaniesController::class, 'putHomeCompany'])->name('home_company.put')
     ->middleware('WebPermission:finance-edit');
-Route::delete('home_company/{uuid}', [AdminFinanceController::class, 'deleteHomeCompany'])->name('home_company.delete')
+Route::delete('home_company/{uuid}', [AdminHomeCompaniesController::class, 'deleteHomeCompany'])->name('home_company.delete')
     ->middleware('WebPermission:finance-delete');
+
+// Payment Gateways
 Route::get('payment_modules/select',
-    [AdminFinanceController::class, 'getPaymentModulesSelect'])->name('payment_modules.select.get')
+    [AdminPaymentGatewaysController::class, 'getPaymentModulesSelect'])->name('payment_modules.select.get')
     ->middleware('WebPermission:finance-edit');
 Route::get('home_company/{uuid}/payment_gateways',
-    [AdminFinanceController::class, 'getHomeCompanyPaymentGateways'])->name('home_company.payment_gateways.get')
+    [AdminPaymentGatewaysController::class, 'getHomeCompanyPaymentGateways'])->name('home_company.payment_gateways.get')
     ->middleware('WebPermission:finance-view');
 Route::post('home_company/{uuid}/payment_gateway',
-    [AdminFinanceController::class, 'postHomeCompanyPaymentGateway'])->name('home_company.payment_gateway.post')
+    [AdminPaymentGatewaysController::class, 'postHomeCompanyPaymentGateway'])->name('home_company.payment_gateway.post')
     ->middleware('WebPermission:finance-create');
 
+// Invoice Templates
 Route::get('home_company/templates/{type}',
-    [AdminFinanceController::class, 'getHomeCompanyInvoiceTemplates'])->name('home_company.invoice_templates.get')
+    [AdminHomeCompaniesController::class, 'getHomeCompanyInvoiceTemplates'])->name('home_company.invoice_templates.get')
     ->middleware('WebPermission:finance-view');
 Route::get('home_company/template/{type}',
-    [AdminFinanceController::class, 'getHomeCompanyInvoiceTemplateContent'])->name('home_company.invoice_template.get')
+    [AdminHomeCompaniesController::class, 'getHomeCompanyInvoiceTemplateContent'])->name('home_company.invoice_template.get')
     ->middleware('WebPermission:finance-create');
 
-Route::get('tax_rules', [AdminFinanceController::class, 'getTaxRules'])->name('tax_rules.get')
+// Tax Rules
+Route::get('tax_rules', [AdminTaxRulesController::class, 'getTaxRules'])->name('tax_rules.get')
     ->middleware('WebPermission:finance-view');
-Route::get('tax_rule/{uuid}', [AdminFinanceController::class, 'getTaxRule'])->name('tax_rule.get')
+Route::get('tax_rule/{uuid}', [AdminTaxRulesController::class, 'getTaxRule'])->name('tax_rule.get')
     ->middleware('WebPermission:finance-view');
-Route::post('tax_rule', [AdminFinanceController::class, 'postTaxRule'])->name('tax_rule.post')
+Route::post('tax_rule', [AdminTaxRulesController::class, 'postTaxRule'])->name('tax_rule.post')
     ->middleware('WebPermission:finance-create');
-Route::put('tax_rule/{uuid}', [AdminFinanceController::class, 'putTaxRule'])->name('tax_rule.put')
+Route::put('tax_rule/{uuid}', [AdminTaxRulesController::class, 'putTaxRule'])->name('tax_rule.put')
     ->middleware('WebPermission:finance-edit');
-Route::delete('tax_rule/{uuid}', [AdminFinanceController::class, 'deleteTaxRule'])->name('tax_rule.delete')
+Route::delete('tax_rule/{uuid}', [AdminTaxRulesController::class, 'deleteTaxRule'])->name('tax_rule.delete')
     ->middleware('WebPermission:finance-delete');
 
 Route::post('tax_rules/update_order',
-    [AdminFinanceController::class, 'postTaxRulesUpdateOrder'])->name('tax_rules.update_order.post')
+    [AdminTaxRulesController::class, 'postTaxRulesUpdateOrder'])->name('tax_rules.update_order.post')
     ->middleware('WebPermission:finance-edit');
-Route::post('tax_rule/eu', [AdminFinanceController::class, 'postTaxEuRules'])->name('tax_rule.eu.post')
+Route::post('tax_rule/eu', [AdminTaxRulesController::class, 'postTaxEuRules'])->name('tax_rule.eu.post')
     ->middleware('WebPermission:finance-create');
 Route::post('tax_rule/canadian',
-    [AdminFinanceController::class, 'postTaxCanadianRules'])->name('tax_rule.canadian.post')
+    [AdminTaxRulesController::class, 'postTaxCanadianRules'])->name('tax_rule.canadian.post')
     ->middleware('WebPermission:finance-create');
 
-Route::get('invoice/{uuid}', [AdminFinanceController::class, 'getInvoice'])->name('invoice.get')
+// Invoices
+Route::get('invoice/{uuid}', [AdminInvoicesController::class, 'getInvoice'])->name('invoice.get')
     ->middleware('WebPermission:finance-view');
-Route::delete('invoice/{uuid}', [AdminFinanceController::class, 'deleteInvoice'])->name('invoice.delete')
+Route::delete('invoice/{uuid}', [AdminInvoicesController::class, 'deleteInvoice'])->name('invoice.delete')
     ->middleware('WebPermission:finance-edit');
-Route::get('invoice/{uuid}/items', [AdminFinanceController::class, 'getInvoiceItems'])->name('invoice.items.get')
+Route::get('invoice/{uuid}/items', [AdminInvoicesController::class, 'getInvoiceItems'])->name('invoice.items.get')
     ->middleware('WebPermission:finance-view');
 Route::get('invoice/{uuid}/transactions',
-    [AdminFinanceController::class, 'getInvoiceTransactions'])->name('invoice.transactions.get')
+    [AdminInvoicesController::class, 'getInvoiceTransactions'])->name('invoice.transactions.get')
     ->middleware('WebPermission:finance-view');
-Route::put('invoice/{uuid}/publish', [AdminFinanceController::class, 'putInvoicePublish'])->name('invoice.publish.put')
+Route::put('invoice/{uuid}/publish', [AdminInvoicesController::class, 'putInvoicePublish'])->name('invoice.publish.put')
     ->middleware('WebPermission:finance-edit');
-Route::put('invoice/{uuid}/cancel', [AdminFinanceController::class, 'putInvoiceCancel'])->name('invoice.cancel.put')
+Route::put('invoice/{uuid}/cancel', [AdminInvoicesController::class, 'putInvoiceCancel'])->name('invoice.cancel.put')
     ->middleware('WebPermission:finance-edit');
-Route::post('invoice/{uuid}/add_payment',
-    [AdminFinanceController::class, 'postInvoiceAddPayment'])->name('invoice.add_payment.post')
+Route::put('invoice/{uuid}/to_draft', [AdminInvoicesController::class, 'putInvoiceToDraft'])->name('invoice.to_draft.put')
     ->middleware('WebPermission:finance-edit');
-Route::post('invoice/{uuid}/make_refund',
-    [AdminFinanceController::class, 'postInvoiceMakeRefund'])->name('invoice.make_refund.post')
+Route::put('invoice/{uuid}/due_date', [AdminInvoicesController::class, 'putInvoiceDueDate'])->name('invoice.due_date.put')
+    ->middleware('WebPermission:finance-edit');
+Route::post('invoice/{uuid}/resend_notification', [AdminInvoicesController::class, 'postInvoiceResendNotification'])->name('invoice.resend_notification.post')
     ->middleware('WebPermission:finance-edit');
 
-Route::get('invoice/{uuid}/pdf', [AdminFinanceController::class, 'getInvoicePdf'])->name('invoice.pdf.get')
+Route::post('invoice/{uuid}/item', [AdminInvoicesController::class, 'postInvoiceItem'])->name('invoice.item.post')
+    ->middleware('WebPermission:finance-edit');
+Route::put('invoice/{uuid}/item/{item_uuid}', [AdminInvoicesController::class, 'putInvoiceItem'])->name('invoice.item.put')
+    ->middleware('WebPermission:finance-edit');
+Route::delete('invoice/{uuid}/item/{item_uuid}', [AdminInvoicesController::class, 'deleteInvoiceItem'])->name('invoice.item.delete')
+    ->middleware('WebPermission:finance-edit');
+Route::post('invoice/{uuid}/add_payment',
+    [AdminInvoicesController::class, 'postInvoiceAddPayment'])->name('invoice.add_payment.post')
+    ->middleware('WebPermission:finance-edit');
+Route::post('invoice/{uuid}/make_refund',
+    [AdminInvoicesController::class, 'postInvoiceMakeRefund'])->name('invoice.make_refund.post')
+    ->middleware('WebPermission:finance-edit');
+
+Route::get('invoice/{uuid}/pdf', [AdminInvoicesController::class, 'getInvoicePdf'])->name('invoice.pdf.get')
     ->middleware('WebPermission:finance-view');
 
 Route::get('invoice/{uuid}/payment_gateways/select',
-    [AdminFinanceController::class, 'getInvoicePaymentGatewaysSelect'])->name('invoice.payment_gateways.select.get')
+    [AdminInvoicesController::class, 'getInvoicePaymentGatewaysSelect'])->name('invoice.payment_gateways.select.get')
     ->middleware('WebPermission:finance-view');
 
-Route::get('payment_gateway/{uuid}', [AdminFinanceController::class, 'getPaymentGateway'])->name('payment_gateway.get')
+// Payment Gateway CRUD
+Route::get('payment_gateway/{uuid}', [AdminPaymentGatewaysController::class, 'getPaymentGateway'])->name('payment_gateway.get')
     ->middleware('WebPermission:finance-view');
-Route::put('payment_gateway/{uuid}', [AdminFinanceController::class, 'putPaymentGateway'])->name('payment_gateway.put')
+Route::put('payment_gateway/{uuid}', [AdminPaymentGatewaysController::class, 'putPaymentGateway'])->name('payment_gateway.put')
     ->middleware('WebPermission:finance-edit');
 Route::delete('payment_gateway/{uuid}',
-    [AdminFinanceController::class, 'deletePaymentGateway'])->name('payment_gateway.delete')
+    [AdminPaymentGatewaysController::class, 'deletePaymentGateway'])->name('payment_gateway.delete')
     ->middleware('WebPermission:finance-edit');
 
 Route::post('payment_gateway/update_order',
-    [AdminFinanceController::class, 'postPaymentGatewayUpdateOrder'])->name('payment_gateway.update_order.post')
+    [AdminPaymentGatewaysController::class, 'postPaymentGatewayUpdateOrder'])->name('payment_gateway.update_order.post')
     ->middleware('WebPermission:finance-edit');
 
 // **********************************************************************************************************************
@@ -815,7 +1019,7 @@ Route::get('product/prices/select',
     [AdminProductsController::class, 'getProductPricesSelect'])->name('product.prices.select.get');
 
 Route::get('home_companies/select',
-    [AdminFinanceController::class, 'getHomeCompaniesSelect'])->name('home_companies.select.get');
+    [AdminHomeCompaniesController::class, 'getHomeCompaniesSelect'])->name('home_companies.select.get');
 
 Route::post('file/image/upload', [FileController::class, 'uploadImages'])->name('file.image.upload');
 Route::post('file/image/delete', [FileController::class, 'deleteImages'])->name('file.image.delete');
@@ -844,3 +1048,4 @@ try {
 }
 // Load Modules Dynamic Routes
 loadApiModulesDynamicRoutes();
+

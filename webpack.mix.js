@@ -13,4 +13,11 @@ mix.js('resources/js/app.js', 'public/js')
                 'window.jQuery': 'jquery',
             }),
         ],
+        resolve: {
+            fallback: {
+                path: require.resolve('path-browserify'),
+                fs: false,
+                os: false
+            }
+        }
     });

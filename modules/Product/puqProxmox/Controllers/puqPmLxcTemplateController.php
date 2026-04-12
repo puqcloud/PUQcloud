@@ -24,6 +24,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Modules\Product\puqProxmox\Models\PuqPmCluster;
 use Modules\Product\puqProxmox\Models\PuqPmLxcTemplate;
+use OpenApi\Attributes as OA;
 use Yajra\DataTables\DataTables;
 
 class puqPmLxcTemplateController extends Controller
@@ -35,6 +36,7 @@ class puqPmLxcTemplateController extends Controller
         return view_admin_module('Product', 'puqProxmox', 'admin_area.lxc_templates.lxc_templates', compact('title'));
     }
 
+    #[OA\Get(path: 'admin.api.Product.puqProxmox.lxc_templates.get', description: 'Returns a list of LXC templates.', summary: 'Get LXC templates list', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], responses: [new OA\Response(response: 200, description: 'LXC templates list returned successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function getLxcTemplates(Request $request): JsonResponse
     {
         $query = PuqPmLxcTemplate::query();
@@ -61,6 +63,7 @@ class puqPmLxcTemplateController extends Controller
         ], 200);
     }
 
+    #[OA\Post(path: 'admin.api.Product.puqProxmox.lxc_template.post', description: 'Creates a new LXC template.', summary: 'Create LXC template', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(required: ['name', 'url'], properties: [new OA\Property(property: 'name', type: 'string'), new OA\Property(property: 'url', type: 'string')], type: 'object')), responses: [new OA\Response(response: 200, description: 'LXC template created successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string'), new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function postLxcTemplate(Request $request): JsonResponse
     {
 
@@ -117,6 +120,7 @@ class puqPmLxcTemplateController extends Controller
         ]);
     }
 
+    #[OA\Get(path: 'admin.api.Product.puqProxmox.lxc_template.get', description: 'Returns details of a specific LXC template.', summary: 'Get LXC template details', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the LXC template', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], responses: [new OA\Response(response: 200, description: 'LXC template details returned successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function getLxcTemplate(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmLxcTemplate::find($uuid);
@@ -133,6 +137,7 @@ class puqPmLxcTemplateController extends Controller
         ]);
     }
 
+    #[OA\Put(path: 'admin.api.Product.puqProxmox.lxc_template.put', description: 'Updates a specific LXC template.', summary: 'Update LXC template', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the LXC template', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(required: ['name', 'url'], properties: [new OA\Property(property: 'name', type: 'string'), new OA\Property(property: 'url', type: 'string')], type: 'object')), responses: [new OA\Response(response: 200, description: 'LXC template updated successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string'), new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function putLxcTemplate(Request $request, $uuid): JsonResponse
     {
         Validator::extend('has_valid_extension', function ($attribute, $value, $parameters, $validator) {
@@ -184,6 +189,7 @@ class puqPmLxcTemplateController extends Controller
         ]);
     }
 
+    #[OA\Delete(path: 'admin.api.Product.puqProxmox.lxc_template.delete', description: 'Deletes a specific LXC template.', summary: 'Delete LXC template', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the LXC template', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], responses: [new OA\Response(response: 200, description: 'LXC template deleted successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string')], type: 'object'))])]
     public function deleteLxcTemplate(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmLxcTemplate::find($uuid);
@@ -213,6 +219,7 @@ class puqPmLxcTemplateController extends Controller
         ]);
     }
 
+    #[OA\Get(path: 'admin.api.Product.puqProxmox.lxc_templates.select.get', description: 'Returns LXC templates for select dropdown.', summary: 'Get LXC templates select', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], responses: [new OA\Response(response: 200, description: 'LXC templates select returned successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function getLxcTemplatesSelect(Request $request): JsonResponse
     {
         $search = $request->input('q');
@@ -241,6 +248,7 @@ class puqPmLxcTemplateController extends Controller
         ], 200);
     }
 
+    #[OA\Get(path: 'admin.api.Product.puqProxmox.lxc_template.check_lxc_template_file.get', description: 'Checks if a LXC template file is accessible.', summary: 'Check LXC template file', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the LXC template', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], responses: [new OA\Response(response: 200, description: 'Template file check result returned successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function checkLxcTemplateFile(Request $request, $uuid): JsonResponse
     {
         $template = PuqPmLxcTemplate::where('uuid', $uuid)->first();
@@ -276,6 +284,7 @@ class puqPmLxcTemplateController extends Controller
     }
 
 
+    #[OA\Get(path: 'admin.api.Product.puqProxmox.lxc_templates.sync_templates.get', description: 'Syncs LXC templates to cluster storages.', summary: 'Sync LXC templates', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], responses: [new OA\Response(response: 200, description: 'Templates syncing started successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string')], type: 'object'))])]
     public function getLxcTemplatesSyncTemplates(Request $request): JsonResponse
     {
         $models = PuqPmCluster::query()->where('disable', false)->get();
@@ -291,6 +300,7 @@ class puqPmLxcTemplateController extends Controller
         ]);
     }
 
+    #[OA\Get(path: 'admin.api.Product.puqProxmox.lxc_templates.sync_delete_templates.get', description: 'Syncs and deletes unused LXC templates from cluster storages.', summary: 'Sync and delete LXC templates', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], responses: [new OA\Response(response: 200, description: 'Templates sync-delete started successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string')], type: 'object'))])]
     public function getLxcTemplatesSyncDeleteTemplates(Request $request): JsonResponse
     {
         $models = PuqPmCluster::query()->where('disable', false)->get();

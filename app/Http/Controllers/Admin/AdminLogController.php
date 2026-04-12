@@ -15,6 +15,23 @@
  * Do not remove this header.
  */
 
+/*
+ * WEB Routes:
+ *   GET  admin_session_logs                                    -> adminSessions()               [admin.web.admin_session_logs]
+ *   GET  client_session_logs                                   -> clientSessions()              [admin.web.client_session_logs]
+ *   GET  activity_logs                                         -> activityLogs()                [admin.web.activity_logs]
+ *   GET  module_logs                                           -> moduleLogs()                  [admin.web.module_logs]
+ *
+ * API Routes:
+ *   GET  admin_session_logs                                    -> getAdminSessions()            [admin.api.admin_session_logs.get]
+ *   GET  client_session_logs                                   -> getClientSessions()           [admin.api.client_session_logs.get]
+ *   GET  activity_logs                                         -> getActivityLogs()             [admin.api.activity_logs.get]
+ *   GET  activity_log/{uuid}                                   -> getActivityLog()              [admin.api.activity_log.get]
+ *   GET  module_logs                                           -> getModuleLogs()               [admin.api.module_logs.get]
+ *   DELETE module_logs/delete_all                              -> deleteModuleLogsDeleteAll()   [admin.api.module_logs.delete_all.delete]
+ *   GET  module_log/{uuid}                                     -> getModuleLog()                [admin.api.module_log.get]
+ */
+
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
@@ -26,6 +43,7 @@ use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use OpenApi\Attributes as OA;
 use Yajra\DataTables\Facades\DataTables;
 
 class AdminLogController extends Controller
@@ -37,6 +55,25 @@ class AdminLogController extends Controller
         return view_admin('admin_session_logs.admin_session_logs', compact('title'));
     }
 
+    #[OA\Get(
+        path: 'admin.api.admin_session_logs.get',
+        description: 'Returns a DataTable list of admin session logs.',
+        summary: 'Get admin session logs',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Monitoring'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Admin session logs returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getAdminSessions(Request $request): JsonResponse
     {
         $query = AdminSessionLog::with('admin');
@@ -89,6 +126,25 @@ class AdminLogController extends Controller
         return view_admin('activity_logs.activity_logs', compact('title'));
     }
 
+    #[OA\Get(
+        path: 'admin.api.activity_logs.get',
+        description: 'Returns a DataTable list of activity logs.',
+        summary: 'Get activity logs list',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Monitoring'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Activity logs returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getActivityLogs(Request $request): JsonResponse
     {
         $query = ActivityLog::query()
@@ -165,6 +221,53 @@ class AdminLogController extends Controller
         ], 200);
     }
 
+    #[OA\Get(
+        path: 'admin.api.activity_log.get',
+        description: 'Returns detailed information about an activity log entry, including decoded old and new model data.',
+        summary: 'Get activity log entry by UUID',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Logs'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'UUID of the activity log entry',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Activity log data returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(
+                            property: 'data',
+                            properties: [
+                                new OA\Property(property: 'uuid', type: 'string', format: 'uuid'),
+                                new OA\Property(property: 'admin_uuid', type: 'string', format: 'uuid', nullable: true),
+                                new OA\Property(property: 'user_uuid', type: 'string', format: 'uuid', nullable: true),
+                                new OA\Property(property: 'client_uuid', type: 'string', format: 'uuid', nullable: true),
+                                new OA\Property(property: 'action', type: 'string'),
+                                new OA\Property(property: 'level', type: 'string'),
+                                new OA\Property(property: 'description', type: 'string', nullable: true),
+                                new OA\Property(property: 'ip_address', type: 'string', nullable: true),
+                                new OA\Property(property: 'model_type', type: 'string', nullable: true),
+                                new OA\Property(property: 'model_uuid', type: 'string', nullable: true),
+                                new OA\Property(property: 'model_old_data', type: 'string', nullable: true),
+                                new OA\Property(property: 'model_new_data', type: 'string', nullable: true),
+                                new OA\Property(property: 'created_at', type: 'string', format: 'date-time'),
+                                new OA\Property(property: 'updated_at', type: 'string', format: 'date-time'),
+                            ],
+                            type: 'object'
+                        ),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getActivityLog(Request $request, $uuid): JsonResponse
     {
         $activity_log = ActivityLog::find($uuid);
@@ -216,6 +319,25 @@ class AdminLogController extends Controller
     }
 
 
+    #[OA\Delete(
+        path: 'admin.api.module_logs.delete_all.delete',
+        description: 'Deletes all module log entries.',
+        summary: 'Delete all module logs',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Logs'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'All module logs deleted successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string', example: 'success'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function deleteModuleLogsDeleteAll(): JsonResponse
     {
         ModuleLog::query()->delete();
@@ -225,6 +347,25 @@ class AdminLogController extends Controller
         ]);
     }
 
+    #[OA\Get(
+        path: 'admin.api.module_logs.get',
+        description: 'Returns a DataTable list of module logs.',
+        summary: 'Get module logs list',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Monitoring'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Module logs returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getModuleLogs(Request $request): JsonResponse
     {
         $query = ModuleLog::query()
@@ -281,6 +422,48 @@ class AdminLogController extends Controller
         ], 200);
     }
 
+    #[OA\Get(
+        path: 'admin.api.module_log.get',
+        description: 'Returns detailed information about a module log entry, including decoded request and response data.',
+        summary: 'Get module log entry by UUID',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Logs'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'UUID of the module log entry',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Module log data returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(
+                            property: 'data',
+                            properties: [
+                                new OA\Property(property: 'uuid', type: 'string', format: 'uuid'),
+                                new OA\Property(property: 'type', type: 'string'),
+                                new OA\Property(property: 'name', type: 'string'),
+                                new OA\Property(property: 'action', type: 'string'),
+                                new OA\Property(property: 'level', type: 'string'),
+                                new OA\Property(property: 'request', type: 'string', nullable: true),
+                                new OA\Property(property: 'response', type: 'string', nullable: true),
+                                new OA\Property(property: 'created_at', type: 'string', format: 'date-time'),
+                                new OA\Property(property: 'updated_at', type: 'string', format: 'date-time'),
+                            ],
+                            type: 'object'
+                        ),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getModuleLog(Request $request, $uuid): JsonResponse
     {
         $module_log = ModuleLog::find($uuid);
@@ -340,6 +523,25 @@ class AdminLogController extends Controller
         return view_admin('client_session_logs.client_session_logs', compact('title'));
     }
 
+    #[OA\Get(
+        path: 'admin.api.client_session_logs.get',
+        description: 'Returns a DataTable list of client session logs.',
+        summary: 'Get client session logs',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Monitoring'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Client session logs returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getClientSessions(Request $request): JsonResponse
     {
         $query = ClientSessionLog::with('client', 'user');

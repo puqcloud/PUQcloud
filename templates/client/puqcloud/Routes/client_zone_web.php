@@ -20,6 +20,7 @@ use Template\Client\Controllers\AuthController;
 use Template\Client\Controllers\ClientController;
 use Template\Client\Controllers\CloudController;
 use Template\Client\Controllers\PanelController;
+use Template\Client\Controllers\TicketController;
 use Template\Client\Controllers\UserController;
 
 Route::get('/', function () {
@@ -85,7 +86,19 @@ Route::middleware('panel_web')
                 Route::get('/group/{uuid}', [CloudController::class, 'cloudProductGroup'])->name('group');
                 Route::get('/group/{uuid}/order', [CloudController::class, 'cloudProductGroupOrder'])->name('group.order');
 
+                Route::get('/service/{uuid}/upgrade', [CloudController::class, 'cloudServiceUpgrade'])->name('service.upgrade');
+                Route::get('/service/{uuid}/proration', [CloudController::class, 'cloudServiceProration'])->name('service.proration');
                 Route::get('/service/{uuid}/{tab?}', [CloudController::class, 'cloudService'])->name('service');
+            });
+
+        // Support --------------------------------------------------------------------------------------------------
+        Route::prefix('support')
+            ->name('support.')
+            ->group(function () {
+                Route::get('/tickets', [TicketController::class, 'tickets'])->name('tickets');
+                Route::get('/ticket/create', [TicketController::class, 'ticketCreate'])->name('ticket.create');
+                Route::get('/ticket/attachment/{uuid}', [TicketController::class, 'getTicketReplyAttachment'])->name('ticket.attachment.download');
+                Route::get('/ticket/{uuid}', [TicketController::class, 'ticketDetail'])->name('ticket.detail');
             });
 
     });

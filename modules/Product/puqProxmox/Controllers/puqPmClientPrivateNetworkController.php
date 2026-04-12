@@ -24,6 +24,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Modules\Product\puqProxmox\Models\PuqPmClientPrivateNetwork;
+use OpenApi\Attributes as OA;
 use Yajra\DataTables\DataTables;
 
 class puqPmClientPrivateNetworkController extends Controller
@@ -37,6 +38,7 @@ class puqPmClientPrivateNetworkController extends Controller
             compact('title'));
     }
 
+    #[OA\Get(path: 'admin.api.Product.puqProxmox.client_private_networks.get', description: 'Returns a list of client private networks.', summary: 'Get client private networks list', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], responses: [new OA\Response(response: 200, description: 'Client private networks list returned successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function getClientPrivateNetworks(Request $request): JsonResponse
     {
         $query = PuqPmClientPrivateNetwork::query()
@@ -83,6 +85,7 @@ class puqPmClientPrivateNetworkController extends Controller
         ], 200);
     }
 
+    #[OA\Post(path: 'admin.api.Product.puqProxmox.client_private_network.post', description: 'Creates a new client private network.', summary: 'Create client private network', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(required: ['name', 'client_uuid', 'type', 'bridge', 'vlan_tag', 'ipv4_network'], properties: [new OA\Property(property: 'name', type: 'string'), new OA\Property(property: 'client_uuid', type: 'string', format: 'uuid'), new OA\Property(property: 'type', type: 'string'), new OA\Property(property: 'puq_pm_cluster_group_uuid', type: 'string', format: 'uuid'), new OA\Property(property: 'bridge', type: 'string'), new OA\Property(property: 'vlan_tag', type: 'integer'), new OA\Property(property: 'ipv4_network', type: 'string')], type: 'object')), responses: [new OA\Response(response: 200, description: 'Client private network created successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string'), new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function postClientPrivateNetwork(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
@@ -196,6 +199,7 @@ class puqPmClientPrivateNetworkController extends Controller
         ]);
     }
 
+    #[OA\Delete(path: 'admin.api.Product.puqProxmox.client_private_network.delete', description: 'Deletes a specific client private network.', summary: 'Delete client private network', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the client private network', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], responses: [new OA\Response(response: 200, description: 'Client private network deleted successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string')], type: 'object'))])]
     public function deleteClientPrivateNetwork(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmClientPrivateNetwork::find($uuid);

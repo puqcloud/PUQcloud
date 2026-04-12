@@ -27,6 +27,7 @@ use App\Services\CleanupService;
 use App\Services\TranslationService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Cache;
 
 class SystemCleanup extends Command
 {
@@ -43,19 +44,27 @@ class SystemCleanup extends Command
 
     public function handle()
     {
-        CleanupService::deleteOldRecords(AdminSessionLog::class, 'time_based.admin_session_log_history');
+        $lock = Cache::lock('system:cleanup', 3600);
+        if (! $lock->get()) {
+            return;
+        }
 
-        CleanupService::deleteOldRecords(ClientSessionLog::class, 'time_based.client_session_log_history');
+        try {
+            CleanupService::deleteOldRecords(AdminSessionLog::class, 'time_based.admin_session_log_history');
 
-        CleanupService::deleteOldRecords(ActivityLog::class, 'time_based.activity_log_history');
+            CleanupService::deleteOldRecords(ClientSessionLog::class, 'time_based.client_session_log_history');
 
-        CleanupService::deleteOldRecords(ModuleLog::class, 'time_based.module_log_history');
+            CleanupService::deleteOldRecords(ActivityLog::class, 'time_based.activity_log_history');
 
-        CleanupService::deleteOldRecords(Notification::class, 'time_based.notification_history');
+            CleanupService::deleteOldRecords(ModuleLog::class, 'time_based.module_log_history');
 
-        CleanupService::deleteOldRecords(Task::class, 'time_based.completed_task_queue_history', ['status' => 'success']);
+            CleanupService::deleteOldRecords(Notification::class, 'time_based.notification_history');
 
-        CleanupService::deleteOldRecords(Task::class, 'time_based.task_queue_history');
+            CleanupService::deleteOldRecords(Task::class, 'time_based.completed_task_queue_history', ['status' => 'success']);
 
+            CleanupService::deleteOldRecords(Task::class, 'time_based.task_queue_history');
+        } finally {
+            $lock->release();
+        }
     }
 }

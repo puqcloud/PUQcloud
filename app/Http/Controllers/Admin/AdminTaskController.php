@@ -15,6 +15,15 @@
  * Do not remove this header.
  */
 
+/*
+ * WEB Routes:
+ *   GET  task_queue                                            -> taskQueue()           [admin.web.task_queue]
+ *
+ * API Routes:
+ *   GET  tasks                                                 -> getTasks()            [admin.api.tasks.get]
+ *   GET  task/{uuid}                                           -> getTask()             [admin.api.task.get]
+ */
+
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
@@ -23,6 +32,7 @@ use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use OpenApi\Attributes as OA;
 use Yajra\DataTables\DataTables;
 
 class AdminTaskController extends Controller
@@ -34,6 +44,25 @@ class AdminTaskController extends Controller
         return view_admin('task_queue.tasks', compact('title'));
     }
 
+    #[OA\Get(
+        path: 'admin.api.tasks.get',
+        description: 'Returns a DataTable list of tasks.',
+        summary: 'Get tasks list',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Tasks'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Tasks list returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getTasks(Request $request): JsonResponse
     {
         $query = Task::query()
@@ -92,6 +121,53 @@ class AdminTaskController extends Controller
         ], 200);
     }
 
+    #[OA\Get(
+        path: 'admin.api.task.get',
+        description: 'Returns detailed information about a task, including decoded input and output data.',
+        summary: 'Get task details by UUID',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Tasks'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'UUID of the task',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Task data returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(
+                            property: 'data',
+                            properties: [
+                                new OA\Property(property: 'uuid', type: 'string', format: 'uuid'),
+                                new OA\Property(property: 'job_name', type: 'string'),
+                                new OA\Property(property: 'job_id', type: 'string'),
+                                new OA\Property(property: 'queue', type: 'string'),
+                                new OA\Property(property: 'tags', type: 'string', nullable: true),
+                                new OA\Property(property: 'status', type: 'string'),
+                                new OA\Property(property: 'attempts', type: 'integer'),
+                                new OA\Property(property: 'maxTries', type: 'integer'),
+                                new OA\Property(property: 'input_data', type: 'string', nullable: true),
+                                new OA\Property(property: 'output_data', type: 'string', nullable: true),
+                                new OA\Property(property: 'added_at', type: 'string', format: 'date-time', nullable: true),
+                                new OA\Property(property: 'started_at', type: 'string', format: 'date-time', nullable: true),
+                                new OA\Property(property: 'filed_at', type: 'string', format: 'date-time', nullable: true),
+                                new OA\Property(property: 'completed_at', type: 'string', format: 'date-time', nullable: true),
+                            ],
+                            type: 'object'
+                        ),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getTask(Request $request, $uuid): JsonResponse
     {
         $task = Task::find($uuid);

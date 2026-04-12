@@ -55,6 +55,15 @@
                 </div>
 
                 <div id="product_price_data"></div>
+
+                <div id="billing_mode_selector" class="position-relative mb-3" style="display:none;">
+                    <label class="form-label">{{__('main.Billing Mode')}}</label>
+                    <select name="billing_mode" id="billing_mode" class="form-select mb-2 form-control">
+                        <option value="prepaid">{{__('main.Prepaid')}}</option>
+                        <option value="invoice">{{__('main.Invoice')}}</option>
+                    </select>
+                </div>
+
                 <div id="product_data"></div>
 
             </form>
@@ -142,6 +151,7 @@
             $product_select.on('change', function () {
                 product_uuid = $(this).val();
                 resetBelowProduct();
+                $('#billing_mode_selector').hide();
 
                 if (product_uuid) {
                     $product_price_select.prop('disabled', false);
@@ -149,6 +159,20 @@
                         product_uuid: () => product_uuid,
                         client_uuid: () => client_uuid
                     });
+
+                    // Show billing mode selector based on product billing_mode
+                    var selectedData = $product_select.select2('data');
+                    if (selectedData && selectedData.length > 0) {
+                        var billingMode = selectedData[0].billing_mode;
+                        if (billingMode === 'both') {
+                            $('#billing_mode_selector').show();
+                        } else if (billingMode === 'invoice') {
+                            $('#billing_mode_selector').show();
+                            $('#billing_mode').val('invoice');
+                        } else {
+                            $('#billing_mode').val('prepaid');
+                        }
+                    }
                 }
             });
 

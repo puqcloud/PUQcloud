@@ -22,6 +22,7 @@ use App\Models\PaymentGateway;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
+use OpenApi\Attributes as OA;
 
 class puqMonobank extends Controller
 {
@@ -32,6 +33,25 @@ class puqMonobank extends Controller
      * @param string $uuid Payment gateway UUID
      * @return JsonResponse Test result
      */
+    #[OA\Post(
+        path: 'admin.api.Payment.puqMonobank.test_connection.post',
+        description: 'Tests the connection to Monobank API using provided or saved credentials.',
+        summary: 'Test Monobank connection',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqMonobank'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Connection test result',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function testConnection(Request $request, string $uuid): JsonResponse
     {
         try {
@@ -120,6 +140,25 @@ class puqMonobank extends Controller
      * @param string $uuid Payment gateway UUID
      * @return JsonResponse Fetch result
      */
+    #[OA\Post(
+        path: 'admin.api.Payment.puqMonobank.fetch_public_key.post',
+        description: 'Fetches the public key from Monobank API for webhook signature verification.',
+        summary: 'Fetch Monobank public key',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqMonobank'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Public key fetch result',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function fetchPublicKey(Request $request, string $uuid): JsonResponse
     {
         try {

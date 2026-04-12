@@ -34,7 +34,7 @@
                     <span style="white-space: nowrap;">
                     {!! $int !!}<span style="font-size: 0.7em;">{{ $separator }}{!! $dec !!}</span>
                 </span>
-                    <small class="opacity-5">{{ $client->currency->sufix }}</small>
+                    <small class="opacity-5">{{ $client->currency->suffix }}</small>
                 </div>
             </div>
 
@@ -43,7 +43,7 @@
                 <div class="widget-subheading">
                     {{ $client->currency->prefix }}
                     {{ number_format_custom($client->credit_limit, 4, $client->currency->format) }}
-                    {{ $client->currency->sufix }}
+                    {{ $client->currency->suffix }}
                 </div>
             </div>
 

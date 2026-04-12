@@ -68,9 +68,6 @@
                     render: function (data, type, row) {
                         var btn = '';
 
-                        if (row.urls.edit) {
-                            btn = btn + renderEditButton(row.urls.edit);
-                        }
                         if (row.urls.delete) {
                             btn = btn + renderDisconnectButton(row.urls.delete);
                         }

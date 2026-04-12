@@ -15,6 +15,14 @@
  * Do not remove this header.
  */
 
+/*
+ * WEB Routes:
+ *   GET  redirect/{label}:{uuid}                  -> uuidRedirect()             [admin.web.redirect]
+ *
+ * API Routes:
+ *   GET  languages/select                         -> getLanguagesSelect()       [admin.api.languages.select.get]
+ */
+
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
@@ -23,9 +31,62 @@ use App\Models\Service;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
+use OpenApi\Attributes as OA;
 
 class AdminController extends Controller
 {
+    #[OA\Get(
+        path: 'admin.api.languages.select.get',
+        summary: 'Get list of admin panel languages for select',
+        description: 'Returns a list of available languages for admin panel select input. Supports optional search term filtering.',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Language'],
+        parameters: [
+            new OA\Parameter(
+                name: 'term',
+                in: 'query',
+                description: 'Optional search term to filter languages',
+                required: false,
+                schema: new OA\Schema(type: 'string')
+            )
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'List of admin panel languages returned successfully',
+                content: new OA\JsonContent(
+                    type: 'object',
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string', example: 'success'),
+                        new OA\Property(
+                            property: 'data',
+                            type: 'object',
+                            properties: [
+                                new OA\Property(
+                                    property: 'results',
+                                    type: 'array',
+                                    items: new OA\Items(
+                                        type: 'object',
+                                        properties: [
+                                            new OA\Property(property: 'id', type: 'string', example: 'en'),
+                                            new OA\Property(property: 'text', type: 'string', example: 'English (English)')
+                                        ]
+                                    )
+                                ),
+                                new OA\Property(
+                                    property: 'pagination',
+                                    type: 'object',
+                                    properties: [
+                                        new OA\Property(property: 'more', type: 'boolean', example: false)
+                                    ]
+                                )
+                            ]
+                        )
+                    ]
+                )
+            )
+        ]
+    )]
     public function getLanguagesSelect(Request $request): JsonResponse
     {
 
@@ -43,12 +104,14 @@ class AdminController extends Controller
             return empty($searchTerm) || stripos($language['text'], $searchTerm) !== false;
         });
 
-        return response()->json(['data' => [
-            'results' => array_values($filteredLanguages),
-            'pagination' => [
-                'more' => false,
+        return response()->json([
+            'data' => [
+                'results' => array_values($filteredLanguages),
+                'pagination' => [
+                    'more' => false,
+                ],
             ],
-        ]], 200);
+        ], 200);
     }
 
     public function uuidRedirect($label, $uuid)

@@ -102,7 +102,7 @@ class Payment extends Module
                         'status' => 'success',
                         'message' => __('message.Payment Already Processed'),
                         'data' => [
-                            'url' => route('client.web.panel.client.invoice.details', ['uuid' => $invoice->reference_invoice_uuid]),
+                            'url' => route('client.web.panel.client.invoice.details', ['uuid' => $invoice->reference_invoice_uuid ?? $invoice->uuid]),
                         ],
                     ];
                 }
@@ -126,7 +126,7 @@ class Payment extends Module
                     'status' => 'success',
                     'message' => __('message.Payment Successful'),
                     'data' => [
-                        'url' => route('client.web.panel.client.invoice.details', ['uuid' => $invoice->reference_invoice_uuid]),
+                        'url' => route('client.web.panel.client.invoice.details', ['uuid' => $invoice->reference_invoice_uuid ?? $invoice->uuid]),
                     ],
                 ];
             });

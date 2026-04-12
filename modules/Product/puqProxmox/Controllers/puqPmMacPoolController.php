@@ -24,6 +24,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Modules\Product\puqProxmox\Models\puqPmLxcInstanceNet;
 use Modules\Product\puqProxmox\Models\PuqPmMacPool;
+use OpenApi\Attributes as OA;
 use Yajra\DataTables\DataTables;
 
 class puqPmMacPoolController extends Controller
@@ -35,6 +36,7 @@ class puqPmMacPoolController extends Controller
         return view_admin_module('Product', 'puqProxmox', 'admin_area.mac_pools.mac_pools', compact('title'));
     }
 
+    #[OA\Get(path: 'admin.api.Product.puqProxmox.mac_pools.get', description: 'Returns a list of MAC pools.', summary: 'Get MAC pools list', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], responses: [new OA\Response(response: 200, description: 'MAC pools list returned successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function getMacPools(Request $request): JsonResponse
     {
         $query = PuqPmMacPool::query();
@@ -67,6 +69,7 @@ class puqPmMacPoolController extends Controller
         ], 200);
     }
 
+    #[OA\Post(path: 'admin.api.Product.puqProxmox.mac_pool.post', description: 'Creates a new MAC pool.', summary: 'Create MAC pool', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(required: ['name', 'first_mac', 'last_mac'], properties: [new OA\Property(property: 'name', type: 'string'), new OA\Property(property: 'first_mac', type: 'string'), new OA\Property(property: 'last_mac', type: 'string')], type: 'object')), responses: [new OA\Response(response: 200, description: 'MAC pool created successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string'), new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function postMacPool(Request $request): JsonResponse
     {
 
@@ -109,6 +112,7 @@ class puqPmMacPoolController extends Controller
         ]);
     }
 
+    #[OA\Delete(path: 'admin.api.Product.puqProxmox.mac_pool.delete', description: 'Deletes a specific MAC pool.', summary: 'Delete MAC pool', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the MAC pool', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], responses: [new OA\Response(response: 200, description: 'MAC pool deleted successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string')], type: 'object'))])]
     public function deleteMacPool(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmMacPool::find($uuid);
@@ -138,6 +142,7 @@ class puqPmMacPoolController extends Controller
         ]);
     }
 
+    #[OA\Get(path: 'admin.api.Product.puqProxmox.mac_pool.get', description: 'Returns details of a specific MAC pool.', summary: 'Get MAC pool details', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the MAC pool', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], responses: [new OA\Response(response: 200, description: 'MAC pool details returned successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function getMacPool(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmMacPool::find($uuid);
@@ -158,6 +163,7 @@ class puqPmMacPoolController extends Controller
         ]);
     }
 
+    #[OA\Put(path: 'admin.api.Product.puqProxmox.mac_pool.put', description: 'Updates a specific MAC pool.', summary: 'Update MAC pool', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the MAC pool', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(type: 'object')), responses: [new OA\Response(response: 200, description: 'MAC pool updated successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string'), new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function putMacPool(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmMacPool::find($uuid);
@@ -213,6 +219,7 @@ class puqPmMacPoolController extends Controller
         return view_admin_module('Product', 'puqProxmox', 'admin_area.mac_pools.mac_pool', compact('title', 'uuid'));
     }
 
+    #[OA\Get(path: 'admin.api.Product.puqProxmox.mac_pools.select.get', description: 'Returns MAC pools for select dropdown.', summary: 'Get MAC pools select', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], responses: [new OA\Response(response: 200, description: 'MAC pools select returned successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function getMacPoolsSelect(Request $request): JsonResponse
     {
         $search = $request->input('q');
@@ -241,6 +248,7 @@ class puqPmMacPoolController extends Controller
         ], 200);
     }
 
+    #[OA\Get(path: 'admin.api.Product.puqProxmox.mac_pool.used_macs.get', description: 'Returns used MACs for a specific MAC pool.', summary: 'Get used MACs', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the MAC pool', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], responses: [new OA\Response(response: 200, description: 'Used MACs list returned successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function getUsedMacs(Request $request, $uuid): JsonResponse
     {
         $query = puqPmLxcInstanceNet::query()->where('puq_pm_mac_pool_uuid', $uuid);

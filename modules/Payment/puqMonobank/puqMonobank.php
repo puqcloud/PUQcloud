@@ -215,7 +215,8 @@ class puqMonobank extends Payment
     public function getClientAreaHtml(array $data = []): string
     {
         $invoice = $data['invoice'];
-        $amount = $invoice->getDueAmountAttribute();
+        $amount = $invoice->getDueAmountAttribute(); // display string
+        $amountInKopecks = $invoice->due_amount_cents; // safe integer for gateway
         $currency = $invoice->client->currency->code;
 
         // Validate currency support
@@ -228,7 +229,6 @@ class puqMonobank extends Payment
         }
 
         // Validate amount limits
-        $amountInKopecks = $amount * 100;
         if ($amountInKopecks < $this->module_data['min_amount'] || $amountInKopecks > $this->module_data['max_amount']) {
 
             return $this->view('amount_error', [
@@ -301,15 +301,15 @@ class puqMonobank extends Payment
             }
 
         } catch (\Exception $e) {
+            \Log::error('Monobank payment error', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
 
             return $this->view('payment_error', [
-                'error_message' => 'EXCEPTION: ' . $e->getMessage(),
+                'error_message' => __('Payment.puqMonobank.Failed to create payment'),
                 'error_code' => 'SYSTEM_ERROR',
-                'error_details' => [
-                    'file' => $e->getFile(),
-                    'line' => $e->getLine(),
-                    'trace' => $e->getTraceAsString()
-                ]
             ]);
         }
     }
@@ -797,14 +797,14 @@ class puqMonobank extends Payment
             }
             
         } catch (\Exception $e) {
+            \Log::error('Monobank fetch error', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
             return response()->json([
                 'status' => 'error',
-                'message' => __('Payment.puqMonobank.Fetch failed') . ': ' . $e->getMessage(),
-                'debug' => [
-                    'file' => $e->getFile(),
-                    'line' => $e->getLine(),
-                    'trace' => $e->getTraceAsString(),
-                ],
+                'message' => __('Payment.puqMonobank.Fetch failed'),
             ], 500);
         }
     }
@@ -878,14 +878,14 @@ class puqMonobank extends Payment
             }
             
         } catch (\Exception $e) {
+            \Log::error('Monobank test error', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
             return response()->json([
                 'status' => 'error',
-                'message' => __('Payment.puqMonobank.Test failed') . ': ' . $e->getMessage(),
-                'debug' => [
-                    'file' => $e->getFile(),
-                    'line' => $e->getLine(),
-                    'trace' => $e->getTraceAsString(),
-                ],
+                'message' => __('Payment.puqMonobank.Test failed'),
             ], 500);
         }
     }

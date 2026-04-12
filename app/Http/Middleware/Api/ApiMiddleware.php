@@ -20,33 +20,43 @@ namespace App\Http\Middleware\Api;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ApiMiddleware
 {
     public function handle(Request $request, Closure $next): Response
     {
-
         $response = $next($request);
+
+        if ($response instanceof StreamedResponse) {
+            return $response;
+        }
 
         if ($response->headers->get('Content-Type') === 'application/pdf') {
             return $response;
         }
+
         $response->headers->set('Content-Type', 'application/json');
 
         $statusCode = $response->getStatusCode();
-        $data = json_decode($response->content(), true);
+        $data = json_decode($response->content(), true) ?? [];
+
+        if (isset($data['raw'])) {
+            $response->setContent(json_encode($data['raw']));
+
+            return $response;
+        }
+
         $answer = [];
 
-        $answer['message'] = null;
-        $answer['errors'] = null;
-        $answer['data'] = null;
+        $answer['status'] = $statusCode === 200 ? 'success' : 'error';
 
         if (! empty($data['message'])) {
             $answer['message'] = $data['message'];
         }
 
         if (! empty($data['errors'])) {
-            $answer['errors'] = $data['errors'];
+            $answer['errors'] = array_values(array_unique($data['errors']));
         }
 
         if (! empty($data['data'])) {
@@ -57,26 +67,22 @@ class ApiMiddleware
             $answer['redirect'] = $data['redirect'];
         }
 
-        $errorCodes = [
-            400 => __('error.Bad request'),
-            401 => __('error.Unauthorized'),
-            403 => __('error.Forbidden'),
-            404 => __('error.Not found'),
-            409 => __('error.Conflict'),
-            422 => __('error.Unprocessable entity'),
-            500 => __('error.Internal server error'),
-        ];
+        if ($statusCode !== 200) {
+            $errorCodes = [
+                400 => __('error.Bad request'),
+                401 => __('error.Unauthorized'),
+                403 => __('error.Forbidden'),
+                404 => __('error.Not found'),
+                409 => __('error.Conflict'),
+                422 => __('error.Unprocessable entity'),
+                500 => __('error.Internal server error'),
+            ];
 
-        if ($statusCode === 200) {
-            $answer['status'] = 'success';
-        } else {
-            $answer['status'] = 'error';
-            if (array_key_exists($statusCode, $errorCodes)) {
-                $answer['errors'][] = $errorCodes[$statusCode];
-            } else {
-                $answer['errors'][] = __('error.Unexpected internal error');
-            }
+            $systemError = $errorCodes[$statusCode] ?? __('error.Unexpected internal error');
+            $answer['errors'][] = $systemError;
+            $answer['errors'] = array_values(array_unique($answer['errors']));
         }
+
         $response->setContent(json_encode($answer));
 
         return $response;

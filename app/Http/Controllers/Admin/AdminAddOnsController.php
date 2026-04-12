@@ -15,6 +15,20 @@
  * Do not remove this header.
  */
 
+/*
+ * WEB Routes:
+ *   GET  add_ons/marketplace                      -> marketplace()              [admin.web.add_ons.marketplace]
+ *   GET  add_ons/modules                          -> modules()                  [admin.web.add_ons.modules]
+ *   GET  add_ons/reports                           -> reports()                  [admin.web.add_ons.reports]
+ *
+ * API Routes:
+ *   GET     add_ons/modules                        -> getModules()               [admin.api.add_ons.modules.get]
+ *   POST    add_ons/module/{uuid}/activate         -> postModuleActivate()       [admin.api.add_ons.module.activate.post]
+ *   POST    add_ons/module/{uuid}/deactivate       -> postModuleDeactivate()     [admin.api.add_ons.module.deactivate.post]
+ *   POST    add_ons/module/{uuid}/update           -> postModuleUpdate()         [admin.api.add_ons.module.update.post]
+ *   DELETE  add_ons/module/{uuid}/delete           -> postModuleDelete()         [admin.api.add_ons.module.delete.delete]
+ */
+
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
@@ -23,6 +37,7 @@ use App\Models\NotificationSender;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use OpenApi\Attributes as OA;
 use Yajra\DataTables\DataTables;
 
 class AdminAddOnsController extends Controller
@@ -41,6 +56,25 @@ class AdminAddOnsController extends Controller
         return view_admin('add_ons.modules', compact('title'));
     }
 
+    #[OA\Get(
+        path: 'admin.api.add_ons.modules.get',
+        description: 'Returns a DataTable list of installed modules.',
+        summary: 'Get modules list',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Add-Ons'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Modules list returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getModules(Request $request): JsonResponse
     {
         $query = Module::query();
@@ -85,6 +119,35 @@ class AdminAddOnsController extends Controller
 
     }
 
+    #[OA\Post(
+        path: 'admin.api.add_ons.module.activate.post',
+        description: 'Activates an inactive module.',
+        summary: 'Activate module',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Add-Ons'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'UUID of the module',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Module activated successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string', example: 'success'),
+                        new OA\Property(property: 'message', type: 'string', example: 'Activated successfully'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function postModuleActivate(Request $request, $uuid): JsonResponse
     {
 
@@ -116,6 +179,35 @@ class AdminAddOnsController extends Controller
 
     }
 
+    #[OA\Post(
+        path: 'admin.api.add_ons.module.deactivate.post',
+        description: 'Deactivates an active or restricted module.',
+        summary: 'Deactivate module',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Add-Ons'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'UUID of the module',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Module deactivated successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string', example: 'success'),
+                        new OA\Property(property: 'message', type: 'string', example: 'Deactivated successfully'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function postModuleDeactivate(Request $request, $uuid): JsonResponse
     {
 
@@ -147,6 +239,35 @@ class AdminAddOnsController extends Controller
 
     }
 
+    #[OA\Post(
+        path: 'admin.api.add_ons.module.update.post',
+        description: 'Updates a restricted module to the latest version.',
+        summary: 'Update module',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Add-Ons'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'UUID of the module',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Module updated successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string', example: 'success'),
+                        new OA\Property(property: 'message', type: 'string', example: 'Updated successfully'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function postModuleUpdate(Request $request, $uuid): JsonResponse
     {
 
@@ -178,6 +299,35 @@ class AdminAddOnsController extends Controller
 
     }
 
+    #[OA\Delete(
+        path: 'admin.api.add_ons.module.delete.delete',
+        description: 'Deletes a module by UUID.',
+        summary: 'Delete module',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Add-Ons'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'UUID of the module to delete',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Module deleted successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string', example: 'success'),
+                        new OA\Property(property: 'message', type: 'string', example: 'Deleted successfully'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function postModuleDelete(Request $request, $uuid): JsonResponse
     {
         $module = Module::find($uuid);

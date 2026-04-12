@@ -11,4 +11,13 @@ return [
     'Successfully' => 'Successfully',
     'Payment Successful' => 'Payment Successful',
     'Payment Already Processed' => 'Payment Already Processed',
+    'Reply added successfully' => 'Reply added successfully',
+    'Ticket closed successfully' => 'Ticket closed successfully',
+    'Ticket reopened successfully' => 'Ticket reopened successfully',
+
+    // Upgrade/Downgrade
+    'Invoice generated successfully' => 'Invoice generated successfully',
+    'Service updated successfully' => 'Service updated successfully',
+    'Proration invoice generated successfully' => 'Proration invoice generated successfully',
+    'Billing date aligned successfully' => 'Billing date aligned successfully',
 ];

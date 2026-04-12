@@ -11,4 +11,11 @@ return [
     'Successfully' => 'Pomyślnie',
     'Payment Successful' => 'Płatność zakończona sukcesem',
     'Payment Already Processed' => 'Płatność została już przetworzona',
+    'Reply added successfully' => 'Odpowiedź została dodana',
+    'Ticket closed successfully' => 'Zgłoszenie zostało zamknięte',
+    'Ticket reopened successfully' => 'Zgłoszenie zostało ponownie otwarte',
+    'Invoice generated successfully' => 'Faktura została wygenerowana',
+    'Service updated successfully' => 'Usługa została zaktualizowana',
+    'Proration invoice generated successfully' => 'Faktura proporcjonalna została wygenerowana',
+    'Billing date aligned successfully' => 'Data rozliczenia została wyrównana',
 ];

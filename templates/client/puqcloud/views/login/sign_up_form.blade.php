@@ -52,7 +52,7 @@
                              style="border-bottom-right-radius: 5px; border-bottom-left-radius: 5px;">
                             <div class="w-100">
                                 <div class="w-100 mt-3 mb-3">
-                                    <button id="signup" class="btn-wide btn btn-primary btn-lg btn-warning w-100">
+                                    <button id="signup" class="btn-wide btn btn-warning btn-lg w-100">
                                         {{ Str::upper(__('main.Continue')) }}
                                     </button>
                                 </div>
@@ -66,7 +66,7 @@
                                style="text-shadow: 0 2px 2px rgba(0,0,0,0.9);">
                                 {{ __('main.Do you already have an account?') }}
                             </p>
-                            <a class="btn-lg btn btn-light btn-wide btn-lg btn-link"
+                            <a class="btn btn-light btn-wide btn-lg"
                                href="{{route('client.web.panel.login')}}">
                                 {{ __('main.Login now') }}
                             </a>
@@ -83,58 +83,7 @@
     @parent
     <script>
         $(document).ready(function () {
-            function validatePassword(password) {
-                const hasLength = password.length >= 6;
-                const hasNumber = /[0-9]/.test(password);
-                const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-                return hasLength && hasNumber && hasSpecial;
-            }
-
-            function updateStrengthBar(strength) {
-                const $bar = $('#passwordStrengthBar .progress-bar');
-                let color = 'bg-danger';
-                let value = 33;
-
-                if (strength === 2) {
-                    color = 'bg-warning';
-                    value = 66;
-                } else if (strength === 3) {
-                    color = 'bg-success';
-                    value = 100;
-                }
-
-                $bar.removeClass('bg-success bg-warning bg-danger').addClass(color);
-                $bar.css('width', value + '%').text(value + '%');
-            }
-
-            $('#password').on('input', function () {
-                const password = $(this).val();
-                const hasLength = password.length >= 6;
-                const hasNumber = /[0-9]/.test(password);
-                const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-                const strength = [hasLength, hasNumber, hasSpecial].filter(Boolean).length;
-
-                updateStrengthBar(strength);
-
-                if (validatePassword(password)) {
-                    $(this).removeClass('is-invalid').addClass('is-valid');
-                } else {
-                    $(this).removeClass('is-valid').addClass('is-invalid');
-                }
-
-                $('#password_confirmation').trigger('input');
-            });
-
-            $('#password_confirmation').on('input', function () {
-                const pw1 = $('#password').val();
-                const pw2 = $(this).val();
-
-                if (pw1 === pw2 && validatePassword(pw1)) {
-                    $(this).removeClass('is-invalid').addClass('is-valid');
-                } else {
-                    $(this).removeClass('is-valid').addClass('is-invalid');
-                }
-            });
+            initPasswordValidation('#password', '#password_confirmation');
 
             $('#signup').on('click', function (e) {
                 blockUI('appContainer');

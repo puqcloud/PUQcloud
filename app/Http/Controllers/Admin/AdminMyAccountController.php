@@ -15,6 +15,21 @@
  * Do not remove this header.
  */
 
+/*
+ * WEB Routes:
+ *   GET  my_account                                            -> myAccount()                       [admin.web.my_account]
+ *   GET  my_account/notifications                              -> myNotifications()                 [admin.web.my_account.notifications]
+ *
+ * API Routes:
+ *   GET  my_account                                            -> getMyAccount()                    [admin.api.my_account.get]
+ *   PUT  my_account                                            -> putMyAccount()                    [admin.api.my_account.put]
+ *   GET  my_account/bell_notification                          -> getBellNotification()             [admin.api.my_account.bell_notification.get]
+ *   GET  my_account/bell_notification/mark_read                -> getBellNotificationMarkRead()     [admin.api.my_account.bell_notification.mark_read.get]
+ *   GET  my_account/bell_notification/mark_all_read            -> getBellNotificationMarkAllRead()  [admin.api.my_account.bell_notification.mark_all_read.get]
+ *   GET  my_account/notifications                              -> getNotifications()                [admin.api.my_account.notifications.get]
+ *   GET  my_account/notification/{uuid}                        -> getNotification()                 [admin.api.my_account.notification.get]
+ */
+
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
@@ -26,6 +41,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Validator;
+use OpenApi\Attributes as OA;
 use Yajra\DataTables\DataTables;
 
 class AdminMyAccountController extends Controller
@@ -37,6 +53,44 @@ class AdminMyAccountController extends Controller
         return view_admin('my_account.my_account', compact('title'));
     }
 
+    #[OA\Get(
+        path: 'admin.api.my_account.get',
+        description: 'Returns the current admin account details including language data.',
+        summary: 'Get current admin account',
+        security: [['apiKeyAuth' => []]],
+        tags: ['My Account'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Account data returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(
+                            property: 'data',
+                            properties: [
+                                new OA\Property(property: 'uuid', type: 'string', format: 'uuid'),
+                                new OA\Property(property: 'email', type: 'string'),
+                                new OA\Property(property: 'firstname', type: 'string'),
+                                new OA\Property(property: 'lastname', type: 'string'),
+                                new OA\Property(property: 'language', type: 'string'),
+                                new OA\Property(property: 'phone_number', type: 'string', nullable: true),
+                                new OA\Property(
+                                    property: 'language_data',
+                                    properties: [
+                                        new OA\Property(property: 'id', type: 'string'),
+                                        new OA\Property(property: 'text', type: 'string'),
+                                    ],
+                                    type: 'object'
+                                ),
+                            ],
+                            type: 'object'
+                        ),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getMyAccount(): JsonResponse
     {
         $admin = app('admin');
@@ -58,6 +112,45 @@ class AdminMyAccountController extends Controller
         ], 200);
     }
 
+    #[OA\Put(
+        path: 'admin.api.my_account.put',
+        description: 'Updates the current admin account details.',
+        summary: 'Update current admin account',
+        security: [['apiKeyAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'application/json',
+                schema: new OA\Schema(
+                    properties: [
+                        new OA\Property(property: 'email', type: 'string', format: 'email', nullable: true),
+                        new OA\Property(property: 'password', type: 'string', format: 'password', nullable: true),
+                        new OA\Property(property: 'password_confirmation', type: 'string', format: 'password', nullable: true),
+                        new OA\Property(property: 'firstname', type: 'string', nullable: true),
+                        new OA\Property(property: 'lastname', type: 'string', nullable: true),
+                        new OA\Property(property: 'language', type: 'string', nullable: true),
+                        new OA\Property(property: 'phone_number', type: 'string', nullable: true),
+                        new OA\Property(property: 'country_code', type: 'string', nullable: true),
+                    ]
+                )
+            )
+        ),
+        tags: ['My Account'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Account updated successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string', example: 'success'),
+                        new OA\Property(property: 'message', type: 'string', example: 'Updated successfully'),
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function putMyAccount(Request $request): JsonResponse
     {
         $admin = app('admin');
@@ -129,6 +222,38 @@ class AdminMyAccountController extends Controller
         ]);
     }
 
+    #[OA\Get(
+        path: 'admin.api.my_account.bell_notification.get',
+        description: 'Returns undelivered bell notifications for the current admin.',
+        summary: 'Get bell notifications',
+        security: [['apiKeyAuth' => []]],
+        tags: ['My Account'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Bell notifications returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(
+                            property: 'data',
+                            type: 'array',
+                            items: new OA\Items(
+                                properties: [
+                                    new OA\Property(property: 'notification_uuid', type: 'string', format: 'uuid'),
+                                    new OA\Property(property: 'subject', type: 'string'),
+                                    new OA\Property(property: 'text_mini', type: 'string'),
+                                    new OA\Property(property: 'notification_status_uuid', type: 'string', format: 'uuid'),
+                                    new OA\Property(property: 'created_at', type: 'string', format: 'date-time'),
+                                ],
+                                type: 'object'
+                            )
+                        ),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getBellNotification(Request $request): JsonResponse
     {
         $admin = app('admin');
@@ -158,6 +283,36 @@ class AdminMyAccountController extends Controller
         ], 200);
     }
 
+    #[OA\Get(
+        path: 'admin.api.my_account.bell_notification.mark_read.get',
+        description: 'Marks a specific bell notification as read.',
+        summary: 'Mark bell notification as read',
+        security: [['apiKeyAuth' => []]],
+        tags: ['My Account'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'UUID of the notification status',
+                in: 'query',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Notification marked as read',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string', example: 'success'),
+                        new OA\Property(property: 'message', type: 'string', example: 'Updated successfully'),
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getBellNotificationMarkRead(Request $request): JsonResponse
     {
         $admin = app('admin');
@@ -184,6 +339,34 @@ class AdminMyAccountController extends Controller
         ]);
     }
 
+    #[OA\Get(
+        path: 'admin.api.my_account.bell_notification.mark_all_read.get',
+        description: 'Marks all bell notifications as read for the current admin.',
+        summary: 'Mark all bell notifications as read',
+        security: [['apiKeyAuth' => []]],
+        tags: ['My Account'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'All notifications marked as read',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string', example: 'success'),
+                        new OA\Property(property: 'message', type: 'string', example: 'All notifications marked as read'),
+                        new OA\Property(
+                            property: 'data',
+                            properties: [
+                                new OA\Property(property: 'updated_count', type: 'integer'),
+                                new OA\Property(property: 'updated_notifications', type: 'array', items: new OA\Items(type: 'string')),
+                            ],
+                            type: 'object'
+                        ),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getBellNotificationMarkAllRead(Request $request): JsonResponse
     {
         $admin = app('admin');
@@ -227,6 +410,25 @@ class AdminMyAccountController extends Controller
         return view_admin('my_account.notifications', compact('title'));
     }
 
+    #[OA\Get(
+        path: 'admin.api.my_account.notifications.get',
+        description: 'Returns a DataTable list of notifications for the current admin.',
+        summary: 'Get admin notifications list',
+        security: [['apiKeyAuth' => []]],
+        tags: ['My Account'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Notifications list returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getNotifications(Request $request): JsonResponse
     {
         $admin = app('admin');
@@ -284,6 +486,45 @@ class AdminMyAccountController extends Controller
         ], 200);
     }
 
+    #[OA\Get(
+        path: 'admin.api.my_account.notification.get',
+        description: 'Returns detailed information about a specific notification for the current admin.',
+        summary: 'Get notification by UUID',
+        security: [['apiKeyAuth' => []]],
+        tags: ['My Account'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'UUID of the notification',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Notification data returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(
+                            property: 'data',
+                            properties: [
+                                new OA\Property(property: 'uuid', type: 'string', format: 'uuid'),
+                                new OA\Property(property: 'subject', type: 'string'),
+                                new OA\Property(property: 'text_mini', type: 'string', nullable: true),
+                                new OA\Property(property: 'model_type', type: 'string'),
+                                new OA\Property(property: 'model_uuid', type: 'string', format: 'uuid'),
+                                new OA\Property(property: 'created_at', type: 'string', format: 'date-time'),
+                            ],
+                            type: 'object'
+                        ),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getNotification(Request $request, $uuid): JsonResponse
     {
         $admin = app('admin');

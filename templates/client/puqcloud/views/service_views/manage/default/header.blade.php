@@ -5,6 +5,13 @@
 
     $groupIcon = $product_group->icon ?? null;
     $isFlag = $groupIcon && strpos($groupIcon, 'flag') === 0;
+
+    // Mutation guards: upgrade/proration require an active, non-terminating service.
+    // Proration additionally requires invoice billing mode — it makes no sense for prepaid
+    // where the client is charged from their balance at top-up, not on recurring invoices.
+    $canMutate = $service->status === 'active' && ! $service->termination_request;
+    $showUpgrade = $canMutate && ($product->allow_upgrade || $product->allow_downgrade);
+    $showProration = $canMutate && $product->allow_proration_alignment && $service->billing_mode === 'invoice';
 @endphp
 
 @if($backgroundUrl)
@@ -53,6 +60,20 @@
                 </div>
             </div>
             <div class="page-title-actions">
+                @if($showUpgrade)
+                    <a href="{{ route('client.web.panel.cloud.service.upgrade', ['uuid' => $service->uuid]) }}"
+                       class="mb-2 me-2 btn-icon btn-outline-2x btn btn-outline-info">
+                        <i class="fas fa-exchange-alt"></i>
+                        {{ __('main.Upgrade / Downgrade') }}
+                    </a>
+                @endif
+                @if($showProration)
+                    <a href="{{ route('client.web.panel.cloud.service.proration', ['uuid' => $service->uuid]) }}"
+                       class="mb-2 me-2 btn-icon btn-outline-2x btn btn-outline-warning">
+                        <i class="fas fa-calendar-alt"></i>
+                        {{ __('main.Billing Alignment') }}
+                    </a>
+                @endif
                 @yield('buttons')
             </div>
         </div>

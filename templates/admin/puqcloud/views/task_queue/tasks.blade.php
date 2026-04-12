@@ -189,8 +189,8 @@
                         if (row.completed_at !== null) {
                             result += `<div class="badge ms-0 me-0 badge-dot badge-dot-lg bg-success">puq</div>` + formatDateWithoutTimezone(row.completed_at) + `<br>`;
                         }
-                        if (row.filed_at !== null) {
-                            result += `<div class="badge ms-0 me-0 badge-dot badge-dot-lg bg-danger">puq</div>` + formatDateWithoutTimezone(row.filed_at);
+                        if (row.failed_at !== null) {
+                            result += `<div class="badge ms-0 me-0 badge-dot badge-dot-lg bg-danger">puq</div>` + formatDateWithoutTimezone(row.failed_at);
                         }
                         return result;
                     }

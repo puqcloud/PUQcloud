@@ -64,6 +64,7 @@ class Invoice extends Model
         'number',
         'invoice_uuid',
         'status',
+        'billing_purpose',
         'currency_code',
         'tax_1',
         'tax_2',
@@ -123,6 +124,10 @@ class Invoice extends Model
         'payment_date' => 'datetime:Y-m-d H:i',
         'refunded_date' => 'datetime:Y-m-d H:i',
         'canceled_date' => 'datetime:Y-m-d H:i',
+        'reminder_sent_at' => 'datetime:Y-m-d H:i',
+        'overdue_1_sent_at' => 'datetime:Y-m-d H:i',
+        'overdue_2_sent_at' => 'datetime:Y-m-d H:i',
+        'overdue_3_sent_at' => 'datetime:Y-m-d H:i',
     ];
 
     protected $appends = [
@@ -140,7 +145,7 @@ class Invoice extends Model
         'transactions',
     ];
 
-    public function getCurrency(): Currency
+    public function getCurrency(): ?Currency
     {
         $currency = Currency::where('code', $this->currency_code)->first();
         if (!$currency) {
@@ -212,6 +217,15 @@ class Invoice extends Model
         return number_format_custom($amount, 2);
     }
 
+    /**
+     * Due amount formatted as a human-readable string (e.g. "18.90").
+     *
+     * WARNING: This returns a STRING. Payment gateway modules that need to
+     * convert to integer minor units (cents/kopecks) MUST use
+     * {@see getDueAmountCentsAttribute()} instead — converting this string to
+     * float and multiplying by 100 suffers from IEEE-754 truncation
+     * (e.g. (int)(18.90 * 100) = 1889, not 1890).
+     */
     public function getDueAmountAttribute(): string
     {
         $tmp = (float) $this->total - (float) $this->paid_gross_amount;
@@ -220,6 +234,21 @@ class Invoice extends Model
         $amount = max(0.00, $amount);
 
         return number_format_custom($amount, 2);
+    }
+
+    /**
+     * Due amount expressed in integer minor units (cents, kopecks, grosze...).
+     *
+     * This is the ONLY safe way to pass the due amount to a payment gateway
+     * that expects an integer (Stripe, Przelewy24, Monobank, etc.). Uses
+     * round() before int cast to avoid IEEE-754 float truncation.
+     */
+    public function getDueAmountCentsAttribute(): int
+    {
+        $tmp = (float) $this->total - (float) $this->paid_gross_amount;
+        $amount = max(0.0, $tmp);
+
+        return (int) round($amount * 100);
     }
 
     public function client(): belongsTo
@@ -365,7 +394,7 @@ class Invoice extends Model
             return;
         }
 
-        $homeCompany = HomeCompany::find($this->home_company_uuid);
+        $homeCompany = HomeCompany::where('uuid', $this->home_company_uuid)->lockForUpdate()->first();
 
         if (!$homeCompany) {
             return;
@@ -410,9 +439,22 @@ class Invoice extends Model
 
     public function setOther(): void
     {
-        $default_invoice_due_days = SettingService::get('finance.default_invoice_due_days');
-        $this->issue_date = now();
-        $this->due_date = now()->addDays((int) $default_invoice_due_days);
+        if (in_array($this->billing_purpose, ['service_billing', 'standalone'])) {
+            // For service billing and standalone: preserve pre-set dates
+            if (! $this->issue_date) {
+                $this->issue_date = now();
+            }
+            if (! $this->due_date) {
+                $dueDaysSetting = $this->billing_purpose === 'service_billing'
+                    ? 'finance.invoice_due_days'
+                    : 'finance.default_invoice_due_days';
+                $this->due_date = $this->issue_date->copy()->addDays((int) SettingService::get($dueDaysSetting));
+            }
+        } else {
+            $default_invoice_due_days = SettingService::get('finance.default_invoice_due_days');
+            $this->issue_date = now();
+            $this->due_date = now()->addDays((int) $default_invoice_due_days);
+        }
     }
 
     public function calculateTotals(): void
@@ -511,13 +553,63 @@ class Invoice extends Model
 
         logActivity(
             'info',
-            'Invoice:'.$this->uuid.' ('.$this->number.') published. Subtotal: '.$this->subtotal.' '.$this->client->currency->code,
+            'Invoice:'.$this->uuid.' ('.$this->number.') cancelled. Subtotal: '.$this->subtotal.' '.$this->client->currency->code,
             'cancel',
             null,
             null,
             null,
             $this->client_uuid
         );
+
+        app(HookService::class)->callHooks('InvoiceCancelled', ['invoice' => $this]);
+
+        return ['status' => 'success'];
+    }
+
+    public function toDraft(): array
+    {
+        if ($this->type != 'proforma') {
+            return [
+                'status' => 'error',
+                'errors' => [__('error.The type should be proforma')],
+            ];
+        }
+
+        if ($this->status != 'unpaid') {
+            return [
+                'status' => 'error',
+                'errors' => [__('error.The status should be unpaid')],
+            ];
+        }
+
+        if ($this->billing_purpose != 'standalone') {
+            return [
+                'status' => 'error',
+                'errors' => [__('error.Only standalone invoices can be returned to draft')],
+            ];
+        }
+
+        if ($this->transactions()->count() > 0) {
+            return [
+                'status' => 'error',
+                'errors' => [__('error.Cannot return to draft: invoice has transactions')],
+            ];
+        }
+
+        $this->status = 'draft';
+        $this->save();
+
+        logActivity(
+            'info',
+            'Invoice:'.$this->uuid.' ('.$this->number.') returned to draft. Subtotal: '.$this->subtotal.' '.$this->client->currency->code,
+            'to_draft',
+            null,
+            null,
+            null,
+            $this->client_uuid
+        );
+
+        app(HookService::class)->callHooks('InvoiceReturnedToDraft', ['invoice' => $this]);
 
         return ['status' => 'success'];
     }
@@ -645,6 +737,8 @@ class Invoice extends Model
             $this->save();
 
             DB::commit();
+
+            app(HookService::class)->callHooks('InvoiceRefunded', ['invoice' => $this, 'credit_note' => $newInvoice]);
 
             return ['status' => 'success', 'data' => $newInvoice->toArray() ?? []];
         } catch (\Throwable $e) {
@@ -990,8 +1084,27 @@ class Invoice extends Model
         string $payment_gateway_uuid
     ): array {
         if ($this->transactions()->where('transaction_id', $transaction_id)->exists()) {
+            logActivity(
+                'warning',
+                'Invoice:'.$this->uuid.' duplicate payment attempt. Transaction ID: '.$transaction_id.' already exists',
+                'payment',
+                null,
+                null,
+                null,
+                $this->client_uuid
+            );
             return ['status' => 'error', 'errors' => [__('error.Transaction already exists')]];
         }
+
+        logActivity(
+            'info',
+            'Invoice:'.$this->uuid.' payment received via gateway. Amount: '.$amount.', Fee: '.$fee.', Transaction ID: '.$transaction_id,
+            'payment',
+            null,
+            null,
+            null,
+            $this->client_uuid
+        );
 
         return $this->handleSuccessfulPayment(
             $amount,
@@ -1012,6 +1125,21 @@ class Invoice extends Model
         DB::beginTransaction();
 
         try {
+            $lockedInvoice = self::where('uuid', $this->uuid)->lockForUpdate()->first();
+            if (!$lockedInvoice || $lockedInvoice->status === 'invoiced') {
+                DB::rollBack();
+                logActivity(
+                    'warning',
+                    'Invoice:'.$this->uuid.' payment rejected: invoice already processed. Transaction ID: '.$transaction_id,
+                    'payment',
+                    null,
+                    null,
+                    null,
+                    $this->client_uuid
+                );
+                return ['status' => 'error', 'errors' => ['Invoice already processed']];
+            }
+
             $this->createTransaction(
                 $this->getNet($amount),
                 $amount,
@@ -1076,6 +1204,12 @@ class Invoice extends Model
             DB::commit();
 
             app(HookService::class)->callHooks('InvoiceCreated', ['invoice' => $newInvoice]);
+            app(HookService::class)->callHooks('InvoicePaid', ['invoice' => $newInvoice]);
+
+            // For service-related invoices: advance billing, activate pending, unsuspend, apply changes
+            if (in_array($newInvoice->billing_purpose, ['service_billing', 'service_upgrade', 'service_downgrade', 'service_proration'])) {
+                $this->advanceServiceBilling($newInvoice);
+            }
 
             return ['status' => 'success'];
         } catch (\Throwable $e) {
@@ -1095,6 +1229,95 @@ class Invoice extends Model
                 'status' => 'error',
                 'errors' => [__('error.Payment failed. Please try again later.'), $e->getMessage()],
             ];
+        }
+    }
+
+    private function advanceServiceBilling(Invoice $paidInvoice): void
+    {
+        $items = $paidInvoice->invoiceItems()->whereNotNull('service_uuid')->get();
+        $processedServiceUuids = [];
+        $isChangeInvoice = in_array($paidInvoice->billing_purpose, ['service_upgrade', 'service_downgrade']);
+        $isProrationInvoice = $paidInvoice->billing_purpose === 'service_proration';
+
+        foreach ($items as $item) {
+            // Skip duplicate service processing (same service may have multiple items like setup + period)
+            if (in_array($item->service_uuid, $processedServiceUuids)) {
+                // Still advance billing_timestamp for additional items
+                $service = Service::find($item->service_uuid);
+                if ($service && $item->period_stop && (! $service->billing_timestamp || $item->period_stop > $service->billing_timestamp)) {
+                    $service->billing_timestamp = $item->period_stop;
+                    $service->save();
+                }
+                continue;
+            }
+
+            try {
+                $service = Service::find($item->service_uuid);
+                if (! $service) {
+                    continue;
+                }
+
+                // For upgrade/downgrade: apply product/price change BEFORE advancing billing_timestamp
+                if ($isChangeInvoice && ! empty($item->metadata)) {
+                    $metadata = is_array($item->metadata) ? $item->metadata : json_decode($item->metadata, true);
+                    if ($metadata) {
+                        $targetProductUuid = $metadata['target_product_uuid'] ?? null;
+                        $targetPriceUuid = $metadata['target_price_uuid'] ?? null;
+                        $targetOptions = $metadata['target_options'] ?? [];
+
+                        if ($targetProductUuid && $targetPriceUuid) {
+                            $service->product_uuid = $targetProductUuid;
+                            $service->price_uuid = $targetPriceUuid;
+                            $service->save();
+
+                            if (! empty($targetOptions)) {
+                                $service->productOptions()->sync($targetOptions);
+                            }
+
+                            $service->refresh();
+                            $service->applyModuleChangePackage();
+
+                            logActivity(
+                                'info',
+                                'Service:'.$service->uuid.' product changed via invoice '.$paidInvoice->number,
+                                'change_package',
+                                null,
+                                null,
+                                null,
+                                $paidInvoice->client_uuid
+                            );
+                        }
+                    }
+                }
+
+                // Advance billing_timestamp to period_stop (after product change)
+                if ($item->period_stop && (! $service->billing_timestamp || $item->period_stop > $service->billing_timestamp)) {
+                    $service->billing_timestamp = $item->period_stop;
+                    $service->save();
+                }
+
+                // Activate pending invoice-mode service after payment
+                if ($service->status === 'pending' && $service->billing_mode === 'invoice') {
+                    $service->createAfterPayment();
+                }
+
+                // Unsuspend suspended service
+                if ($service->status === 'suspended') {
+                    $service->unsuspendInvoiceMode();
+                }
+
+                $processedServiceUuids[] = $item->service_uuid;
+            } catch (\Throwable $e) {
+                logActivity(
+                    'error',
+                    'advanceServiceBilling error for Service:'.$item->service_uuid.' - '.$e->getMessage(),
+                    'payment',
+                    null,
+                    null,
+                    null,
+                    $paidInvoice->client_uuid
+                );
+            }
         }
     }
 }

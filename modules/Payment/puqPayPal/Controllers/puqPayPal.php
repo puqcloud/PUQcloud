@@ -21,9 +21,29 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Modules\Payment\puqPayPal\Services\PayPalClient;
+use OpenApi\Attributes as OA;
 
 class puqPayPal extends Controller
 {
+    #[OA\Post(
+        path: 'admin.api.Payment.puqPayPal.test_connection.post',
+        description: 'Tests the connection to PayPal API using provided credentials.',
+        summary: 'Test PayPal connection',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqPayPal'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Connection test result',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function testConnection(Request $request, $uuid): JsonResponse
     {
         if ($request->get('sandbox') == 'yes') {

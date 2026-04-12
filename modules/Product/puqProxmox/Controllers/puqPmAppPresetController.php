@@ -30,6 +30,7 @@ use Modules\Product\puqProxmox\Models\PuqPmAppEndpointLocation;
 use Modules\Product\puqProxmox\Models\PuqPmAppPreset;
 use Modules\Product\puqProxmox\Models\PuqPmDnsZone;
 use Modules\Product\puqProxmox\Models\PuqPmLxcPreset;
+use OpenApi\Attributes as OA;
 use Yajra\DataTables\DataTables;
 
 class puqPmAppPresetController extends Controller
@@ -41,6 +42,7 @@ class puqPmAppPresetController extends Controller
         return view_admin_module('Product', 'puqProxmox', 'admin_area.app_presets.app_presets', compact('title'));
     }
 
+    #[OA\Get(path: 'admin.api.Product.puqProxmox.app_presets.get', description: 'Returns a list of app presets.', summary: 'Get app presets list', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], responses: [new OA\Response(response: 200, description: 'App presets list returned successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function getAppPresets(Request $request): JsonResponse
     {
         $query = PuqPmAppPreset::query();
@@ -101,6 +103,7 @@ class puqPmAppPresetController extends Controller
         );
     }
 
+    #[OA\Post(path: 'admin.api.Product.puqProxmox.app_preset.post', description: 'Creates a new app preset.', summary: 'Create app preset', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(required: ['name'], properties: [new OA\Property(property: 'name', type: 'string'), new OA\Property(property: 'puq_pm_lxc_preset_uuid', type: 'string', format: 'uuid'), new OA\Property(property: 'puq_pm_dns_zone_uuid', type: 'string', format: 'uuid'), new OA\Property(property: 'certificate_authority_uuid', type: 'string', format: 'uuid')], type: 'object')), responses: [new OA\Response(response: 200, description: 'App preset created successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string'), new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function postAppPreset(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
@@ -168,6 +171,7 @@ class puqPmAppPresetController extends Controller
         ]);
     }
 
+    #[OA\Get(path: 'admin.api.Product.puqProxmox.app_preset.get', description: 'Returns details of a specific app preset.', summary: 'Get app preset details', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the app preset', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], responses: [new OA\Response(response: 200, description: 'App preset details returned successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function getAppPreset(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmAppPreset::find($uuid);
@@ -210,6 +214,7 @@ class puqPmAppPresetController extends Controller
         ]);
     }
 
+    #[OA\Put(path: 'admin.api.Product.puqProxmox.app_preset.put', description: 'Updates a specific app preset.', summary: 'Update app preset', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the app preset', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(type: 'object')), responses: [new OA\Response(response: 200, description: 'App preset updated successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string'), new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function putAppPreset(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmAppPreset::find($uuid);
@@ -307,6 +312,7 @@ class puqPmAppPresetController extends Controller
         ]);
     }
 
+    #[OA\Get(path: 'admin.api.Product.puqProxmox.app_preset.custom_page.get', description: 'Returns the custom page for a specific app preset.', summary: 'Get app preset custom page', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the app preset', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], responses: [new OA\Response(response: 200, description: 'Custom page returned successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function getAppPresetCustomPage(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmAppPreset::find($uuid);
@@ -329,6 +335,7 @@ class puqPmAppPresetController extends Controller
         ]);
     }
 
+    #[OA\Put(path: 'admin.api.Product.puqProxmox.app_preset.custom_page.put', description: 'Updates the custom page for a specific app preset.', summary: 'Update app preset custom page', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the app preset', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(properties: [new OA\Property(property: 'custom_page', type: 'string'), new OA\Property(property: 'locale', type: 'string')], type: 'object')), responses: [new OA\Response(response: 200, description: 'Custom page updated successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string')], type: 'object'))])]
     public function putAppPresetCustomPage(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmAppPreset::find($uuid);
@@ -354,6 +361,7 @@ class puqPmAppPresetController extends Controller
     }
 
 
+    #[OA\Delete(path: 'admin.api.Product.puqProxmox.app_preset.delete', description: 'Deletes a specific app preset.', summary: 'Delete app preset', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the app preset', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], responses: [new OA\Response(response: 200, description: 'App preset deleted successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string')], type: 'object'))])]
     public function deleteAppPreset(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmAppPreset::find($uuid);
@@ -384,6 +392,7 @@ class puqPmAppPresetController extends Controller
         ]);
     }
 
+    #[OA\Get(path: 'admin.api.Product.puqProxmox.app_preset.script.get', description: 'Returns a specific script for an app preset.', summary: 'Get app preset script', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the app preset', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')), new OA\Parameter(name: 'type', description: 'Script type', in: 'path', required: true, schema: new OA\Schema(type: 'string'))], responses: [new OA\Response(response: 200, description: 'Script returned successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function getAppPresetScript(Request $request, $uuid, $type): JsonResponse
     {
         $model = PuqPmAppPreset::find($uuid);
@@ -402,6 +411,7 @@ class puqPmAppPresetController extends Controller
         ]);
     }
 
+    #[OA\Put(path: 'admin.api.Product.puqProxmox.app_preset.script.put', description: 'Updates a specific script for an app preset.', summary: 'Update app preset script', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the app preset', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')), new OA\Parameter(name: 'type', description: 'Script type', in: 'path', required: true, schema: new OA\Schema(type: 'string'))], requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(properties: [new OA\Property(property: 'script', type: 'string')], type: 'object')), responses: [new OA\Response(response: 200, description: 'Script updated successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string'), new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function putAppPresetScript(Request $request, $uuid, $type): JsonResponse
     {
         $model = PuqPmAppPreset::find($uuid);
@@ -432,6 +442,7 @@ class puqPmAppPresetController extends Controller
         ]);
     }
 
+    #[OA\Get(path: 'admin.api.Product.puqProxmox.app_presets.select.get', description: 'Returns app presets for select dropdown.', summary: 'Get app presets select', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], responses: [new OA\Response(response: 200, description: 'App presets select returned successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function getAppPresetsSelect(Request $request): JsonResponse
     {
         $search = $request->input('q');
@@ -466,6 +477,7 @@ class puqPmAppPresetController extends Controller
         ], 200);
     }
 
+    #[OA\Get(path: 'admin.api.Product.puqProxmox.app_preset.export.json.get', description: 'Exports an app preset as JSON.', summary: 'Export app preset JSON', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the app preset', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], responses: [new OA\Response(response: 200, description: 'App preset exported successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function getAppPresetExportJson(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmAppPreset::find($uuid);
@@ -490,6 +502,7 @@ class puqPmAppPresetController extends Controller
         ]);
     }
 
+    #[OA\Post(path: 'admin.api.Product.puqProxmox.app_preset.import.json.post', description: 'Imports an app preset from JSON.', summary: 'Import app preset JSON', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the app preset', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(required: ['import'], properties: [new OA\Property(property: 'import', type: 'string')], type: 'object')), responses: [new OA\Response(response: 200, description: 'App preset imported successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success')], type: 'object'))])]
     public function postAppPresetImportJson(Request $request, $uuid): JsonResponse
     {
         $raw = $request->input('import');
@@ -535,6 +548,7 @@ class puqPmAppPresetController extends Controller
 
 
     // App Endpoints
+    #[OA\Get(path: 'admin.api.Product.puqProxmox.app_preset.app_endpoints.get', description: 'Returns app endpoints for a specific app preset.', summary: 'Get app preset endpoints', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the app preset', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], responses: [new OA\Response(response: 200, description: 'App endpoints returned successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function getAppPresetAppEndpoints(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmAppPreset::find($uuid);
@@ -571,6 +585,7 @@ class puqPmAppPresetController extends Controller
         ], 200);
     }
 
+    #[OA\Get(path: 'admin.api.Product.puqProxmox.app_endpoint.get', description: 'Returns details of a specific app endpoint.', summary: 'Get app endpoint details', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the app endpoint', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], responses: [new OA\Response(response: 200, description: 'App endpoint details returned successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function getAppEndpoint(Request $request, $uuid): JsonResponse
     {
 
@@ -588,6 +603,7 @@ class puqPmAppPresetController extends Controller
         ]);
     }
 
+    #[OA\Post(path: 'admin.api.Product.puqProxmox.app_endpoint.post', description: 'Creates a new app endpoint.', summary: 'Create app endpoint', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(required: ['name', 'puq_pm_app_preset_uuid'], properties: [new OA\Property(property: 'name', type: 'string'), new OA\Property(property: 'puq_pm_app_preset_uuid', type: 'string', format: 'uuid')], type: 'object')), responses: [new OA\Response(response: 200, description: 'App endpoint created successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string'), new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function postAppEndpoint(Request $request): JsonResponse
     {
         $model = new PuqPmAppEndpoint;
@@ -626,6 +642,7 @@ class puqPmAppPresetController extends Controller
         ]);
     }
 
+    #[OA\Put(path: 'admin.api.Product.puqProxmox.app_endpoint.put', description: 'Updates a specific app endpoint.', summary: 'Update app endpoint', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the app endpoint', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(required: ['name'], properties: [new OA\Property(property: 'name', type: 'string')], type: 'object')), responses: [new OA\Response(response: 200, description: 'App endpoint updated successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string'), new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function putAppEndpoint(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmAppEndpoint::find($uuid);
@@ -663,6 +680,7 @@ class puqPmAppPresetController extends Controller
         ]);
     }
 
+    #[OA\Delete(path: 'admin.api.Product.puqProxmox.app_endpoint.delete', description: 'Deletes a specific app endpoint.', summary: 'Delete app endpoint', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the app endpoint', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], responses: [new OA\Response(response: 200, description: 'App endpoint deleted successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string')], type: 'object'))])]
     public function deleteAppEndpoint(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmAppEndpoint::find($uuid);
@@ -693,6 +711,7 @@ class puqPmAppPresetController extends Controller
     }
 
     // App Endpoint Locations
+    #[OA\Get(path: 'admin.api.Product.puqProxmox.app_endpoint.app_endpoint_locations.get', description: 'Returns locations for a specific app endpoint.', summary: 'Get app endpoint locations', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the app endpoint', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], responses: [new OA\Response(response: 200, description: 'App endpoint locations returned successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function getAppEndpointAppEndpointLocations(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmAppEndpoint::find($uuid);
@@ -729,6 +748,7 @@ class puqPmAppPresetController extends Controller
         ], 200);
     }
 
+    #[OA\Get(path: 'admin.api.Product.puqProxmox.app_endpoint_location.get', description: 'Returns details of a specific app endpoint location.', summary: 'Get app endpoint location details', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the app endpoint location', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], responses: [new OA\Response(response: 200, description: 'App endpoint location details returned successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function getAppEndpointLocation(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmAppEndpointLocation::find($uuid);
@@ -745,6 +765,7 @@ class puqPmAppPresetController extends Controller
         ]);
     }
 
+    #[OA\Post(path: 'admin.api.Product.puqProxmox.app_endpoint_location.post', description: 'Creates a new app endpoint location.', summary: 'Create app endpoint location', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(required: ['path', 'puq_pm_app_endpoint_uuid', 'proxy_protocol', 'proxy_port'], properties: [new OA\Property(property: 'path', type: 'string'), new OA\Property(property: 'puq_pm_app_endpoint_uuid', type: 'string', format: 'uuid'), new OA\Property(property: 'proxy_protocol', type: 'string'), new OA\Property(property: 'proxy_port', type: 'integer'), new OA\Property(property: 'proxy_path', type: 'string')], type: 'object')), responses: [new OA\Response(response: 200, description: 'App endpoint location created successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string'), new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function postAppEndpointLocation(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
@@ -812,6 +833,7 @@ class puqPmAppPresetController extends Controller
         ]);
     }
 
+    #[OA\Put(path: 'admin.api.Product.puqProxmox.app_endpoint_location.put', description: 'Updates a specific app endpoint location.', summary: 'Update app endpoint location', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the app endpoint location', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(type: 'object')), responses: [new OA\Response(response: 200, description: 'App endpoint location updated successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string'), new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function putAppEndpointLocation(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmAppEndpointLocation::find($uuid);
@@ -884,6 +906,7 @@ class puqPmAppPresetController extends Controller
         ]);
     }
 
+    #[OA\Delete(path: 'admin.api.Product.puqProxmox.app_endpoint_location.delete', description: 'Deletes a specific app endpoint location.', summary: 'Delete app endpoint location', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the app endpoint location', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], responses: [new OA\Response(response: 200, description: 'App endpoint location deleted successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string')], type: 'object'))])]
     public function deleteAppEndpointLocation(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmAppEndpointLocation::find($uuid);

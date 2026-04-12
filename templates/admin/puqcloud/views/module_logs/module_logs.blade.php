@@ -231,7 +231,7 @@
         <div class="col"><strong>${translate('Name')}:</strong> ${data.name}</div>
         <div class="col"><strong>${translate('Action')}:</strong> ${data.action}</div>
         <div class="col"><div class="badge ${getLogLevelColor(data.level)}">${data.level}</div></div>
-        <div class="col"><strong>${translate('Created At')}:</strong> ${formatDateWithoutTimezone(data.created_at)}</p>
+        <div class="col"><strong>${translate('Created At')}:</strong> ${formatDateWithoutTimezone(data.created_at)}</div>
         </div>
         <strong>${translate('Request')}:</strong>
         <pre>${data.request}</pre>

@@ -187,7 +187,7 @@
             }
 
             // Import button
-            $('#btn_import').on('click', function () {
+            $('#btn_import').on('click', function (event) {
                 const selected = $('.zone-checkbox:checked').map(function () {
                     return $(this).val();
                 }).get();

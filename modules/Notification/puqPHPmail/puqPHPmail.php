@@ -103,6 +103,10 @@ class puqPHPmail extends Notification
         $subject = $data['subject'] ?? '';
         $message = $data['layout_text'] ?? '';
         $headers = 'From: "'.$data['sender_name'].'" <'.$data['email'].">\r\n";
+        if (! empty($data['reply_to_email'])) {
+            $replyToName = ! empty($data['reply_to_name']) ? '"'.$data['reply_to_name'].'" ' : '';
+            $headers .= 'Reply-To: '.$replyToName.'<'.$data['reply_to_email'].">\r\n";
+        }
         $headers .= "MIME-Version: 1.0\r\n";
 
         $boundary = md5(uniqid(time()));

@@ -17,6 +17,7 @@
     "require": {
         "php": "^8.2",
         "ext-fileinfo": "*",
+        "ext-mosquitto-php": "*",
         "ext-pdo": "*",
         "barryvdh/laravel-dompdf": "^3.1.1",
         "dragonmantank/cron-expression": "^3.6.0",
@@ -31,12 +32,14 @@
         "league/fractal": "^0.20.2",
         "mockery/mockery": "^1.6.12",
         "nunomaduro/collision": "^8.8.3",
+        "pear/net_dns2": "^2.0.7",
         "phpseclib/phpseclib": "^3.0.47",
         "robthree/twofactorauth": "^3.0.2",
         "setasign/fpdi": "^2.6.4",
         "tecnickcom/tcpdf": "^6.10.1",
+        "webklex/php-imap": "^6.2",
         "yajra/laravel-datatables-oracle": "^12.6.2",
-        "pear/net_dns2": "^2.0.7"
+        "zircote/swagger-php": "^5.7"
     },
     "autoload": {
         "files": [

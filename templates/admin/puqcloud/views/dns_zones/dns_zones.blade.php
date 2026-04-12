@@ -88,7 +88,7 @@
                     render: function (data, type, row) {
                         var btn = '';
                         if (row.urls.edit) {
-                            btn += renderEditButton(row.urls.edit);
+                            btn += renderEditLink(row.urls.edit);
                         }
                         if (row.urls.delete) {
                             btn += renderDeleteButton(row.urls.delete);
@@ -101,23 +101,9 @@
 
             var $dataTable = initializeDataTable($tableId, ajaxUrl, columnsConfig);
 
-            $tableId.on('click', 'button.delete-btn', function (e) {
+            $dataTable.on('click', 'button.delete-btn', function (e) {
                 e.preventDefault();
-                var modelUrl = $(this).data('model-url');
-
-                if (confirm(translate('Are you sure you want to delete this record?'))) {
-                    PUQajax(modelUrl, null, 3000, $(this), 'DELETE')
-                        .then(function (response) {
-                            if (response.status === "success") {
-                                $dataTable.ajax.reload(null, false);
-                            }
-                        });
-                }
-            });
-
-            $tableId.on('click', 'button.edit-btn', function (e) {
-                e.preventDefault();
-                window.location.href = $(this).data('model-url');
+                handleDelete($dataTable, this);
             });
 
             $('#universalModal').on('show.bs.modal', function (event) {
@@ -141,6 +127,15 @@
         <select name="dns_server_group_uuid" id="dns_server_group_uuid" class="form-select">
             <option value="">${translate('Select group')}</option>
         </select>
+    </div>
+
+    <!-- Zone Template -->
+    <div class="mb-3">
+        <label class="form-label" for="template_uuid">${translate('Zone Template')}</label>
+        <select name="template_uuid" id="template_uuid" class="form-select">
+            <option value="">${translate('None (empty zone)')}</option>
+        </select>
+        <div class="form-text">${translate('Optionally apply a template with predefined records')}</div>
     </div>
 
     <!-- SOA Admin Email -->
@@ -187,6 +182,13 @@
                 var $elementDnsServerGroup = $modalBody.find('[name="dns_server_group_uuid"]');
                 initializeSelect2($elementDnsServerGroup, '{{route('admin.api.dns_server_groups.select.get')}}', '', 'GET', 1000, {
                     dropdownParent: $('#universalModal')
+                });
+
+                var $elementTemplate = $modalBody.find('[name="template_uuid"]');
+                initializeSelect2($elementTemplate, '{{route('admin.api.dns_zone_templates.select.get')}}', '', 'GET', 1000, {
+                    dropdownParent: $('#universalModal'),
+                    allowClear: true,
+                    placeholder: translate('None (empty zone)')
                 });
 
                 var $form = $('#createDnsZone');

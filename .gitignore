@@ -3,9 +3,13 @@
 /.idea
 /.vscode
 /.zed
+/.desloppify
+/.claude
+
 
 /node_modules
 /vendor
+/dump
 
 /public/*
 !/public/.htaccess
@@ -18,11 +22,3 @@
 .env
 .env.backup
 .env.production
-
-/modules/Product/*
-!/modules/Product/puqNextcloud/
-!/modules/Product/puqNextcloud/**
-!/modules/Product/puqProxmox/
-!/modules/Product/puqProxmox/**
-!/modules/Product/puqSampleProduct/
-!/modules/Product/puqSampleProduct/**

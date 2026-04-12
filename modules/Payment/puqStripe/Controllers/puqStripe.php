@@ -21,9 +21,29 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Modules\Payment\puqStripe\Services\StripeClient;
+use OpenApi\Attributes as OA;
 
 class puqStripe extends Controller
 {
+    #[OA\Post(
+        path: 'admin.api.Payment.puqStripe.test_connection.post',
+        description: 'Tests the connection to Stripe API using provided credentials.',
+        summary: 'Test Stripe connection',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqStripe'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Connection test result',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function testConnection(Request $request, $uuid): JsonResponse
     {
         if ($request->get('sandbox') == 'yes') {

@@ -97,10 +97,9 @@ class GroupsSeeder extends Seeder
         }
 
         // --------------------------------------------------------------------------------------------------------------
-        Group::where('name', $admin_notifications_group_name)->delete();
-        $admin_notifications_group = Group::create(
+        $admin_notifications_group = Group::updateOrCreate(
+            ['name' => $admin_notifications_group_name],
             [
-                'name' => $admin_notifications_group_name,
                 'description' => 'Creating by system',
                 'type' => 'notification',
             ]
@@ -117,16 +116,28 @@ class GroupsSeeder extends Seeder
             foreach ($category['notifications'] as $notification) {
                 $notification_template = NotificationTemplate::where('name', $notification['name'])->where('category', $category['key'])->first();
                 if ($notification_template) {
-                    $notification_rule = NotificationRule::create(
-                        [
-                            'group_uuid' => $admin_notifications_group->uuid,
-                            'category' => $category['key'],
-                            'notification' => $notification['name'],
-                            'notification_layout_uuid' => $notification_admin_layout->uuid,
-                            'notification_template_uuid' => $notification_template->uuid,
-                        ]
-                    );
-                    $notification_rule->notificationsenders()->attach([$notification_sender->uuid, $notification_sender2->uuid]);
+                    $existingRule = NotificationRule::where('group_uuid', $admin_notifications_group->uuid)
+                        ->where('category', $category['key'])
+                        ->where('notification', $notification['name'])
+                        ->first();
+
+                    if (! $existingRule) {
+                        $notification_rule = NotificationRule::create(
+                            [
+                                'group_uuid' => $admin_notifications_group->uuid,
+                                'category' => $category['key'],
+                                'notification' => $notification['name'],
+                                'notification_layout_uuid' => $notification_admin_layout->uuid ?? null,
+                                'notification_template_uuid' => $notification_template->uuid,
+                            ]
+                        );
+                        if ($notification_sender) {
+                            $notification_rule->notificationsenders()->syncWithoutDetaching([$notification_sender->uuid]);
+                        }
+                        if ($notification_sender2) {
+                            $notification_rule->notificationsenders()->syncWithoutDetaching([$notification_sender2->uuid]);
+                        }
+                    }
                 }
             }
         }
@@ -140,7 +151,6 @@ class GroupsSeeder extends Seeder
         );
 
         $client_notifications_group->refresh();
-        $client_notifications_group->notificationRules()->delete();
 
         $notification_sender = NotificationSender::where('name', $notification_sender_name)->first();
         $notification_sender2 = NotificationSender::where('name', $notification_sender_name2)->first();
@@ -151,16 +161,28 @@ class GroupsSeeder extends Seeder
             foreach ($category['notifications'] as $notification) {
                 $notification_template = NotificationTemplate::where('name', $notification['name'])->where('category', $category['key'])->first();
                 if ($notification_template) {
-                    $notification_rule = NotificationRule::create(
-                        [
-                            'group_uuid' => $client_notifications_group->uuid,
-                            'category' => $category['key'],
-                            'notification' => $notification['name'],
-                            'notification_layout_uuid' => $notification_client_layout->uuid,
-                            'notification_template_uuid' => $notification_template->uuid,
-                        ]
-                    );
-                    $notification_rule->notificationsenders()->attach([$notification_sender->uuid, $notification_sender2->uuid]);
+                    $existingRule = NotificationRule::where('group_uuid', $client_notifications_group->uuid)
+                        ->where('category', $category['key'])
+                        ->where('notification', $notification['name'])
+                        ->first();
+
+                    if (! $existingRule) {
+                        $notification_rule = NotificationRule::create(
+                            [
+                                'group_uuid' => $client_notifications_group->uuid,
+                                'category' => $category['key'],
+                                'notification' => $notification['name'],
+                                'notification_layout_uuid' => $notification_client_layout->uuid ?? null,
+                                'notification_template_uuid' => $notification_template->uuid,
+                            ]
+                        );
+                        if ($notification_sender) {
+                            $notification_rule->notificationsenders()->syncWithoutDetaching([$notification_sender->uuid]);
+                        }
+                        if ($notification_sender2) {
+                            $notification_rule->notificationsenders()->syncWithoutDetaching([$notification_sender2->uuid]);
+                        }
+                    }
                 }
             }
         }

@@ -50,6 +50,42 @@ return [
                     'name' => 'Client Invoice Created',
                     'description' => 'Information about a invoice',
                 ],
+                [
+                    'name' => 'Client Invoice Payment Reminder',
+                    'description' => 'Payment reminder sent before the invoice due date',
+                ],
+                [
+                    'name' => 'Client Invoice First Overdue Notice',
+                    'description' => 'First overdue notice sent after the invoice due date',
+                ],
+                [
+                    'name' => 'Client Invoice Second Overdue Notice',
+                    'description' => 'Second overdue notice sent after the invoice due date',
+                ],
+                [
+                    'name' => 'Client Invoice Third Overdue Notice',
+                    'description' => 'Third (final) overdue notice sent after the invoice due date',
+                ],
+                [
+                    'name' => 'Client Billing Mode Changed',
+                    'description' => 'Notification when service billing mode is switched between prepaid and invoice',
+                ],
+                [
+                    'name' => 'Client Ticket Opened',
+                    'description' => 'Confirmation when a new support ticket is submitted',
+                ],
+                [
+                    'name' => 'Client Ticket Reply from Staff',
+                    'description' => 'Notification when staff replies to a support ticket',
+                ],
+                [
+                    'name' => 'Client Ticket Closed',
+                    'description' => 'Notification when a support ticket is closed',
+                ],
+                [
+                    'name' => 'Client Ticket Reopened',
+                    'description' => 'Notification when a support ticket is reopened',
+                ],
             ],
         ],
     ],

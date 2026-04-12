@@ -22,10 +22,12 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Modules\Product\puqProxmox\Models\PuqPmLxcInstance;
 use Modules\Product\puqProxmox\Models\PuqPmScriptLog;
+use OpenApi\Attributes as OA;
 
 class puqPmLxcInstanceController extends Controller
 {
 
+    #[OA\Get(path: 'admin.api.Product.puqProxmox.puq_pm_lxc_instance.deploy_status.get', description: 'Returns the deploy status of a specific LXC instance.', summary: 'Get LXC instance deploy status', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the LXC instance', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], responses: [new OA\Response(response: 200, description: 'Deploy status returned successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function getDeployStatus(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmLxcInstance::find($uuid);
@@ -66,6 +68,7 @@ class puqPmLxcInstanceController extends Controller
         ]);
     }
 
+    #[OA\Put(path: 'admin.api.Product.puqProxmox.puq_pm_lxc_instance.reboot.put', description: 'Reboots a specific LXC instance.', summary: 'Reboot LXC instance', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the LXC instance', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], responses: [new OA\Response(response: 200, description: 'Reboot task sent successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string')], type: 'object'))])]
     public function putReboot(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmLxcInstance::find($uuid);
@@ -90,6 +93,7 @@ class puqPmLxcInstanceController extends Controller
         ]);
     }
 
+    #[OA\Get(path: 'admin.api.Product.puqProxmox.puq_pm_lxc_instance.script_log.get', description: 'Returns a specific script log for an LXC instance.', summary: 'Get LXC instance script log', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the LXC instance', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')), new OA\Parameter(name: 'log_uuid', description: 'UUID of the script log', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], responses: [new OA\Response(response: 200, description: 'Script log returned successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function getScriptLog(Request $request, $uuid, $log_uuid): JsonResponse
     {
         $model = PuqPmLxcInstance::find($uuid);

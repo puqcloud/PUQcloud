@@ -44,6 +44,7 @@
         @php
             $tabs = [
                 'general' => __('main.General'),
+                'settings' => __('main.Settings'),
                 'images' => __('main.Images'),
                 'pricing' => __('main.Pricing'),
                 'attributes' => __('main.Attributes'),

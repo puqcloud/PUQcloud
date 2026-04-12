@@ -54,6 +54,42 @@ return [
                     'name' => 'Service Cancellation Successful',
                     'description' => 'Confirms successful service cancellation',
                 ],
+                [
+                    'name' => 'Admin Invoice Overdue Notification',
+                    'description' => 'Alert when a service billing invoice becomes overdue',
+                ],
+                [
+                    'name' => 'Admin Service Invoice Created',
+                    'description' => 'Notification when a new service billing invoice is generated',
+                ],
+                [
+                    'name' => 'New Ticket from Client',
+                    'description' => 'Alert when a client submits a new support ticket',
+                ],
+                [
+                    'name' => 'Client Reply on Ticket',
+                    'description' => 'Alert when a client replies to a support ticket',
+                ],
+                [
+                    'name' => 'Ticket Assigned to You',
+                    'description' => 'Notification when a ticket is assigned to you',
+                ],
+                [
+                    'name' => 'Ticket Escalated',
+                    'description' => 'Alert when a ticket is escalated or transferred',
+                ],
+                [
+                    'name' => 'Ticket SLA Breached',
+                    'description' => 'Alert when a ticket SLA response time has been exceeded',
+                ],
+                [
+                    'name' => 'Ticket Closed',
+                    'description' => 'Alert when a ticket is closed',
+                ],
+                [
+                    'name' => 'Ticket Reopened',
+                    'description' => 'Alert when a ticket is reopened by a client',
+                ],
             ],
         ],
     ],

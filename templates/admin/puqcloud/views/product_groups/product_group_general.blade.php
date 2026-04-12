@@ -6,6 +6,25 @@
 
 @section('head')
     @parent
+    <style>
+        .product-section-card .card-header {
+            background: linear-gradient(90deg, rgba(13, 110, 253, 0.04), transparent);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.075);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .product-section-card .card-header i {
+            color: #0d6efd;
+        }
+
+        .product-section-card .card-header h5 {
+            margin: 0;
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+    </style>
 @endsection
 
 @section('buttons')
@@ -23,80 +42,13 @@
 
     <form id="product_group" class="mx-auto" novalidate="novalidate">
 
-        <div class="card mb-3">
-            <div class="card-body">
-                <div class="row">
-
-                    <div class="col-12 col-sm-3 col-md-3 col-lg mb-1">
-                        <label class="form-label" for="key">{{__('main.Key')}}</label>
-                        <div>
-                            <input type="text" class="form-control input-mask-trigger"
-                                   id="key"
-                                   name="key"
-                                   placeholder="{{__('main.Key')}}">
-                        </div>
-                    </div>
-
-                    <div class="col-12 col-sm-3 col-md-3 col-lg mb-1">
-                        @include(config('template.admin.view') .'.elements.icon_picker')
-                    </div>
-
-                    <div class="col-12 col-sm-3 col-md-3 col-lg mb-1">
-                        <label class="form-label" for="disable">{{__('main.Hidden')}}</label>
-                        <div>
-                            <input type="checkbox" data-toggle="toggle" data-on="{{__('main.Yes')}}"
-                                   id="hidden"
-                                   name="hidden"
-                                   data-off="{{__('main.No')}}" data-onstyle="danger"
-                                   data-offstyle="success">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-12 col-sm-3 col-md-3 col-lg mb-1">
-                        <div class="mb-3">
-                            <div class="position-relative mb-3">
-                                <div>
-                                    <label for="list_template" class="form-label">{{__('main.List Template')}}</label>
-                                    <select name="list_template" id="list_template"
-                                            class="form-select mb-2 form-control"></select>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-12 col-sm-3 col-md-3 col-lg mb-1">
-                        <div class="mb-3">
-                            <div class="position-relative mb-3">
-                                <div>
-                                    <label for="order_template" class="form-label">{{__('main.Order Template')}}</label>
-                                    <select name="order_template" id="order_template"
-                                            class="form-select mb-2 form-control"></select>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-12 col-sm-3 col-md-3 col-lg mb-1">
-                        <div class="mb-3">
-                            <div class="position-relative mb-3">
-                                <div>
-                                    <label for="manage_template"
-                                           class="form-label">{{__('main.Manage Template')}}</label>
-                                    <select name="manage_template" id="manage_template"
-                                            class="form-select mb-2 form-control"></select>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
+        {{-- Localized Content --}}
+        <div class="card mb-3 product-section-card">
+            <div class="card-header">
+                <i class="fa fa-language"></i>
+                <h5>{{__('main.Localized Content')}}</h5>
             </div>
-        </div>
-
-        <div class="card mb-3">
-            <div class="tabs-lg-alternate card-header">
+            <div class="tabs-lg-alternate card-header p-0">
                 <ul class="nav nav-justified">
                     @php($i=0)
                     @foreach($locales as $key => $locale)
@@ -114,51 +66,41 @@
                     @endforeach
                 </ul>
             </div>
-            <div class="tab-content mb-3">
+            <div class="tab-content">
                 <div class="card-body">
-                    <div class="row">
-                        <div class="row">
-                            <div class="col-12 col-sm-12 col-md-12 col-lg-6 mb-1">
+                    <div class="row g-3">
+                        <div class="col-12 col-lg-6">
+                            <div class="mb-3">
                                 <label class="form-label" for="name">{{__('main.Name')}}</label>
-                                <div>
-                                    <input type="text" class="form-control input-mask-trigger"
-                                           id="name"
-                                           name="name"
-                                           placeholder="{{__('main.Name')}}">
-                                </div>
-
-                                <label class="form-label"
-                                       for="short_description">{{__('main.Short Description')}}</label>
-                                <div>
-                                    <input type="text" class="form-control input-mask-trigger"
-                                           id="short_description"
-                                           name="short_description"
-                                           placeholder="{{__('main.Short Description')}}">
-                                </div>
-
+                                <input type="text" class="form-control input-mask-trigger" id="name"
+                                       name="name" placeholder="{{__('main.Name')}}">
                             </div>
-                            <div class="col-12 col-sm-12 col-md-12 col-lg-6 mb-1">
-                                <div class="form-group">
-                                    <label for="description">{{__('main.Description')}}</label>
-                                    <textarea name="description" id="description" class="form-control"
-                                              rows="5"></textarea>
-                                </div>
+
+                            <div class="mb-3">
+                                <label class="form-label" for="short_description">{{__('main.Short Description')}}</label>
+                                <input type="text" class="form-control input-mask-trigger"
+                                       id="short_description" name="short_description"
+                                       placeholder="{{__('main.Short Description')}}">
                             </div>
+                        </div>
+                        <div class="col-12 col-lg-6">
+                            <label for="description" class="form-label">{{__('main.Description')}}</label>
+                            <textarea name="description" id="description" class="form-control" rows="6"></textarea>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="card mb-3">
+        {{-- Notes --}}
+        <div class="card mb-3 product-section-card">
+            <div class="card-header">
+                <i class="fa fa-sticky-note"></i>
+                <h5>{{__('main.Notes')}}</h5>
+            </div>
             <div class="card-body">
-                <div class="row">
-                    <div class="col-12 mb-1">
-                        <label class="form-label" for="notes">{{__('main.Notes')}}</label>
-                        <div><textarea name="notes" id="notes" class="form-control" rows="2"></textarea>
-                        </div>
-                    </div>
-                </div>
+                <textarea name="notes" id="notes" class="form-control" rows="3"
+                          placeholder="{{__('main.Internal notes visible to admins only')}}"></textarea>
             </div>
         </div>
 
@@ -171,6 +113,8 @@
     <script>
         $(document).ready(function () {
 
+            $(".input-mask-trigger").inputmask();
+
             function loadFormData(locale) {
                 blockUI('product_group');
                 const $form = $('#product_group');
@@ -182,50 +126,26 @@
                     .then(function (response) {
                         $.each(response.data, function (key, value) {
                             const $element = $form.find(`[name="${key}"]`);
-                            if ($element.length) {
+                            if (!$element.length) return;
 
-                                if (key === 'list_template') {
-                                    var list_template_selected = {id: response.data[key], text: response.data[key]};
-                                    initializeSelect2($element[0], '{{route('admin.api.product_group.list_templates.select.get')}}', list_template_selected, 'GET', 1000, {});
+                            if ($element.is('textarea')) {
+                                if (value !== null) {
+                                    $element.val(value);
                                 }
-
-                                if (key === 'order_template') {
-                                    var order_template_selected = {id: response.data[key], text: response.data[key]};
-                                    initializeSelect2($element[0], '{{route('admin.api.product_group.order_templates.select.get')}}', order_template_selected, 'GET', 1000, {});
+                                if (key === 'description') {
+                                    $element.textareaAutoSize().trigger('autosize');
                                 }
-
-                                if (key === 'manage_template') {
-                                    var manage_template_selected = {id: response.data[key], text: response.data[key]};
-                                    initializeSelect2($element[0], '{{route('admin.api.product_group.manage_templates.select.get')}}', manage_template_selected, 'GET', 1000, {});
-                                }
-
-                                if ($element.is(':checkbox')) {
-                                    $element.prop('checked', !!value).trigger('click');
-                                    return;
-                                }
-
-                                if ($element.is('textarea')) {
-                                    if (value !== null) {
-                                        $element.val(value);
-                                    }
-                                    if (key === 'description') {
-                                        $element.textareaAutoSize().trigger('autosize');
-                                    }
-                                    return;
-                                }
-
-                                $element.val(value);
+                                return;
                             }
+
+                            $element.val(value);
                         });
 
-                        if (response.data) {
-                            unblockUI('product_group');
-                        }
-
-
+                        unblockUI('product_group');
                     })
                     .catch(function (error) {
                         console.error('Error loading form data:', error);
+                        unblockUI('product_group');
                     });
             }
 
@@ -236,7 +156,7 @@
                 const locale = $('.locale.active').data('locale');
                 const formData = serializeForm($form);
                 PUQajax('{{route('admin.api.product_group.put', $uuid)}}?locale=' + locale, formData, 5000, $(this), 'PUT', $form)
-                    .then(function (response) {
+                    .then(function () {
                         loadFormData(locale);
                     });
             });

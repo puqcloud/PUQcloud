@@ -1,0 +1,7 @@
+{
+    "name": "Ticket SLA Breached",
+    "category": "staffOperational",
+    "custom": false,
+    "subject": "[Ticket #{{ $ticket->number }}] SLA Breached: {{ $ticket->subject }}",
+    "text_mini": "Ticket #{{ $ticket->number }} has exceeded the SLA response time."
+}

@@ -15,6 +15,21 @@
  * Do not remove this header.
  */
 
+/*
+ * WEB Routes:
+ *   GET  (empty = dashboard)                                   -> dashboard()                       [admin.web.dashboard]
+ *
+ * API Routes:
+ *   GET  dashboard/widgets                                     -> getDashboardWidgets()             [admin.api.dashboard.widgets.get]
+ *   GET  dashboard/widget                                      -> getDashboardWidget()              [admin.api.dashboard.widget.get]
+ *   GET  dashboard                                             -> getDashboard()                    [admin.api.dashboard.get]
+ *   PUT  dashboard                                             -> putDashboard()                    [admin.api.dashboard.put]
+ *   GET  client/{uuid}/summary/widgets                         -> getClientSummaryWidgets()         [admin.api.client.summary.widgets.get]
+ *   GET  client/{uuid}/summary/widget                          -> getClientSummaryWidget()          [admin.api.client.summary.widget.get]
+ *   GET  client/{uuid}/summary/dashboard                       -> getClientSummaryDashboard()       [admin.api.client.summary.dashboard.get]
+ *   PUT  client/{uuid}/summary/dashboard                       -> putClientSummaryDashboard()       [admin.api.client.summary.dashboard.put]
+ */
+
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
@@ -32,6 +47,7 @@ use Laravel\Horizon\Contracts\SupervisorRepository;
 use Laravel\Horizon\Http\Controllers\MasterSupervisorController;
 use Mosquitto\Exception;
 use Illuminate\Contracts\Console\Kernel;
+use OpenApi\Attributes as OA;
 
 class AdminWidgetsController extends Controller
 {
@@ -42,6 +58,25 @@ class AdminWidgetsController extends Controller
         return view_admin('dashboard.dashboard', compact('title'));
     }
 
+    #[OA\Get(
+        path: 'admin.api.dashboard.widgets.get',
+        description: 'Returns the list of available dashboard widgets.',
+        summary: 'Get dashboard widgets list',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Widgets'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Widgets list returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'array', items: new OA\Items(type: 'object')),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getDashboardWidgets(): JsonResponse
     {
         return response()->json([
@@ -50,6 +85,34 @@ class AdminWidgetsController extends Controller
 
     }
 
+    #[OA\Get(
+        path: 'admin.api.dashboard.widget.get',
+        description: 'Returns rendered HTML content for a specific dashboard widget by key.',
+        summary: 'Get single dashboard widget',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Widgets'],
+        parameters: [
+            new OA\Parameter(
+                name: 'key',
+                description: 'Widget key identifier',
+                in: 'query',
+                required: true,
+                schema: new OA\Schema(type: 'string')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Widget data returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getDashboardWidget(Request $request): JsonResponse
     {
         if (! $request->has('key')) {
@@ -112,6 +175,25 @@ class AdminWidgetsController extends Controller
         ], 404);
     }
 
+    #[OA\Get(
+        path: 'admin.api.dashboard.get',
+        description: 'Returns the current admin dashboard layout with widget positions.',
+        summary: 'Get dashboard layout',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Widgets'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Dashboard layout returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'array', items: new OA\Items(type: 'object')),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getDashboard(): JsonResponse
     {
         $admin = app('admin');
@@ -138,6 +220,38 @@ class AdminWidgetsController extends Controller
         ], 200);
     }
 
+    #[OA\Put(
+        path: 'admin.api.dashboard.put',
+        description: 'Updates the admin dashboard layout with new widget positions.',
+        summary: 'Update dashboard layout',
+        security: [['apiKeyAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'application/json',
+                schema: new OA\Schema(
+                    required: ['widgets'],
+                    properties: [
+                        new OA\Property(property: 'widgets', type: 'array', items: new OA\Items(type: 'object')),
+                    ]
+                )
+            )
+        ),
+        tags: ['Widgets'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Dashboard updated successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string', example: 'success'),
+                        new OA\Property(property: 'message', type: 'string', example: 'Updated successfully'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function putDashboard(Request $request): JsonResponse
     {
         $admin = app('admin');
@@ -337,7 +451,189 @@ class AdminWidgetsController extends Controller
         return $html;
     }
 
+    public function getServicesOverview(): string
+    {
+        $statuses = ['active', 'suspended', 'pending', 'terminated', 'cancelled'];
+
+        $serviceCounts = DB::table('services')
+            ->select(DB::raw('status, COUNT(*) as count'))
+            ->whereIn('status', $statuses)
+            ->groupBy('status')
+            ->get()
+            ->keyBy('status');
+
+        $totalServices = DB::table('services')->count();
+        $idleCount = DB::table('services')->where('idle', true)->where('status', 'active')->count();
+        $terminationRequests = DB::table('services')->where('termination_request', true)->whereNotIn('status', ['terminated', 'cancelled'])->count();
+
+        $html = view_admin('dashboard.widgets.services_overview', [
+            'serviceCounts' => $serviceCounts,
+            'statuses' => $statuses,
+            'totalServices' => $totalServices,
+            'idleCount' => $idleCount,
+            'terminationRequests' => $terminationRequests,
+        ])->render();
+
+        return $html;
+    }
+
+    public function getFinancialSummary(): string
+    {
+        $unpaid = DB::table('invoices')->where('status', 'unpaid')->selectRaw('COUNT(*) as count, COALESCE(SUM(total), 0) as total')->first();
+        $draft = DB::table('invoices')->where('status', 'draft')->selectRaw('COUNT(*) as count, COALESCE(SUM(total), 0) as total')->first();
+
+        $paidMonth = DB::table('invoices')
+            ->where('status', 'paid')
+            ->whereMonth('paid_date', now()->month)
+            ->whereYear('paid_date', now()->year)
+            ->selectRaw('COUNT(*) as count, COALESCE(SUM(total), 0) as total')
+            ->first();
+
+        $dueTodayCount = DB::table('invoices')->where('status', 'unpaid')->whereDate('due_date', today())->count();
+        $overdueCount = DB::table('invoices')->where('status', 'unpaid')->whereDate('due_date', '<', today())->count();
+
+        $html = view_admin('dashboard.widgets.financial_summary', [
+            'unpaidCount' => $unpaid->count,
+            'unpaidTotal' => $unpaid->total,
+            'draftCount' => $draft->count,
+            'draftTotal' => $draft->total,
+            'paidMonthCount' => $paidMonth->count,
+            'paidMonthTotal' => $paidMonth->total,
+            'dueTodayCount' => $dueTodayCount,
+            'overdueCount' => $overdueCount,
+        ])->render();
+
+        return $html;
+    }
+
+    public function getClientsOverview(): string
+    {
+        $totalClients = DB::table('clients')->count();
+        $newThisMonth = DB::table('clients')->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->count();
+        $newToday = DB::table('clients')->whereDate('created_at', today())->count();
+
+        $withActiveServices = DB::table('clients')
+            ->whereExists(function ($query) {
+                $query->select(DB::raw(1))
+                    ->from('services')
+                    ->whereColumn('services.client_uuid', 'clients.uuid')
+                    ->where('services.status', 'active');
+            })
+            ->count();
+
+        $withUnpaidInvoices = DB::table('clients')
+            ->whereExists(function ($query) {
+                $query->select(DB::raw(1))
+                    ->from('invoices')
+                    ->whereColumn('invoices.client_uuid', 'clients.uuid')
+                    ->where('invoices.status', 'unpaid');
+            })
+            ->count();
+
+        $html = view_admin('dashboard.widgets.clients_overview', [
+            'totalClients' => $totalClients,
+            'newThisMonth' => $newThisMonth,
+            'newToday' => $newToday,
+            'withActiveServices' => $withActiveServices,
+            'withUnpaidInvoices' => $withUnpaidInvoices,
+        ])->render();
+
+        return $html;
+    }
+
+    public function getSslCertificatesStatus(): string
+    {
+        $statuses = ['active', 'expired', 'pending', 'draft', 'revoked', 'failed'];
+
+        $certCounts = DB::table('ssl_certificates')
+            ->select(DB::raw('status, COUNT(*) as count'))
+            ->whereIn('status', $statuses)
+            ->groupBy('status')
+            ->get()
+            ->keyBy('status');
+
+        $expiringSoon = DB::table('ssl_certificates')
+            ->where('status', 'active')
+            ->whereNotNull('expires_at')
+            ->where('expires_at', '<=', now()->addDays(30))
+            ->where('expires_at', '>', now())
+            ->count();
+
+        $html = view_admin('dashboard.widgets.ssl_certificates_status', [
+            'certCounts' => $certCounts,
+            'statuses' => $statuses,
+            'expiringSoon' => $expiringSoon,
+        ])->render();
+
+        return $html;
+    }
+
+    public function getTicketsOverview(): string
+    {
+        $newOpen = DB::table('tickets')
+            ->join('ticket_statuses', 'tickets.status_uuid', '=', 'ticket_statuses.uuid')
+            ->where('ticket_statuses.title', 'Open')
+            ->count();
+
+        $customerReply = DB::table('tickets')
+            ->join('ticket_statuses', 'tickets.status_uuid', '=', 'ticket_statuses.uuid')
+            ->where('ticket_statuses.title', 'Customer-Reply')
+            ->count();
+
+        $answered = DB::table('tickets')
+            ->join('ticket_statuses', 'tickets.status_uuid', '=', 'ticket_statuses.uuid')
+            ->where('ticket_statuses.title', 'Answered')
+            ->count();
+
+        return view_admin('dashboard.widgets.tickets_overview', [
+            'newOpen' => $newOpen,
+            'customerReply' => $customerReply,
+            'answered' => $answered,
+        ])->render();
+    }
+
+    public function getRecentActivity(): string
+    {
+        $activities = DB::table('activity_logs')
+            ->leftJoin('admins', 'activity_logs.admin_uuid', '=', 'admins.uuid')
+            ->select(
+                'activity_logs.created_at',
+                'activity_logs.description',
+                'activity_logs.model_type',
+                'activity_logs.action',
+                DB::raw("CONCAT(admins.firstname, ' ', admins.lastname) as admin_name")
+            )
+            ->orderByDesc('activity_logs.created_at')
+            ->limit(15)
+            ->get();
+
+        $html = view_admin('dashboard.widgets.recent_activity', [
+            'activities' => $activities,
+        ])->render();
+
+        return $html;
+    }
+
     // Client Summary --------------------------------------------------------------------------------------------------
+    #[OA\Get(
+        path: 'admin.api.client.summary.widgets.get',
+        description: 'Returns the list of available client summary widgets.',
+        summary: 'Get client summary widgets list',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Widgets'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Client summary widgets list returned',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'array', items: new OA\Items(type: 'object')),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getClientSummaryWidgets(): JsonResponse
     {
         return response()->json([
@@ -346,6 +642,41 @@ class AdminWidgetsController extends Controller
 
     }
 
+    #[OA\Get(
+        path: 'admin.api.client.summary.widget.get',
+        description: 'Returns rendered content for a specific client summary widget.',
+        summary: 'Get single client summary widget',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Widgets'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'UUID of the client',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+            new OA\Parameter(
+                name: 'key',
+                description: 'Widget key identifier',
+                in: 'query',
+                required: true,
+                schema: new OA\Schema(type: 'string')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Widget data returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getClientSummaryWidget(Request $request, $uuid): JsonResponse
     {
         if (! $request->has('key')) {
@@ -408,6 +739,25 @@ class AdminWidgetsController extends Controller
         ], 404);
     }
 
+    #[OA\Get(
+        path: 'admin.api.client.summary.dashboard.get',
+        description: 'Returns the client summary dashboard layout with widget positions.',
+        summary: 'Get client summary dashboard layout',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Widgets'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Client summary dashboard returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'array', items: new OA\Items(type: 'object')),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getClientSummaryDashboard(): JsonResponse
     {
         $admin = app('admin');
@@ -434,6 +784,38 @@ class AdminWidgetsController extends Controller
         ], 200);
     }
 
+    #[OA\Put(
+        path: 'admin.api.client.summary.dashboard.put',
+        description: 'Updates the client summary dashboard layout.',
+        summary: 'Update client summary dashboard layout',
+        security: [['apiKeyAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'application/json',
+                schema: new OA\Schema(
+                    required: ['widgets'],
+                    properties: [
+                        new OA\Property(property: 'widgets', type: 'array', items: new OA\Items(type: 'object')),
+                    ]
+                )
+            )
+        ),
+        tags: ['Widgets'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Dashboard updated successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string', example: 'success'),
+                        new OA\Property(property: 'message', type: 'string', example: 'Updated successfully'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function putClientSummaryDashboard(Request $request): JsonResponse
     {
         $admin = app('admin');
@@ -493,6 +875,121 @@ class AdminWidgetsController extends Controller
         ];
 
         $html = view_admin('clients.widgets.actions', $data)->render();
+
+        return $html;
+    }
+
+    public function getClientServices(Request $request, $uuid): string
+    {
+        $locale = config('locale.admin.default');
+
+        $services = DB::table('services')
+            ->leftJoin('prices', 'services.price_uuid', '=', 'prices.uuid')
+            ->leftJoin('translations', function ($join) use ($locale) {
+                $join->on('translations.model_uuid', '=', 'services.product_uuid')
+                    ->where('translations.model_type', '=', 'App\\Models\\Product')
+                    ->where('translations.field', '=', 'name')
+                    ->where('translations.locale', '=', $locale);
+            })
+            ->where('services.client_uuid', $uuid)
+            ->select(
+                'services.uuid',
+                'services.status',
+                'services.termination_request',
+                'services.idle',
+                'translations.value as product_name',
+                'prices.base as price_base',
+                'prices.period as price_period'
+            )
+            ->orderByDesc('services.created_at')
+            ->get();
+
+        $html = view_admin('clients.widgets.client_services', [
+            'services' => $services,
+        ])->render();
+
+        return $html;
+    }
+
+    public function getClientInvoices(Request $request, $uuid): string
+    {
+        $invoices = DB::table('invoices')
+            ->where('client_uuid', $uuid)
+            ->select('uuid', 'number', 'type', 'status', 'issue_date', 'total', 'currency_code')
+            ->orderByDesc('created_at')
+            ->limit(15)
+            ->get();
+
+        $unpaidTotal = DB::table('invoices')
+            ->where('client_uuid', $uuid)
+            ->where('status', 'unpaid')
+            ->sum('total');
+
+        $currencyCode = DB::table('clients')
+            ->join('currencies', 'clients.currency_uuid', '=', 'currencies.uuid')
+            ->where('clients.uuid', $uuid)
+            ->value('currencies.code') ?? '';
+
+        $html = view_admin('clients.widgets.client_invoices', [
+            'invoices' => $invoices,
+            'unpaidTotal' => $unpaidTotal,
+            'currencyCode' => $currencyCode,
+        ])->render();
+
+        return $html;
+    }
+
+    public function getClientTransactions(Request $request, $uuid): string
+    {
+        $locale = config('locale.admin.default');
+
+        $transactions = DB::table('transactions')
+            ->leftJoin('translations', function ($join) use ($locale) {
+                $join->on('translations.model_uuid', '=', 'transactions.payment_gateway_uuid')
+                    ->where('translations.model_type', '=', 'App\\Models\\PaymentGateway')
+                    ->where('translations.field', '=', 'name')
+                    ->where('translations.locale', '=', $locale);
+            })
+            ->where('transactions.client_uuid', $uuid)
+            ->select(
+                'transactions.uuid',
+                'transactions.transaction_date',
+                'transactions.type',
+                'transactions.amount_gross',
+                'transactions.currency_code',
+                'translations.value as gateway_name'
+            )
+            ->orderByDesc('transactions.transaction_date')
+            ->limit(15)
+            ->get();
+
+        $html = view_admin('clients.widgets.client_transactions', [
+            'transactions' => $transactions,
+        ])->render();
+
+        return $html;
+    }
+
+    public function getClientNotes(Request $request, $uuid): string
+    {
+        $client = DB::table('clients')->where('uuid', $uuid)->select('admin_notes', 'notes')->first();
+
+        $html = view_admin('clients.widgets.client_notes', [
+            'adminNotes' => $client->admin_notes ?? '',
+            'clientNotes' => $client->notes ?? '',
+        ])->render();
+
+        return $html;
+    }
+
+    public function getClientRecurringPayments(Request $request, $uuid): string
+    {
+        $client = Client::find($uuid);
+        $totals = $client->calculateRecurringPaymentsBreakdown();
+
+        $html = view_admin('clients.widgets.client_recurring_payments', [
+            'totals' => $totals,
+        ])->render();
 
         return $html;
     }

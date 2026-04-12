@@ -8,6 +8,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Modules\Product\puqSampleProduct\Models\PuqSampleProduct as PuqSampleProductModel;
+use OpenApi\Attributes as OA;
 use puqSampleProduct;
 use Yajra\DataTables\DataTables;
 
@@ -37,6 +38,25 @@ class puqSampleProductController extends Controller
         return view_admin_module('Product', 'puqSampleProduct', 'admin_area.simple_api_requests', compact('title'));
     }
 
+    #[OA\Get(
+        path: 'admin.api.Product.puqSampleProduct.simple_api_request.get',
+        description: 'Returns a success message for the GET API request.',
+        summary: 'Get API request',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqSampleProduct'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Successful GET API request',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'message', type: 'string'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getApiRequest(Request $request): JsonResponse
     {
         return response()->json([
@@ -44,6 +64,25 @@ class puqSampleProductController extends Controller
         ], 200);
     }
 
+    #[OA\Put(
+        path: 'admin.api.Product.puqSampleProduct.simple_api_request.put',
+        description: 'Returns a success message for the PUT API request.',
+        summary: 'Put API request',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqSampleProduct'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Successful PUT API request',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'message', type: 'string'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function putApiRequest(Request $request): JsonResponse
     {
         return response()->json([
@@ -51,6 +90,25 @@ class puqSampleProductController extends Controller
         ], 200);
     }
 
+    #[OA\Post(
+        path: 'admin.api.Product.puqSampleProduct.simple_api_request.post',
+        description: 'Returns a success message for the POST API request.',
+        summary: 'Post API request',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqSampleProduct'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Successful POST API request',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'message', type: 'string'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function postApiRequest(Request $request): JsonResponse
     {
         return response()->json([
@@ -58,6 +116,25 @@ class puqSampleProductController extends Controller
         ], 200);
     }
 
+    #[OA\Delete(
+        path: 'admin.api.Product.puqSampleProduct.simple_api_request.delete',
+        description: 'Returns a success message for the DELETE API request.',
+        summary: 'Delete API request',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqSampleProduct'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Successful DELETE API request',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'message', type: 'string'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function deleteApiRequest(Request $request): JsonResponse
     {
         return response()->json([
@@ -65,6 +142,25 @@ class puqSampleProductController extends Controller
         ], 200);
     }
 
+    #[OA\Get(
+        path: 'admin.api.Product.puqSampleProduct.simple_models.get',
+        description: 'Returns a paginated list of simple models with search and filtering support.',
+        summary: 'Get simple models list',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqSampleProduct'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Successful response with list of simple models',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getSimpleModels(Request $request): JsonResponse
     {
         $query = PuqSampleProductModel::query();
@@ -102,6 +198,27 @@ class puqSampleProductController extends Controller
         ], 200);
     }
 
+    #[OA\Post(
+        path: 'admin.api.Product.puqSampleProduct.simple_model.post',
+        description: 'Creates a new simple model record with the provided name, test, and test2 fields.',
+        summary: 'Create a simple model',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqSampleProduct'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Simple model created successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string'),
+                        new OA\Property(property: 'message', type: 'string'),
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function postSimpleModel(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
@@ -139,6 +256,35 @@ class puqSampleProductController extends Controller
         ]);
     }
 
+    #[OA\Get(
+        path: 'admin.api.Product.puqSampleProduct.simple_model.get',
+        description: 'Returns a single simple model record by its ID.',
+        summary: 'Get a simple model',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqSampleProduct'],
+        parameters: [
+            new OA\Parameter(
+                name: 'id',
+                description: 'ID of the simple model',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'integer')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Successful response with simple model data',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string'),
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getSimpleModel(Request $request, $id): JsonResponse
     {
         $model = PuqSampleProductModel::find($id);
@@ -155,6 +301,36 @@ class puqSampleProductController extends Controller
         ]);
     }
 
+    #[OA\Put(
+        path: 'admin.api.Product.puqSampleProduct.simple_model.put',
+        description: 'Updates an existing simple model record by its ID.',
+        summary: 'Update a simple model',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqSampleProduct'],
+        parameters: [
+            new OA\Parameter(
+                name: 'id',
+                description: 'ID of the simple model',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'integer')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Simple model updated successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string'),
+                        new OA\Property(property: 'message', type: 'string'),
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function putSimpleModel(Request $request, $id): JsonResponse
     {
         $model = PuqSampleProductModel::find($id);
@@ -198,6 +374,35 @@ class puqSampleProductController extends Controller
         ]);
     }
 
+    #[OA\Delete(
+        path: 'admin.api.Product.puqSampleProduct.simple_model.delete',
+        description: 'Deletes a simple model record by its ID.',
+        summary: 'Delete a simple model',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqSampleProduct'],
+        parameters: [
+            new OA\Parameter(
+                name: 'id',
+                description: 'ID of the simple model',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'integer')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Simple model deleted successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string'),
+                        new OA\Property(property: 'message', type: 'string'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function deleteSimpleModel(Request $request, $id): JsonResponse
     {
         $model = PuqSampleProductModel::find($id);

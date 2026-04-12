@@ -112,7 +112,7 @@
                     render: function (data, type, row) {
                         var btn = '';
                         if (row.urls.edit) {
-                            btn = btn + renderEditButton(row.urls.edit);
+                            btn = btn + renderEditLink(row.urls.edit);
                         }
                         if (row.urls.delete) {
                             btn = btn + renderDeleteButton(row.urls.delete);
@@ -170,23 +170,10 @@
                         });
                 }
             });
-            $tableId.on('click', 'button.delete-btn', function (e) {
-                e.preventDefault();
-                var modelUrl = $(this).data('model-url');
 
-                if (confirm(translate('Are you sure you want to delete this record?'))) {
-                    PUQajax(modelUrl, null, 3000, $(this), 'DELETE')
-                        .then(function (response) {
-                            if (response.status === "success") {
-                                $dataTable.ajax.reload(null, false);
-                            }
-                        });
-                }
-            });
-
-            $tableId.on('click', 'button.edit-btn', function (e) {
+            $dataTable.on('click', 'button.delete-btn', function (e) {
                 e.preventDefault();
-                window.location.href = $(this).data('model-url');
+                handleDelete($dataTable, this);
             });
 
 

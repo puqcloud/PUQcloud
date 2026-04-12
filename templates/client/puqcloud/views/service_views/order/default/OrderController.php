@@ -6,15 +6,45 @@ use App\Models\ProductOption;
 use App\Models\Service;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Default OrderController for service_views.
+ *
+ * Generic select2/price/option/summary endpoints used by the default order flow. Modules that
+ * need bespoke product listings (e.g. location-filtered grids with bandwidth metadata) can add
+ * their own `controller_GetLocations` / `controller_GetProducts` methods without touching this
+ * base — the generic helpers below live on the Product model (`getPricesForClient`,
+ * `getOptionGroupsForPrice`, `getAttributesByGroup`) so custom overrides stay thin.
+ */
 class OrderController
 {
-    public function __construct()
+    public function __construct() {}
+
+    /**
+     * Universal product listing for the default order template — returns every orderable
+     * product in the group with its billing cycles in a DataTables-ready shape. No location
+     * filter (the default template is module-agnostic). Modules with location-based order
+     * flows implement their own controller_GetProducts.
+     *
+     * Response:
+     *   { data: { original: { data: [ {uuid, name, short_description, icon, billing_mode,
+     *             billing_periods, default_period, price, price_string, product_price_uuid}, ... ] } } }
+     */
+    public function controller_GetProducts(Request $request, $product_group): JsonResponse
     {
+        return response()->json([
+            'data' => [
+                'original' => [
+                    'data' => $product_group->getOrderableProducts(app('client')),
+                ],
+            ],
+        ]);
     }
 
+    /**
+     * Select2-compatible product list for the current product group.
+     */
     public function controller_ProductsSelect(Request $request, $product_group): JsonResponse
     {
         $search = $request->input('q');
@@ -26,7 +56,7 @@ class OrderController
 
         $products = Product::whereIn('uuid', $existingProductUuids)->get();
 
-        if (!empty($search)) {
+        if (! empty($search)) {
             $products = $products->filter(function ($product) use ($search) {
                 $search = strtolower($search);
 
@@ -41,52 +71,40 @@ class OrderController
             $results[] = [
                 'id' => $product->uuid,
                 'text' => $product->name,
+                'billing_mode' => $product->billing_mode ?? 'prepaid',
             ];
         }
 
         return response()->json([
             'data' => [
                 'results' => array_values($results),
-                'pagination' => [
-                    'more' => false,
-                ],
+                'pagination' => ['more' => false],
             ],
         ]);
     }
 
+    /**
+     * Select2-compatible billing cycle list for a chosen product, in the current client's currency.
+     * Delegates to Product::getAvailableBillingPeriods() so the period set + sort order stay
+     * consistent with every other module's order form.
+     */
     public function controller_ProductPricesSelect(Request $request, $product_group): JsonResponse
     {
         $client = app('client');
 
-        $product_uuid = $request->input('product_uuid');
-        $product = Product::find($product_uuid);
+        $product = Product::find($request->input('product_uuid'));
 
-        $prices = $product->prices()->where('currency_uuid', $client->currency_uuid)->get();
-
-        $periodOrder = [
-            'one-time',
-            'hourly',
-            'daily',
-            'weekly',
-            'bi-weekly',
-            'monthly',
-            'quarterly',
-            'semi-annually',
-            'annually',
-            'biennially',
-            'triennially',
-        ];
-
-        $prices = $prices->sort(function ($a, $b) use ($periodOrder) {
-            return array_search($a->period, $periodOrder) <=> array_search($b->period, $periodOrder);
-        });
+        if (! $product) {
+            return response()->json([
+                'data' => ['results' => [], 'pagination' => ['more' => false]],
+            ]);
+        }
 
         $results = [];
-        foreach ($prices as $price) {
-            $currency = $price->currency;
+        foreach ($product->getAvailableBillingPeriods($client) as $period) {
             $results[] = [
-                'id' => $price->uuid,
-                'text' => $currency->prefix.' '.$price->base.' '.$currency->suffix.' / '.__('main.'.$price->period),
+                'id' => $period['price_uuid'],
+                'text' => $period['base_str'].' / '.$period['label'],
             ];
         }
 
@@ -98,6 +116,9 @@ class OrderController
         ], 200);
     }
 
+    /**
+     * Option groups for a product + price combination.
+     */
     public function controller_ProductOptionGroupsByProduct(Request $request): JsonResponse
     {
         $product_uuid = $request->input('product_uuid');
@@ -107,132 +128,65 @@ class OrderController
         $price = Price::find($product_price_uuid);
 
         if (empty($product) || empty($price)) {
-            return response()->json([
-                'data' => [],
-            ]);
+            return response()->json(['data' => []]);
         }
 
-        $groups = $this->getOptionGroupsWithPrices($product, $price);
-
         return response()->json([
-            'data' => $groups,
+            'data' => $product->getOptionGroupsForPrice($price),
         ]);
     }
 
-    private function getOptionGroupsWithPrices(Product $product, Price $price): Collection
-    {
-        $currency = $price->currency;
-        $user = app('user');
-
-        return $product->productOptionGroups->sortBy(function ($group) {
-            return $group->pivot->order ?? 0;
-        })->values()->map(function ($group) use ($price, $currency, $user) {
-            $options = $group->productOptions->sortBy(function ($option) {
-                return $option->order ?? 0;
-            })->map(function ($option) use ($price, $currency, $user) {
-                $option->setLocale($user->language);
-                $label = $option->name;
-
-                $matched_price = $option->prices->first(function ($p) use ($price) {
-                    return $p->currency_uuid === $price->currency_uuid &&
-                        $p->period === $price->period;
-                });
-
-                if ($matched_price) {
-                    $label .= ' - '.$currency->prefix.' '.$matched_price->base.' '.$currency->suffix.' / '.__('main.'.$matched_price->period);
-                }
-
-                return [
-                    'uuid' => $option->uuid,
-                    'key' => $label,
-                ];
-            })->values();
-
-            $group->setLocale($user->language);
-
-            return [
-                'uuid' => $group->uuid,
-                'key' => $group->key,
-                'name' => $group->name,
-                'short_description' => $group->short_description,
-                'product_options' => $options,
-            ];
-        })->values();
-    }
-
+    /**
+     * Calculate order summary: product base + options + setup fee + total (+ tax lines for invoice mode).
+     *
+     * Response fields:
+     *   - product_name, product_group, period
+     *   - price            — product base price (formatted)
+     *   - options          — array of {label, price} (option line items)
+     *   - setup_fee        — total setup fee (formatted)
+     *   - billing_mode     — echoed back for JS convenience
+     *   - subtotal         — numeric net total (base + options), without taxes
+     *   - subtotal_str     — formatted subtotal
+     *   - taxes            — array of tax lines (empty for prepaid and when no tax rules match)
+     *   - tax_total        — numeric tax amount
+     *   - tax_total_str    — formatted tax amount
+     *   - total            — numeric final total (= subtotal + tax for invoice, = subtotal for prepaid)
+     *   - total_str        — formatted final total (this is what the big summary number displays)
+     */
     public function controller_CalculateSummary(Request $request, $product_group)
     {
         $user = app('user');
-        $productUuid = $request->input('product_uuid');
-        $productPriceUuid = $request->input('product_price_uuid');
-        $optionUuids = $request->input('option_uuids', []);
+        $client = app('client');
 
-        $product = Product::where('uuid', $productUuid)->firstOrFail();
-        $price = Price::where('uuid', $productPriceUuid)->firstOrFail();
-        $currency = $price->currency;
+        $product = Product::where('uuid', $request->input('product_uuid'))->firstOrFail();
+        $price = Price::where('uuid', $request->input('product_price_uuid'))->firstOrFail();
 
-        $product->setLocale($user->language);
         $product_group->setLocale($user->language);
 
-        $options = ProductOption::whereIn('uuid', $optionUuids)
-            ->orderByRaw('FIELD(uuid, "'.implode('","', $optionUuids).'")')
-            ->get();
+        // Core helper does the heavy lifting (options iteration, setup aggregation, tax math,
+        // formatting). Caller just appends the group name which is outside the helper's scope.
+        $summary = $client->calculateOrderSummary(
+            $product,
+            $price,
+            $request->input('option_uuids', []),
+            $request->input('billing_mode', 'prepaid')
+        );
+        $summary['product_group'] = $product_group->name;
 
-        $total = (float) $price->base;
-        $setup_fee = (float) $price->setup;
-
-        $optionsOutput = [];
-
-        foreach ($options as $option) {
-            $option->setLocale($user->language);
-            $option_price = $option->prices()
-                ->where('period', $price->period)
-                ->where('currency_uuid', $price->currency_uuid)
-                ->first();
-
-            $base = 0.00;
-
-            if ($option_price) {
-                if ($option_price->base) {
-                    $base = (float) $option_price->base;
-                    $total += $base;
-                }
-
-                if ($option_price->setup_fee) {
-                    $setup_fee += (float) $option_price->setup_fee;
-                }
-            }
-
-            $optionsOutput[] = [
-                'label' => $option->name,
-                'price' => $currency->prefix.' '.number_format($base, 2).' '.$currency->suffix,
-            ];
-        }
-
-        return response()->json([
-            'data' => [
-                'product_name' => $product->name,
-                'product_group' => $product_group->name,
-                'price' => $currency->prefix.' '.number_format($price->base, 2).' '.$currency->suffix,
-                'options' => $optionsOutput,
-                'setup_fee' => $currency->prefix.' '.number_format($setup_fee, 2).' '.$currency->suffix,
-                'period' => __('main.'.$price->period),
-                'total' => $currency->prefix.' '.number_format($total, 2).' '.$currency->suffix,
-            ],
-        ]);
+        return response()->json(['data' => $summary]);
     }
 
+    /**
+     * Create a new service from the order form submission.
+     */
     public function controller_CreateService(Request $request, $product_group): JsonResponse
     {
-
-        $expected_fields = [
-            "product_uuid", "product_price_uuid",
-        ];
+        $expected_fields = ['product_uuid', 'product_price_uuid'];
 
         $client = app('client');
 
         $product = Product::query()->where('uuid', $request->get('product_uuid'))->first();
-        if (!$product) {
+        if (! $product) {
             return response()->json([
                 'status' => 'error',
                 'errors' => [__('error.The selected product was not found')],
@@ -240,7 +194,7 @@ class OrderController
         }
 
         $product_price = $product->prices()->where('uuid', $request->get('product_price_uuid'))->first();
-        if (!$product_price) {
+        if (! $product_price) {
             return response()->json([
                 'status' => 'error',
                 'errors' => [__('error.The selected product price was not found')],
@@ -249,7 +203,7 @@ class OrderController
 
         $option_uuids = [];
         foreach ($request->all() as $key => $value) {
-            if (!in_array($key, $expected_fields)) {
+            if (! in_array($key, $expected_fields)) {
                 if ($product->hasProductOption($key, $value)) {
                     $option_uuids[$key] = $value;
                 }
@@ -261,6 +215,7 @@ class OrderController
             'product_uuid' => $product->uuid,
             'product_price_uuid' => $product_price->uuid,
             'option_uuids' => $option_uuids,
+            'billing_mode' => $request->get('billing_mode'),
         ];
 
         $result = Service::createFromArray($data);
@@ -269,15 +224,41 @@ class OrderController
             return response()->json([
                 'status' => 'error',
                 'errors' => $result['errors'],
-            ],
-                $result['code']
-            );
+            ], $result['code']);
+        }
+
+        $service = Service::find($result['data']->uuid);
+
+        // Prepaid services fire the module create() hook immediately so the client lands on
+        // a "deploying..." page that polls for status. Invoice-mode services stay pending
+        // until the invoice is paid — the invoice page is where they land instead.
+        if ($service && $service->billing_mode !== 'invoice') {
+            $service->create();
+        }
+
+        $redirect = route('client.web.panel.cloud.group', $product_group->uuid);
+        if ($service && $service->billing_mode === 'invoice') {
+            // Invoice mode → jump straight to the freshly generated invoice payment page.
+            $invoiceItem = \App\Models\InvoiceItem::query()
+                ->join('invoices', 'invoice_items.invoice_uuid', '=', 'invoices.uuid')
+                ->where('invoice_items.service_uuid', $service->uuid)
+                ->where('invoices.billing_purpose', 'service_billing')
+                ->whereIn('invoices.status', ['unpaid'])
+                ->select('invoices.uuid')
+                ->first();
+            if ($invoiceItem) {
+                $redirect = route('client.web.panel.client.invoice.payment', ['uuid' => $invoiceItem->uuid]);
+            }
+        } elseif ($service) {
+            // Prepaid mode → jump to the newly created service manage page so the client
+            // immediately sees the deploying spinner + live polling for status updates.
+            $redirect = route('client.web.panel.cloud.service', ['uuid' => $service->uuid]);
         }
 
         return response()->json([
             'status' => 'success',
             'message' => __('message.Created successfully'),
-            'redirect' => route('client.web.panel.cloud.group', $product_group->uuid),
+            'redirect' => $redirect,
         ]);
     }
 }

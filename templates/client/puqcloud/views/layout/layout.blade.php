@@ -1,22 +1,11 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-{{--<script>--}}
-{{--    (function () {--}}
-{{--        const width = window.innerWidth;--}}
-{{--        const BREAKPOINT = 1250;--}}
-{{--        const classes = width < BREAKPOINT--}}
-{{--            ? ' closed-sidebar closed-sidebar-mobile'--}}
-{{--            : '';--}}
-{{--        document.write('<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="' + classes + '">');--}}
-{{--    })();--}}
-{{--</script>--}}
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta http-equiv="Content-Language" content="en">
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, shrink-to-fit=no">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="Content-Language" content="{{ app()->getLocale() }}">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="msapplication-tap-highlight" content="no">
     <title>@yield('title')</title>
     <link rel="icon" href="{{ $layout_options->images['favicon'] ?? asset_client('images/favicon.png') }}"
@@ -53,6 +42,8 @@
         @endif
     @endif
     @yield('head')
+    {{app(App\Services\HookService::class)->callHooks('ClientAreaHeadOutput')}}
+    {!! app('ClientAreaHeadOutput') !!}
 </head>
 <body>
 
@@ -60,6 +51,8 @@
     class="app-container app-theme-white body-tabs-shadow fixed-footer {{ $layout_options->fixed_header }} {{ $layout_options->fixed_sidebar }}">
     <div class="app-header header-shadow {{ $layout_options->header_color_scheme }}">
         @include(config('template.client.view') .'.layout.header.header')
+        {{app(App\Services\HookService::class)->callHooks('ClientAreaHeaderOutput')}}
+        {!! app('ClientAreaHeaderOutput') !!}
     </div>
 
     <div class="app-main">
@@ -90,6 +83,8 @@
 <script src="{{ route('static.puqcloud.js') }}"></script>
 
 @yield('js')
+{{app(App\Services\HookService::class)->callHooks('ClientAreaFooterOutput')}}
+{!! app('ClientAreaFooterOutput') !!}
 <script>
     $(document).ready(function () {
         $("#logout").on("click", function () {

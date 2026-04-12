@@ -262,7 +262,7 @@
                 const formattedData = `<div class="row">
         <div class="col"><strong>${translate('Action')}:</strong> ${data.action}</div>
         <div class="col"><div class="badge ${getLogLevelColor(data.level)}">${data.level}</div></div>
-        <div class="col"><strong>${translate('Created At')}:</strong> ${formatDateWithoutTimezone(data.created_at)}</p>
+        <div class="col"><strong>${translate('Created At')}:</strong> ${formatDateWithoutTimezone(data.created_at)}</div>
         </div>
         <strong>${translate('New Data')}:</strong>
         <pre>${data.model_new_data}</pre>

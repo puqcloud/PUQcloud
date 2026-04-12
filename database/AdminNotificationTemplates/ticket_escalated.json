@@ -1,0 +1,7 @@
+{
+    "name": "Ticket Escalated",
+    "category": "staffOperational",
+    "custom": false,
+    "subject": "[Ticket #{{ $ticket->number }}] Escalated: {{ $ticket->subject }}",
+    "text_mini": "Ticket #{{ $ticket->number }} has been escalated."
+}

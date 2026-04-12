@@ -10,24 +10,22 @@
 @endsection
 
 @section('content')
-    @parent
-@endsection
-
-@if(!empty($menu[$tab]['template']))
-    {!! \Illuminate\Support\Facades\View::file($menu[$tab]['template'], $service->getModuleVariables($tab))->render() !!}
-@endif
+    @if(!empty($menu[$tab]['template']))
+        {!! \Illuminate\Support\Facades\View::file($menu[$tab]['template'], $service->getModuleVariables($tab))->render() !!}
+    @endif
 
     @php
-        $basePath = config('template.client.view') . '.service_views.manage.';
         $template = $product_group->manage_template ?: 'default';
-        $viewPath = $basePath . $template . '.' . $template;
+        $serviceViewBase = resolveServiceViewBase('manage', $template);
+        $viewPath = $serviceViewBase . '.' . $template;
 
         if (!view()->exists($viewPath)) {
-            $viewPath = $basePath . 'default.default';
+            $serviceViewBase = config('template.client.view') . '.service_views.manage.default';
+            $viewPath = $serviceViewBase . '.default';
         }
     @endphp
     @include($viewPath)
-
+@endsection
 
 @section('js')
     @parent

@@ -18,7 +18,7 @@
 
                     <div class="col-lg-6 col-xl-6">
                         <div class="mb-3">
-                            <label class="form-label" for="email">{{__('main.Name')}}</label>
+                            <label class="form-label" for="name">{{__('main.Name')}}</label>
                             <div>
                                 <input type="text" class="form-control input-mask-trigger" id="name" name="name"
                                        placeholder="{{__('main.Name')}}">

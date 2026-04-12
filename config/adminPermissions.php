@@ -41,6 +41,32 @@ return [
         'group' => 'Permissions',
     ],
 
+    // Permissions for admins-api-keys
+    [
+        'name' => 'View admin API keys',
+        'key' => 'admin-api-keys-view',
+        'description' => 'Allows viewing of Administrator API keys',
+        'group' => 'Permissions',
+    ],
+    [
+        'name' => 'Edit admin API keys',
+        'key' => 'admin-api-keys-edit',
+        'description' => 'Allows editing of Administrator API keys',
+        'group' => 'Permissions',
+    ],
+    [
+        'name' => 'Create admin API keys',
+        'key' => 'admin-api-keys-create',
+        'description' => 'Allows creating Administrator API keys',
+        'group' => 'Permissions',
+    ],
+    [
+        'name' => 'Delete admin API keys',
+        'key' => 'admin-api-keys-delete',
+        'description' => 'Allows deleting Administrator API keys',
+        'group' => 'Permissions',
+    ],
+
     // Permissions for groups
     [
         'name' => 'View groups',
@@ -339,6 +365,58 @@ return [
         'key' => 'ssl-manager-ssl-certificates',
         'description' => 'Management of SSL Certificates',
         'group' => 'SSL Manager',
+    ],
+
+    // API Documentation
+    [
+        'name' => 'Admin API',
+        'key' => 'api-documentation-admin',
+        'description' => 'Management of Admin API Documentation',
+        'group' => 'API Documentation',
+    ],
+    [
+        'name' => 'Client API',
+        'key' => 'api-documentation-client',
+        'description' => 'Management of Client API Documentation',
+        'group' => 'API Documentation',
+    ],
+
+    // Support
+    [
+        'name' => 'View Tickets',
+        'key' => 'tickets-view',
+        'description' => 'Allows viewing support tickets',
+        'group' => 'Support',
+    ],
+    [
+        'name' => 'Edit Tickets',
+        'key' => 'tickets-edit',
+        'description' => 'Allows editing and replying to support tickets',
+        'group' => 'Support',
+    ],
+    [
+        'name' => 'Create Tickets',
+        'key' => 'tickets-create',
+        'description' => 'Allows creating support tickets',
+        'group' => 'Support',
+    ],
+    [
+        'name' => 'Delete Tickets',
+        'key' => 'tickets-delete',
+        'description' => 'Allows deleting support tickets',
+        'group' => 'Support',
+    ],
+    [
+        'name' => 'Manage Departments',
+        'key' => 'tickets-departments',
+        'description' => 'Allows management of ticket departments',
+        'group' => 'Support',
+    ],
+    [
+        'name' => 'Manage Ticket Statuses',
+        'key' => 'tickets-statuses',
+        'description' => 'Allows management of ticket statuses',
+        'group' => 'Support',
     ],
 
 ];

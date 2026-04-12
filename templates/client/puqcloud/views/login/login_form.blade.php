@@ -44,7 +44,7 @@
                             <div class="w-100">
                                 <div class="w-100 mt-3">
                                     <button id="login" name="login"
-                                            class="btn-wide btn btn-primary btn-lg btn-warning w-100">
+                                            class="btn-wide btn btn-warning btn-lg w-100">
                                         {{ __('main.LOGIN') }}
                                     </button>
                                 </div>
@@ -63,7 +63,7 @@
                                style="text-shadow: 0 2px 2px rgba(0,0,0,0.9);">
                                 {{ __('main.Do you not have an account?') }}
                             </p>
-                            <a class="btn-lg btn btn-light btn-wide btn-lg btn-link"
+                            <a class="btn btn-light btn-wide btn-lg"
                                href="{{ route('client.web.panel.sign_up') }}">
                                 {{ __('main.Register now') }}
                             </a>

@@ -397,7 +397,7 @@ add_hook('CancellationServiceSuccess', 1, function($admin) {
 
 ## ServiceOptionsUpdated
 
-Executes upon options updated service cancellation.
+Executes upon successful service options update.
 
 ### Parameters
 
@@ -413,7 +413,32 @@ No response supported.
 ### Example Code
 
 ```php
-add_hook('ServiceOptionsUpdated', 1, function($admin) {
+add_hook('ServiceOptionsUpdated', 1, function($vars) {
+    // Perform hook code here...
+});
+```
+---
+
+## ServiceEdit
+
+Executes after a service has been edited by an admin.
+
+### Parameters
+
+| Variable           | Type               | Notes |
+|--------------------|--------------------|-------|
+| $vars['service']   | App\Models\Service |       |
+
+
+### Response
+
+No response supported.
+
+### Example Code
+
+```php
+add_hook('ServiceEdit', 1, function($vars) {
+    $service = $vars['service'];
     // Perform hook code here...
 });
 ```

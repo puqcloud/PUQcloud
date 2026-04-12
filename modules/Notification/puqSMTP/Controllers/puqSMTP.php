@@ -22,9 +22,29 @@ use App\Models\NotificationSender;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use OpenApi\Attributes as OA;
 
 class puqSMTP extends Controller
 {
+    #[OA\Post(
+        path: 'admin.api.Notification.puqSMTP.test_connection.post',
+        description: 'Tests the SMTP connection by sending a test email to the admin.',
+        summary: 'Test SMTP connection',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqSMTP'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Connection test result',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function testConnection(Request $request, $uuid): JsonResponse
     {
         $validator = Validator::make($request->all(), [

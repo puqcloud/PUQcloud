@@ -25,11 +25,13 @@ class ModulesSeeder extends Seeder
 {
     public function run()
     {
-        Schema::dropIfExists('puq_sample_plugins');
+        Module::syncModulesWithDatabase();
 
         $modules = Module::all();
         foreach ($modules as $module) {
-            $module->moduleActivate();
+            if ($module->status !== 'active') {
+                $module->moduleActivate();
+            }
         }
     }
 }

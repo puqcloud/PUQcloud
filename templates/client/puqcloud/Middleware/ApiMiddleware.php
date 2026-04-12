@@ -20,6 +20,7 @@ namespace Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ApiMiddleware
 {
@@ -28,24 +29,31 @@ class ApiMiddleware
 
         $response = $next($request);
 
+        if ($response instanceof StreamedResponse) {
+            return $response;
+        }
+
         if ($response->headers->get('Content-Type') === 'application/pdf') {
             return $response;
         }
 
         $statusCode = $response->getStatusCode();
         $data = json_decode($response->content(), true);
-        $answer = [];
 
-        $answer['message'] = null;
-        $answer['errors'] = null;
-        $answer['data'] = null;
+        if (isset($data['raw'])) {
+            $response->setContent(json_encode($data['raw']));
+
+            return $response;
+        }
+
+        $answer = [];
 
         if (! empty($data['message'])) {
             $answer['message'] = $data['message'];
         }
 
         if (! empty($data['errors'])) {
-            $answer['errors'] = array_unique($data['errors']);
+            $answer['errors'] = array_values(array_unique($data['errors']));
         }
 
         if (! empty($data['data'])) {

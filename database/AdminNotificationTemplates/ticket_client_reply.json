@@ -1,0 +1,7 @@
+{
+    "name": "Client Reply on Ticket",
+    "category": "staffOperational",
+    "custom": false,
+    "subject": "Re: [Ticket #{{ $ticket->number }}] {{ $ticket->subject }}",
+    "text_mini": "Client replied on ticket #{{ $ticket->number }}."
+}

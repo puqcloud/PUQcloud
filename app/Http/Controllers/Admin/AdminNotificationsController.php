@@ -15,6 +15,48 @@
  * Do not remove this header.
  */
 
+/*
+ * WEB Routes:
+ *   GET  notification_senders                                  -> notificationSenders()                 [admin.web.notification_senders]
+ *   GET  notification_sender/{uuid}                            -> notificationSender()                  [admin.web.notification_sender]
+ *   GET  notification_layouts                                  -> notificationLayouts()                 [admin.web.notification_layouts]
+ *   GET  notification_layout/{uuid}                            -> notificationLayout()                  [admin.web.notification_layout]
+ *   GET  notification_templates                                -> notificationTemplates()               [admin.web.notification_templates]
+ *   GET  notification_template/{uuid}                          -> notificationTemplate()                [admin.web.notification_template]
+ *   GET  notification_histories                                -> notificationHistories()               [admin.web.notification_histories]
+ *
+ * API Routes:
+ *   GET    notification_senders                                -> getNotificationSenders()              [admin.api.notification_senders.get]
+ *   GET    notification_sender/{uuid}                          -> getNotificationSender()               [admin.api.notification_sender.get]
+ *   POST   notification_sender                                 -> postNotificationSender()              [admin.api.notification_sender.post]
+ *   PUT    notification_sender/{uuid}                          -> putNotificationSender()               [admin.api.notification_sender.put]
+ *   DELETE notification_sender/{uuid}                          -> deleteNotificationSender()            [admin.api.notification_sender.delete]
+ *   GET    notification_modules/select                         -> getNotificationModulesSelect()        [admin.api.notification_modules.select.get]
+ *   GET    notification_layouts                                -> getNotificationLayouts()              [admin.api.notification_layouts.get]
+ *   GET    notification_layout/{uuid}                          -> getNotificationLayout()               [admin.api.notification_layout.get]
+ *   POST   notification_layout                                 -> postNotificationLayout()              [admin.api.notification_layout.post]
+ *   PUT    notification_layout/{uuid}                          -> putNotificationLayout()               [admin.api.notification_layout.put]
+ *   DELETE notification_layout/{uuid}                          -> deleteNotificationLayout()            [admin.api.notification_layout.delete]
+ *   GET    notification_templates                              -> getNotificationTemplates()            [admin.api.notification_templates.get]
+ *   GET    notification_template/{uuid}                        -> getNotificationTemplate()             [admin.api.notification_template.get]
+ *   POST   notification_template                               -> postNotificationTemplate()            [admin.api.notification_template.post]
+ *   PUT    notification_template/{uuid}                        -> putNotificationTemplate()             [admin.api.notification_template.put]
+ *   DELETE notification_template/{uuid}                        -> deleteNotificationTemplate()          [admin.api.notification_template.delete]
+ *   POST   notification_rule                                   -> postNotificationRule()                [admin.api.notification_rule.post]
+ *   GET    notification_rule/{uuid}                            -> getNotificationRule()                 [admin.api.notification_rule.get]
+ *   PUT    notification_rule/{uuid}                            -> putNotificationRule()                 [admin.api.notification_rule.put]
+ *   DELETE notification_rule/{uuid}                            -> deleteNotificationRule()              [admin.api.notification_rule.delete]
+ *   POST   notification_rule/mass_creation                     -> postNotificationMassCreationRules()   [admin.api.notification_rule.mass_creation.post]
+ *   PUT    notification_rule/mass_update                       -> putNotificationMassUpdateRules()      [admin.api.notification_rule.mass_update.put]
+ *   GET    notification_histories                              -> getNotificationHistories()            [admin.api.notification_histories.get]
+ *   GET    notification_history/{uuid}                         -> getNotificationHistory()              [admin.api.notification_history.get]
+ *   GET    notification_categories/select                      -> getNotificationCategoriesSelect()     [admin.api.notification_categories.select.get]
+ *   GET    notification_category/notifications/select          -> getNotificationCategoryNotificationsSelect() [admin.api.notification_category_notifications.select.get]
+ *   GET    notification_senders/select                         -> getNotificationSendersSelect()        [admin.api.notification_senders.select.get]
+ *   GET    notification_layouts/select                         -> getNotificationLayoutsSelect()        [admin.api.notification_layouts.select.get]
+ *   GET    notification_templates/select                       -> getNotificationTemplatesSelect()      [admin.api.notification_templates.select.get]
+ */
+
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
@@ -30,6 +72,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Validator;
+use OpenApi\Attributes as OA;
 use Yajra\DataTables\DataTables;
 
 class AdminNotificationsController extends Controller
@@ -41,6 +84,25 @@ class AdminNotificationsController extends Controller
         return view_admin('notification_senders.notification_senders', compact('title'));
     }
 
+    #[OA\Get(
+        path: 'admin.api.notification_senders.get',
+        description: 'Returns a DataTable list of notification senders.',
+        summary: 'Get notification senders list',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Notifications'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Notification senders list returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getNotificationSenders(Request $request): JsonResponse
     {
         $query = NotificationSender::query();
@@ -85,6 +147,34 @@ class AdminNotificationsController extends Controller
         ], 200);
     }
 
+    #[OA\Get(
+        path: 'admin.api.notification_senders.select.get',
+        description: 'Returns a list of notification senders for select.',
+        summary: 'Get notification senders select',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Notifications'],
+        parameters: [
+            new OA\Parameter(
+                name: 'q',
+                description: 'Search query',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'string')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Notification senders select list returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getNotificationSendersSelect(Request $request): JsonResponse
     {
         $search = $request->input('q');
@@ -115,6 +205,37 @@ class AdminNotificationsController extends Controller
         ]], 200);
     }
 
+    #[OA\Post(
+        path: 'admin.api.notification_sender.post',
+        description: 'Creates a new notification sender with the specified name and module.',
+        summary: 'Create notification sender',
+        security: [['apiKeyAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'application/json',
+                schema: new OA\Schema(
+                    required: ['name', 'module'],
+                    properties: [
+                        new OA\Property(property: 'name', description: 'Unique name for the notification sender', type: 'string'),
+                        new OA\Property(property: 'module', description: 'UUID of the notification module', type: 'string', format: 'uuid'),
+                        new OA\Property(property: 'description', description: 'Description of the notification sender', type: 'string'),
+                    ]
+                )
+            )
+        ),
+        tags: ['Notifications'],
+        responses: [
+            new OA\Response(response: 200, description: 'Notification sender created successfully',
+                content: new OA\JsonContent(properties: [
+                    new OA\Property(property: 'status', type: 'string'),
+                    new OA\Property(property: 'message', type: 'string'),
+                    new OA\Property(property: 'data', type: 'object'),
+                    new OA\Property(property: 'redirect', type: 'string'),
+                ], type: 'object')),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
     public function postNotificationSender(Request $request): JsonResponse
     {
         $notificationSender = new NotificationSender;
@@ -167,6 +288,25 @@ class AdminNotificationsController extends Controller
         return view_admin('notification_senders.notification_sender', compact('title', 'uuid'));
     }
 
+    #[OA\Get(
+        path: 'admin.api.notification_sender.get',
+        description: 'Returns detailed information about a notification sender, including module HTML settings page.',
+        summary: 'Get notification sender by UUID',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Notifications'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'UUID of the notification sender', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Notification sender data returned',
+                content: new OA\JsonContent(properties: [
+                    new OA\Property(property: 'status', type: 'string'),
+                    new OA\Property(property: 'data', type: 'object'),
+                ], type: 'object')),
+            new OA\Response(response: 404, description: 'Notification sender not found'),
+        ]
+    )]
     public function getNotificationSender(Request $request, $uuid): JsonResponse
     {
         $NotificationSender = NotificationSender::find($uuid);
@@ -188,6 +328,34 @@ class AdminNotificationsController extends Controller
         ], 200);
     }
 
+    #[OA\Get(
+        path: 'admin.api.notification_modules.select.get',
+        description: 'Returns a list of notification modules for select.',
+        summary: 'Get notification modules select',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Notifications'],
+        parameters: [
+            new OA\Parameter(
+                name: 'q',
+                description: 'Search query',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'string')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Notification modules select list returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getNotificationModulesSelect(Request $request): JsonResponse
     {
         $notificationModules = Module::all();
@@ -217,6 +385,39 @@ class AdminNotificationsController extends Controller
         ]], 200);
     }
 
+    #[OA\Put(
+        path: 'admin.api.notification_sender.put',
+        description: 'Updates an existing notification sender by UUID.',
+        summary: 'Update notification sender',
+        security: [['apiKeyAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'application/json',
+                schema: new OA\Schema(
+                    properties: [
+                        new OA\Property(property: 'name', description: 'Updated name for the notification sender', type: 'string'),
+                        new OA\Property(property: 'description', description: 'Updated description', type: 'string'),
+                    ]
+                )
+            )
+        ),
+        tags: ['Notifications'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'UUID of the notification sender', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Notification sender updated successfully',
+                content: new OA\JsonContent(properties: [
+                    new OA\Property(property: 'status', type: 'string'),
+                    new OA\Property(property: 'message', type: 'string'),
+                    new OA\Property(property: 'data', type: 'object'),
+                ], type: 'object')),
+            new OA\Response(response: 404, description: 'Notification sender not found'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
     public function putNotificationSender(Request $request, $uuid): JsonResponse
     {
 
@@ -266,6 +467,26 @@ class AdminNotificationsController extends Controller
         ]);
     }
 
+    #[OA\Delete(
+        path: 'admin.api.notification_sender.delete',
+        description: 'Deletes a notification sender by UUID.',
+        summary: 'Delete notification sender',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Notifications'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'UUID of the notification sender', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Notification sender deleted successfully',
+                content: new OA\JsonContent(properties: [
+                    new OA\Property(property: 'status', type: 'string'),
+                    new OA\Property(property: 'message', type: 'string'),
+                ], type: 'object')),
+            new OA\Response(response: 404, description: 'Notification sender not found'),
+            new OA\Response(response: 500, description: 'Deletion failed'),
+        ]
+    )]
     public function deleteNotificationSender(Request $request, $uuid): JsonResponse
     {
         $NotificationSender = NotificationSender::find($uuid);
@@ -302,6 +523,25 @@ class AdminNotificationsController extends Controller
         return view_admin('notification_layouts.notification_layouts', compact('title'));
     }
 
+    #[OA\Get(
+        path: 'admin.api.notification_layouts.get',
+        description: 'Returns a DataTable list of notification layouts.',
+        summary: 'Get notification layouts list',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Notifications'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Notification layouts list returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getNotificationLayouts(Request $request): JsonResponse
     {
         $query = NotificationLayout::query();
@@ -339,6 +579,36 @@ class AdminNotificationsController extends Controller
         ], 200);
     }
 
+    #[OA\Post(
+        path: 'admin.api.notification_layout.post',
+        description: 'Creates a new notification layout with the specified name and optional description.',
+        summary: 'Create notification layout',
+        security: [['apiKeyAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'application/json',
+                schema: new OA\Schema(
+                    required: ['name'],
+                    properties: [
+                        new OA\Property(property: 'name', description: 'Unique name for the notification layout', type: 'string'),
+                        new OA\Property(property: 'description', description: 'Description of the notification layout', type: 'string'),
+                    ]
+                )
+            )
+        ),
+        tags: ['Notifications'],
+        responses: [
+            new OA\Response(response: 200, description: 'Notification layout created successfully',
+                content: new OA\JsonContent(properties: [
+                    new OA\Property(property: 'status', type: 'string'),
+                    new OA\Property(property: 'message', type: 'string'),
+                    new OA\Property(property: 'data', type: 'object'),
+                    new OA\Property(property: 'redirect', type: 'string'),
+                ], type: 'object')),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
     public function postNotificationLayout(Request $request): JsonResponse
     {
 
@@ -382,6 +652,26 @@ class AdminNotificationsController extends Controller
         return view_admin('notification_layouts.notification_layout', compact('title', 'uuid', 'locales'));
     }
 
+    #[OA\Get(
+        path: 'admin.api.notification_layout.get',
+        description: 'Returns detailed information about a notification layout by UUID, with optional locale support.',
+        summary: 'Get notification layout by UUID',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Notifications'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'UUID of the notification layout', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+            new OA\Parameter(name: 'locale', description: 'Locale for translation', in: 'query', required: false,
+                schema: new OA\Schema(type: 'string')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Notification layout data returned',
+                content: new OA\JsonContent(properties: [
+                    new OA\Property(property: 'data', type: 'object'),
+                ], type: 'object')),
+            new OA\Response(response: 404, description: 'Notification layout not found'),
+        ]
+    )]
     public function getNotificationLayout(Request $request, $uuid): JsonResponse
     {
         $notificationLayout = NotificationLayout::find($uuid);
@@ -400,6 +690,42 @@ class AdminNotificationsController extends Controller
         ]);
     }
 
+    #[OA\Put(
+        path: 'admin.api.notification_layout.put',
+        description: 'Updates an existing notification layout by UUID, including name, layout content, and description.',
+        summary: 'Update notification layout',
+        security: [['apiKeyAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'application/json',
+                schema: new OA\Schema(
+                    required: ['layout'],
+                    properties: [
+                        new OA\Property(property: 'name', description: 'Updated name for the notification layout', type: 'string'),
+                        new OA\Property(property: 'layout', description: 'Layout HTML content', type: 'string'),
+                        new OA\Property(property: 'description', description: 'Updated description', type: 'string'),
+                        new OA\Property(property: 'locale', description: 'Locale for translation', type: 'string'),
+                    ]
+                )
+            )
+        ),
+        tags: ['Notifications'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'UUID of the notification layout', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Notification layout updated successfully',
+                content: new OA\JsonContent(properties: [
+                    new OA\Property(property: 'status', type: 'string'),
+                    new OA\Property(property: 'message', type: 'string'),
+                    new OA\Property(property: 'data', type: 'object'),
+                ], type: 'object')),
+            new OA\Response(response: 404, description: 'Notification layout not found'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
     public function putNotificationLayout(Request $request, $uuid): JsonResponse
     {
 
@@ -451,6 +777,26 @@ class AdminNotificationsController extends Controller
         ]);
     }
 
+    #[OA\Delete(
+        path: 'admin.api.notification_layout.delete',
+        description: 'Deletes a notification layout by UUID.',
+        summary: 'Delete notification layout',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Notifications'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'UUID of the notification layout', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Notification layout deleted successfully',
+                content: new OA\JsonContent(properties: [
+                    new OA\Property(property: 'status', type: 'string'),
+                    new OA\Property(property: 'message', type: 'string'),
+                ], type: 'object')),
+            new OA\Response(response: 404, description: 'Notification layout not found'),
+            new OA\Response(response: 500, description: 'Deletion failed'),
+        ]
+    )]
     public function deleteNotificationLayout(Request $request, $uuid): JsonResponse
     {
         $notificationLayout = NotificationLayout::find($uuid);
@@ -487,6 +833,25 @@ class AdminNotificationsController extends Controller
         return view_admin('notification_templates.notification_templates', compact('title'));
     }
 
+    #[OA\Get(
+        path: 'admin.api.notification_templates.get',
+        description: 'Returns a DataTable list of notification templates.',
+        summary: 'Get notification templates list',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Notifications'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Notification templates list returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getNotificationTemplates(Request $request): JsonResponse
     {
         $query = NotificationTemplate::query();
@@ -524,6 +889,36 @@ class AdminNotificationsController extends Controller
         ], 200);
     }
 
+    #[OA\Post(
+        path: 'admin.api.notification_template.post',
+        description: 'Creates a new custom notification template with the specified name and category.',
+        summary: 'Create notification template',
+        security: [['apiKeyAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'application/json',
+                schema: new OA\Schema(
+                    required: ['name', 'category'],
+                    properties: [
+                        new OA\Property(property: 'name', description: 'Unique name for the notification template', type: 'string'),
+                        new OA\Property(property: 'category', description: 'Category key for the notification template', type: 'string'),
+                    ]
+                )
+            )
+        ),
+        tags: ['Notifications'],
+        responses: [
+            new OA\Response(response: 200, description: 'Notification template created successfully',
+                content: new OA\JsonContent(properties: [
+                    new OA\Property(property: 'status', type: 'string'),
+                    new OA\Property(property: 'message', type: 'string'),
+                    new OA\Property(property: 'data', type: 'object'),
+                    new OA\Property(property: 'redirect', type: 'string'),
+                ], type: 'object')),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
     public function postNotificationTemplate(Request $request): JsonResponse
     {
 
@@ -576,6 +971,26 @@ class AdminNotificationsController extends Controller
         return view_admin('notification_templates.notification_template', compact('title', 'uuid', 'locales'));
     }
 
+    #[OA\Get(
+        path: 'admin.api.notification_template.get',
+        description: 'Returns detailed information about a notification template by UUID, with optional locale support.',
+        summary: 'Get notification template by UUID',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Notifications'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'UUID of the notification template', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+            new OA\Parameter(name: 'locale', description: 'Locale for translation', in: 'query', required: false,
+                schema: new OA\Schema(type: 'string')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Notification template data returned',
+                content: new OA\JsonContent(properties: [
+                    new OA\Property(property: 'data', type: 'object'),
+                ], type: 'object')),
+            new OA\Response(response: 404, description: 'Notification template not found'),
+        ]
+    )]
     public function getNotificationTemplate(Request $request, $uuid): JsonResponse
     {
         $notification_template = NotificationTemplate::find($uuid);
@@ -594,6 +1009,40 @@ class AdminNotificationsController extends Controller
         ]);
     }
 
+    #[OA\Put(
+        path: 'admin.api.notification_template.put',
+        description: 'Updates an existing notification template subject, text, and mini text by UUID.',
+        summary: 'Update notification template',
+        security: [['apiKeyAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'application/json',
+                schema: new OA\Schema(
+                    properties: [
+                        new OA\Property(property: 'locale', description: 'Locale for translation', type: 'string'),
+                        new OA\Property(property: 'subject', description: 'Email subject line', type: 'string'),
+                        new OA\Property(property: 'text', description: 'Full notification text/body', type: 'string'),
+                        new OA\Property(property: 'text_mini', description: 'Short notification text', type: 'string'),
+                    ]
+                )
+            )
+        ),
+        tags: ['Notifications'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'UUID of the notification template', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Notification template updated successfully',
+                content: new OA\JsonContent(properties: [
+                    new OA\Property(property: 'status', type: 'string'),
+                    new OA\Property(property: 'message', type: 'string'),
+                    new OA\Property(property: 'data', type: 'object'),
+                ], type: 'object')),
+            new OA\Response(response: 404, description: 'Notification template not found'),
+        ]
+    )]
     public function putNotificationTemplate(Request $request, $uuid): JsonResponse
     {
 
@@ -628,6 +1077,26 @@ class AdminNotificationsController extends Controller
         ]);
     }
 
+    #[OA\Delete(
+        path: 'admin.api.notification_template.delete',
+        description: 'Deletes a custom notification template by UUID. Only custom templates can be deleted.',
+        summary: 'Delete notification template',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Notifications'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'UUID of the notification template', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Notification template deleted successfully',
+                content: new OA\JsonContent(properties: [
+                    new OA\Property(property: 'status', type: 'string'),
+                    new OA\Property(property: 'message', type: 'string'),
+                ], type: 'object')),
+            new OA\Response(response: 404, description: 'Notification template not found'),
+            new OA\Response(response: 500, description: 'Deletion failed'),
+        ]
+    )]
     public function deleteNotificationTemplate(Request $request, $uuid): JsonResponse
     {
         $notification_template = NotificationTemplate::query()->where('uuid', $uuid)->where('custom', true)->first();
@@ -657,6 +1126,34 @@ class AdminNotificationsController extends Controller
         ]);
     }
 
+    #[OA\Get(
+        path: 'admin.api.notification_categories.select.get',
+        description: 'Returns a list of notification categories for select.',
+        summary: 'Get notification categories select',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Notifications'],
+        parameters: [
+            new OA\Parameter(
+                name: 'q',
+                description: 'Search query',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'string')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Notification categories select list returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getNotificationCategoriesSelect(Request $request): JsonResponse
     {
         $conf = array_merge(config('adminNotifications.categories'), config('clientNotifications.categories'));
@@ -682,6 +1179,34 @@ class AdminNotificationsController extends Controller
         ]], 200);
     }
 
+    #[OA\Get(
+        path: 'admin.api.notification_category_notifications.select.get',
+        description: 'Returns a list of notification category notifications for select.',
+        summary: 'Get notification category notifications select',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Notifications'],
+        parameters: [
+            new OA\Parameter(
+                name: 'q',
+                description: 'Search query',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'string')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Notification category notifications select list returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getNotificationCategoryNotificationsSelect(Request $request): JsonResponse
     {
         $key = $request->input('selectedCategoryId');
@@ -717,6 +1242,41 @@ class AdminNotificationsController extends Controller
         ]], 200);
     }
 
+    #[OA\Post(
+        path: 'admin.api.notification_rule.post',
+        description: 'Creates a new notification rule linking a category, notification, senders, layout, template, and group.',
+        summary: 'Create notification rule',
+        security: [['apiKeyAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'application/json',
+                schema: new OA\Schema(
+                    required: ['category', 'notification', 'senders', 'notification_layout_uuid', 'notification_template_uuid', 'group_uuid'],
+                    properties: [
+                        new OA\Property(property: 'category', description: 'Notification category key', type: 'string'),
+                        new OA\Property(property: 'notification', description: 'Notification name', type: 'string'),
+                        new OA\Property(property: 'senders', description: 'Array of notification sender UUIDs', type: 'array',
+                            items: new OA\Items(type: 'string', format: 'uuid')),
+                        new OA\Property(property: 'notification_layout_uuid', description: 'UUID of the notification layout', type: 'string', format: 'uuid'),
+                        new OA\Property(property: 'notification_template_uuid', description: 'UUID of the notification template', type: 'string', format: 'uuid'),
+                        new OA\Property(property: 'group_uuid', description: 'UUID of the notification group', type: 'string', format: 'uuid'),
+                    ]
+                )
+            )
+        ),
+        tags: ['Notifications'],
+        responses: [
+            new OA\Response(response: 200, description: 'Notification rule created successfully',
+                content: new OA\JsonContent(properties: [
+                    new OA\Property(property: 'status', type: 'string'),
+                    new OA\Property(property: 'message', type: 'string'),
+                    new OA\Property(property: 'data', type: 'object'),
+                ], type: 'object')),
+            new OA\Response(response: 400, description: 'Invalid data or rule already exists'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
     public function postNotificationRule(Request $request): JsonResponse
     {
         $categories = [];
@@ -815,6 +1375,25 @@ class AdminNotificationsController extends Controller
         ]);
     }
 
+    #[OA\Get(
+        path: 'admin.api.notification_rule.get',
+        description: 'Returns detailed information about a notification rule by UUID.',
+        summary: 'Get notification rule by UUID',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Notifications'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'UUID of the notification rule', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Notification rule data returned',
+                content: new OA\JsonContent(properties: [
+                    new OA\Property(property: 'status', type: 'string'),
+                    new OA\Property(property: 'data', type: 'object'),
+                ], type: 'object')),
+            new OA\Response(response: 404, description: 'Notification rule not found'),
+        ]
+    )]
     public function getNotificationRule(Request $request, $uuid): JsonResponse
     {
         $notificationRule = NotificationRule::find($uuid);
@@ -832,6 +1411,44 @@ class AdminNotificationsController extends Controller
 
     }
 
+    #[OA\Put(
+        path: 'admin.api.notification_rule.put',
+        description: 'Updates an existing notification rule by UUID, including senders, layout, and template.',
+        summary: 'Update notification rule',
+        security: [['apiKeyAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'application/json',
+                schema: new OA\Schema(
+                    required: ['senders', 'notification_layout_uuid', 'notification_template_uuid'],
+                    properties: [
+                        new OA\Property(property: 'senders', description: 'Array of notification sender UUIDs', type: 'array',
+                            items: new OA\Items(type: 'string', format: 'uuid')),
+                        new OA\Property(property: 'notification_layout_uuid', description: 'UUID of the notification layout', type: 'string', format: 'uuid'),
+                        new OA\Property(property: 'notification_template_uuid', description: 'UUID of the notification template', type: 'string', format: 'uuid'),
+                        new OA\Property(property: 'category', description: 'Notification category key', type: 'string'),
+                    ]
+                )
+            )
+        ),
+        tags: ['Notifications'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'UUID of the notification rule', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Notification rule updated successfully',
+                content: new OA\JsonContent(properties: [
+                    new OA\Property(property: 'status', type: 'string'),
+                    new OA\Property(property: 'message', type: 'string'),
+                    new OA\Property(property: 'data', type: 'object'),
+                ], type: 'object')),
+            new OA\Response(response: 400, description: 'Invalid data'),
+            new OA\Response(response: 404, description: 'Notification rule not found'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
     public function putNotificationRule(Request $request, $uuid): JsonResponse
     {
         $notification_rule = NotificationRule::find($uuid);
@@ -904,6 +1521,26 @@ class AdminNotificationsController extends Controller
         ]);
     }
 
+    #[OA\Delete(
+        path: 'admin.api.notification_rule.delete',
+        description: 'Deletes a notification rule by UUID.',
+        summary: 'Delete notification rule',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Notifications'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'UUID of the notification rule', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Notification rule deleted successfully',
+                content: new OA\JsonContent(properties: [
+                    new OA\Property(property: 'status', type: 'string'),
+                    new OA\Property(property: 'message', type: 'string'),
+                ], type: 'object')),
+            new OA\Response(response: 404, description: 'Notification rule not found'),
+            new OA\Response(response: 500, description: 'Deletion failed'),
+        ]
+    )]
     public function deleteNotificationRule(Request $request, $uuid): JsonResponse
     {
         $notificationRule = NotificationRule::find($uuid);
@@ -933,6 +1570,38 @@ class AdminNotificationsController extends Controller
         ]);
     }
 
+    #[OA\Post(
+        path: 'admin.api.notification_rule.mass_creation.post',
+        description: 'Mass creates notification rules for all notifications in a category, assigning senders, layout, and group.',
+        summary: 'Mass create notification rules',
+        security: [['apiKeyAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'application/json',
+                schema: new OA\Schema(
+                    required: ['category', 'senders', 'notification_layout_uuid', 'group_uuid'],
+                    properties: [
+                        new OA\Property(property: 'category', description: 'Notification category key', type: 'string'),
+                        new OA\Property(property: 'senders', description: 'Array of notification sender UUIDs', type: 'array',
+                            items: new OA\Items(type: 'string', format: 'uuid')),
+                        new OA\Property(property: 'notification_layout_uuid', description: 'UUID of the notification layout', type: 'string', format: 'uuid'),
+                        new OA\Property(property: 'group_uuid', description: 'UUID of the notification group', type: 'string', format: 'uuid'),
+                    ]
+                )
+            )
+        ),
+        tags: ['Notifications'],
+        responses: [
+            new OA\Response(response: 200, description: 'Notification rules created successfully',
+                content: new OA\JsonContent(properties: [
+                    new OA\Property(property: 'status', type: 'string'),
+                    new OA\Property(property: 'message', type: 'string'),
+                ], type: 'object')),
+            new OA\Response(response: 400, description: 'Invalid data'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
     public function postNotificationMassCreationRules(Request $request): JsonResponse
     {
         $categories = [];
@@ -1022,6 +1691,173 @@ class AdminNotificationsController extends Controller
         ]);
     }
 
+    #[OA\Put(
+        path: 'admin.api.notification_rule.mass_update.put',
+        description: 'Mass updates notification rules in a group. Can update layout and/or senders for all rules or filtered by category.',
+        summary: 'Mass update notification rules',
+        security: [['apiKeyAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'application/json',
+                schema: new OA\Schema(
+                    required: ['group_uuid'],
+                    properties: [
+                        new OA\Property(property: 'group_uuid', description: 'UUID of the notification group', type: 'string', format: 'uuid'),
+                        new OA\Property(property: 'category', description: 'Optional category filter', type: 'string'),
+                        new OA\Property(property: 'notification_layout_uuid', description: 'New layout UUID (optional)', type: 'string', format: 'uuid'),
+                        new OA\Property(property: 'senders', description: 'Array of sender UUIDs (optional)', type: 'array',
+                            items: new OA\Items(type: 'string', format: 'uuid')),
+                        new OA\Property(property: 'senders_mode', description: 'replace or add', type: 'string', enum: ['replace', 'add']),
+                    ]
+                )
+            )
+        ),
+        tags: ['Notifications'],
+        responses: [
+            new OA\Response(response: 200, description: 'Notification rules updated successfully',
+                content: new OA\JsonContent(properties: [
+                    new OA\Property(property: 'status', type: 'string'),
+                    new OA\Property(property: 'message', type: 'string'),
+                    new OA\Property(property: 'updated_count', type: 'integer'),
+                ], type: 'object')),
+            new OA\Response(response: 400, description: 'Invalid data'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
+    public function putNotificationMassUpdateRules(Request $request): JsonResponse
+    {
+        $categories = [];
+        $conf = array_merge(config('adminNotifications.categories'), config('clientNotifications.categories'));
+
+        foreach ($conf as $value) {
+            $categories[$value['key']] = $value['notifications'] ?? [];
+        }
+
+        $rules = [
+            'group_uuid' => 'required|uuid',
+            'category' => 'nullable|in:'.implode(',', array_keys($categories)),
+            'notification_layout_uuid' => 'nullable|uuid',
+            'senders' => 'nullable|array',
+            'senders.*' => 'uuid',
+            'senders_mode' => 'nullable|in:replace,add',
+        ];
+
+        $validator = Validator::make($request->all(), $rules, [
+            'group_uuid.required' => __('error.Group UUID is required'),
+            'group_uuid.uuid' => __('error.Invalid Group UUID provided'),
+            'category.in' => __('error.The selected Category is invalid'),
+            'notification_layout_uuid.uuid' => __('error.Invalid UUID provided in layout'),
+            'senders.array' => __('error.Senders must be an array'),
+            'senders.*.uuid' => __('error.Invalid UUID provided in senders'),
+            'senders_mode.in' => __('error.Senders mode must be replace or add'),
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => $validator->errors(),
+            ], 422);
+        }
+
+        $group = Group::where('uuid', $request->input('group_uuid'))->where('type', 'notification')->first();
+
+        if (! $group) {
+            return response()->json(['errors' => [__('error.Group does not exist or is not of type notification')]], 400);
+        }
+
+        $hasLayout = $request->filled('notification_layout_uuid');
+        $hasSenders = $request->filled('senders');
+
+        if (! $hasLayout && ! $hasSenders) {
+            return response()->json(['errors' => [__('error.At least one field (layout or senders) must be provided')]], 422);
+        }
+
+        if ($hasLayout) {
+            $notification_layout = NotificationLayout::where('uuid', $request->input('notification_layout_uuid'))->first();
+            if (! $notification_layout) {
+                return response()->json(['errors' => [__('error.Notification Layout does exist')]], 400);
+            }
+        }
+
+        if ($hasSenders) {
+            $invalidSenders = array_filter($request->input('senders'), function ($uuid) {
+                return ! NotificationSender::where('uuid', $uuid)->exists();
+            });
+
+            if (! empty($invalidSenders)) {
+                return response()->json(['errors' => [__('error.Invalid sender UUIDs: ').implode(', ', $invalidSenders)]], 400);
+            }
+        }
+
+        $query = NotificationRule::where('group_uuid', $group->uuid);
+
+        if ($request->filled('category')) {
+            $query->where('category', $request->input('category'));
+        }
+
+        $notificationRules = $query->get();
+
+        $updatedCount = 0;
+
+        foreach ($notificationRules as $rule) {
+            if ($hasLayout) {
+                $rule->notification_layout_uuid = $request->input('notification_layout_uuid');
+                $rule->save();
+            }
+
+            if ($hasSenders) {
+                $sendersMode = $request->input('senders_mode', 'replace');
+
+                if ($sendersMode === 'replace') {
+                    $rule->notificationSenders()->detach();
+                    $rule->notificationSenders()->attach($request->input('senders'));
+                } else {
+                    $existingSenders = $rule->notificationSenders()->pluck('notification_senders.uuid')->toArray();
+                    $newSenders = array_diff($request->input('senders'), $existingSenders);
+                    if (! empty($newSenders)) {
+                        $rule->notificationSenders()->attach($newSenders);
+                    }
+                }
+            }
+
+            $updatedCount++;
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => __('message.Updated successfully'),
+            'updated_count' => $updatedCount,
+        ]);
+    }
+
+    #[OA\Get(
+        path: 'admin.api.notification_layouts.select.get',
+        description: 'Returns a list of notification layouts for select.',
+        summary: 'Get notification layouts select',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Notifications'],
+        parameters: [
+            new OA\Parameter(
+                name: 'q',
+                description: 'Search query',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'string')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Notification layouts select list returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getNotificationLayoutsSelect(Request $request): JsonResponse
     {
         $search = $request->input('q');
@@ -1047,6 +1883,34 @@ class AdminNotificationsController extends Controller
         ]], 200);
     }
 
+    #[OA\Get(
+        path: 'admin.api.notification_templates.select.get',
+        description: 'Returns a list of notification templates for select.',
+        summary: 'Get notification templates select',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Notifications'],
+        parameters: [
+            new OA\Parameter(
+                name: 'q',
+                description: 'Search query',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'string')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Notification templates select list returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getNotificationTemplatesSelect(Request $request): JsonResponse
     {
         $key = $request->input('selectedCategoryId');
@@ -1081,6 +1945,25 @@ class AdminNotificationsController extends Controller
         return view_admin('notification_histories.notification_histories', compact('title'));
     }
 
+    #[OA\Get(
+        path: 'admin.api.notification_histories.get',
+        description: 'Returns a DataTable list of notification histories.',
+        summary: 'Get notification histories list',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Notifications'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Notification histories list returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getNotificationHistories(Request $request): JsonResponse
     {
         $query = Notification::query()
@@ -1138,6 +2021,24 @@ class AdminNotificationsController extends Controller
         ], 200);
     }
 
+    #[OA\Get(
+        path: 'admin.api.notification_history.get',
+        description: 'Returns detailed information about a notification history entry by UUID.',
+        summary: 'Get notification history by UUID',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Notifications'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'UUID of the notification history entry', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Notification history data returned',
+                content: new OA\JsonContent(properties: [
+                    new OA\Property(property: 'data', type: 'object'),
+                ], type: 'object')),
+            new OA\Response(response: 404, description: 'Notification history entry not found'),
+        ]
+    )]
     public function getNotificationHistory(Request $request, $uuid): JsonResponse
     {
         $notification_history = Notification::find($uuid);

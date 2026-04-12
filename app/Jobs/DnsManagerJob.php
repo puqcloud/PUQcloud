@@ -36,17 +36,17 @@ class DnsManagerJob implements ShouldQueue
 
     public $maxExceptions;
 
-    public $model;
+    public mixed $model;
 
-    public $method;
+    public string $method;
 
-    public $callback;
+    public ?string $callback;
 
-    public $tags = [];
+    public array $tags = [];
 
-    public $params = [];
+    public array $params = [];
 
-    public function __construct($data, $tags)
+    public function __construct(array $data, array $tags)
     {
         $this->model = $data['model'];
         $this->method = $data['method'];

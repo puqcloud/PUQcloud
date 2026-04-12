@@ -29,7 +29,7 @@
 
                 <a href="{{route('client.web.panel.client.invoice.payment', $uuid)}}"
                    id="pay_now"
-                   class="payment-btn mb-2 me-2 btn btn-outline-2x btn-outline-success text-danger"
+                   class="payment-btn mb-2 me-2 btn btn-outline-2x btn-outline-success"
                    style="display: none;">
                     <i class="fa fa-credit-card me-1"></i> {{ __('main.Pay Now') }}
                 </a>

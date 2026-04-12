@@ -15,16 +15,27 @@
  * Do not remove this header.
  */
 use App\Http\Controllers\Admin\AdminAddOnsController;
+use App\Http\Controllers\Admin\AdminAdminApiKeysController;
 use App\Http\Controllers\Admin\AdminAdminsController;
+use App\Http\Controllers\Admin\AdminApiDocumentationController;
 use App\Http\Controllers\Admin\AdminAutomationController;
 use App\Http\Controllers\Admin\AdminClientsController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\AdminDnsManagerController;
-use App\Http\Controllers\Admin\AdminFinanceController;
+use App\Http\Controllers\Admin\AdminHomeCompaniesController;
+use App\Http\Controllers\Admin\AdminTaxRulesController;
+use App\Http\Controllers\Admin\AdminTicketDepartmentsController;
+use App\Http\Controllers\Admin\AdminTicketsController;
+use App\Http\Controllers\Admin\AdminTicketEmailBlacklistController;
+use App\Http\Controllers\Admin\AdminTicketStatusesController;
+use App\Http\Controllers\Admin\AdminTransactionsController;
 use App\Http\Controllers\Admin\AdminGroupsController;
 use App\Http\Controllers\Admin\AdminLogController;
 use App\Http\Controllers\Admin\AdminMyAccountController;
 use App\Http\Controllers\Admin\AdminNotificationsController;
+use App\Http\Controllers\Admin\AdminProductAttributesController;
+use App\Http\Controllers\Admin\AdminProductGroupsController;
+use App\Http\Controllers\Admin\AdminProductOptionsController;
 use App\Http\Controllers\Admin\AdminProductsController;
 use App\Http\Controllers\Admin\AdminServicesController;
 use App\Http\Controllers\Admin\AdminSettingsController;
@@ -61,6 +72,9 @@ Route::get('activity_logs', [AdminLogController::class, 'activityLogs'])->name('
 
 Route::get('module_logs', [AdminLogController::class, 'moduleLogs'])->name('module_logs')
     ->middleware('WebPermission:module-log-view');
+
+Route::get('admin_api_keys', [AdminAdminApiKeysController::class, 'adminApiKeys'])->name('admin_api_keys')
+    ->middleware('WebPermission:admin-api-keys-view');
 
 Route::get('groups', [AdminGroupsController::class, 'groups'])->name('groups')
     ->middleware('WebPermission:groups-view');
@@ -119,6 +133,31 @@ Route::get('dns_zones', [AdminDnsManagerController::class, 'dnsZones'])->name('d
 Route::get('dns_zone/{uuid}', [AdminDnsManagerController::class, 'dnsZone'])->name('dns_zone')
     ->middleware('WebPermission:dns-manager-dns-zones');
 
+Route::get('dns_zone_templates', [AdminDnsManagerController::class, 'dnsZoneTemplates'])->name('dns_zone_templates')
+    ->middleware('WebPermission:dns-manager-dns-zones');
+
+// Support Tickets
+Route::get('tickets', [AdminTicketsController::class, 'tickets'])->name('tickets')
+    ->middleware('WebPermission:tickets-view');
+Route::get('ticket_create', [AdminTicketsController::class, 'ticketCreate'])->name('ticket_create')
+    ->middleware('WebPermission:tickets-create');
+Route::get('ticket/attachment/{uuid}', [AdminTicketsController::class, 'getTicketReplyAttachmentDownload'])->name('ticket.attachment.download')
+    ->middleware('WebPermission:tickets-view');
+Route::get('ticket_canned_responses', [\App\Http\Controllers\Admin\AdminTicketCannedResponsesController::class, 'ticketCannedResponses'])->name('ticket_canned_responses')
+    ->middleware('WebPermission:tickets-edit');
+Route::get('ticket/{uuid}', [AdminTicketsController::class, 'ticket'])->name('ticket')
+    ->middleware('WebPermission:tickets-view');
+Route::get('ticket_departments', [AdminTicketDepartmentsController::class, 'ticketDepartments'])->name('ticket_departments')
+    ->middleware('WebPermission:tickets-departments');
+Route::get('ticket_department/{uuid}', [AdminTicketDepartmentsController::class, 'ticketDepartment'])->name('ticket_department')
+    ->middleware('WebPermission:tickets-departments');
+Route::get('ticket_statuses', [AdminTicketStatusesController::class, 'ticketStatuses'])->name('ticket_statuses')
+    ->middleware('WebPermission:tickets-statuses');
+Route::get('ticket_email_blacklist', [AdminTicketEmailBlacklistController::class, 'ticketEmailBlacklist'])->name('ticket_email_blacklist')
+    ->middleware('WebPermission:tickets-edit');
+
+Route::get('dns_zone_template/{uuid}', [AdminDnsManagerController::class, 'dnsZoneTemplate'])->name('dns_zone_template')
+    ->middleware('WebPermission:dns-manager-dns-zones');
 
 Route::get('certificate_authorities', [AdminSslManagerController::class, 'certificateAuthorities'])->name('certificate_authorities')
     ->middleware('WebPermission:ssl-manager-certificate-authorities');
@@ -172,46 +211,59 @@ Route::get('add_ons/modules', [AdminAddOnsController::class, 'modules'])->name('
 Route::get('add_ons/reports', [AdminAddOnsController::class, 'reports'])->name('add_ons.reports')
     ->middleware('WebPermission:add-ons-reports-management');
 
+
+Route::get('api_documentation/admin', [AdminApiDocumentationController::class, 'admin'])->name('api_documentation.admin')
+    ->middleware('WebPermission:api-documentation-admin');
+
+Route::get('api_documentation/admin/{module}/{name}', [AdminApiDocumentationController::class, 'adminApiDocumentation'])->name('api_documentation.admin_api_documentation')
+    ->middleware('WebPermission:api-documentation-admin');
+
+
+Route::get('api_documentation/client', [AdminApiDocumentationController::class, 'client'])->name('api_documentation.client')
+    ->middleware('WebPermission:api-documentation-client');
+
+Route::get('api_documentation/client/{module}/{name}', [AdminApiDocumentationController::class, 'clientApiDocumentation'])->name('api_documentation.client_api_documentation')
+    ->middleware('WebPermission:api-documentation-client');
+
+
+
 Route::get('products', [AdminProductsController::class, 'products'])->name('products')
     ->middleware('WebPermission:products-management');
 
 Route::get('product/{uuid}/{tab}', [AdminProductsController::class, 'productTab'])->name('product.tab')
     ->middleware('WebPermission:products-management');
 
-Route::get('product_groups', [AdminProductsController::class, 'productGroups'])->name('product_groups')
+Route::get('product_groups', [AdminProductGroupsController::class, 'productGroups'])->name('product_groups')
     ->middleware('WebPermission:product-groups-management');
 
-Route::get('product_group/{uuid}/{tab}', [AdminProductsController::class, 'productGroupTab'])->name('product_group.tab')
+Route::get('product_group/{uuid}/{tab}', [AdminProductGroupsController::class, 'productGroupTab'])->name('product_group.tab')
     ->middleware('WebPermission:product-groups-management');
 
-Route::get('product_attribute_groups', [AdminProductsController::class, 'productAttributeGroups'])->name('product_attribute_groups')
+Route::get('product_attribute_groups', [AdminProductAttributesController::class, 'productAttributeGroups'])->name('product_attribute_groups')
     ->middleware('WebPermission:product-attributes-management');
 
-Route::get('product_attribute_group/{uuid}/{tab}', [AdminProductsController::class, 'productAttributeGroupTab'])->name('product_attribute_group.tab')
+Route::get('product_attribute_group/{uuid}/{tab}', [AdminProductAttributesController::class, 'productAttributeGroupTab'])->name('product_attribute_group.tab')
     ->middleware('WebPermission:product-attributes-management');
 
-Route::get('product_option_groups', [AdminProductsController::class, 'productOptionGroups'])->name('product_option_groups')
+Route::get('product_option_groups', [AdminProductOptionsController::class, 'productOptionGroups'])->name('product_option_groups')
     ->middleware('WebPermission:product-options-management');
 
-Route::get('product_option_group/{uuid}/{tab}', [AdminProductsController::class, 'productOptionGroupTab'])->name('product_option_group.tab')
+Route::get('product_option_group/{uuid}/{tab}', [AdminProductOptionsController::class, 'productOptionGroupTab'])->name('product_option_group.tab')
     ->middleware('WebPermission:product-options-management');
 
 Route::get('service/create', [AdminServicesController::class, 'serviceCreate'])->name('service.create')
     ->middleware('WebPermission:clients-edit');
 
-Route::get('transactions', [AdminFinanceController::class, 'transactions'])->name('transactions')
+Route::get('transactions', [AdminTransactionsController::class, 'transactions'])->name('transactions')
     ->middleware('WebPermission:finance-view');
 
-Route::get('home_companies', [AdminFinanceController::class, 'homeCompanies'])->name('home_companies')
+Route::get('home_companies', [AdminHomeCompaniesController::class, 'homeCompanies'])->name('home_companies')
     ->middleware('WebPermission:finance-view');
 
-Route::get('home_company/{uuid}/{tab}', [AdminFinanceController::class, 'homeCompanyTab'])->name('home_company.tab')
+Route::get('home_company/{uuid}/{tab}', [AdminHomeCompaniesController::class, 'homeCompanyTab'])->name('home_company.tab')
     ->middleware('WebPermission:finance-view');
 
-// Route::get('home_company/{uuid}',  [AdminFinanceController::class, 'homeCompany'])->name('home_company.get')
-//    ->middleware('WebPermission:finance-view');
-
-Route::get('tax_rules', [AdminFinanceController::class, 'taxRules'])->name('tax_rules')
+Route::get('tax_rules', [AdminTaxRulesController::class, 'taxRules'])->name('tax_rules')
     ->middleware('WebPermission:finance-view');
 
 Route::get('/redirect/{label}:{uuid}', [AdminController::class, 'uuidRedirect'])
@@ -247,3 +299,4 @@ try {
 }
 // Load Modules Dynamic Routes
 loadAdminModulesDynamicRoutes();
+

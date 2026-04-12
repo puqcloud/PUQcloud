@@ -20,6 +20,7 @@ use Template\Client\Controllers\AuthController;
 use Template\Client\Controllers\ClientController;
 use Template\Client\Controllers\CloudController;
 use Template\Client\Controllers\PanelController;
+use Template\Client\Controllers\TicketController;
 use Template\Client\Controllers\UserController;
 
 Route::get('logout', [AuthController::class, 'getLogout'])->name('logout');
@@ -76,7 +77,7 @@ Route::prefix('client')
 Route::prefix('cloud')
     ->name('cloud.')
     ->group(function () {
-        Route::get('/group/{uuid}/products/select', [CloudController::class, 'cloudProductGroupProductsSelect'])->name('group.products.select.get');
+        //Route::get('/group/{uuid}/products/select', [CloudController::class, 'cloudProductGroupProductsSelect'])->name('group.products.select.get');
 
         Route::get('/group/{uuid}/list/{method}', [CloudController::class, 'cloudProductGroupListApi'])->name('group.list.get');
         Route::post('/group/{uuid}/list/{method}', [CloudController::class, 'cloudProductGroupListApi'])->name('group.list.post');
@@ -98,6 +99,31 @@ Route::prefix('cloud')
         Route::put('/service/{uuid}/module/{method}', [CloudController::class, 'cloudServiceModuleApi'])->name('service.module.put');
         Route::delete('/service/{uuid}/module/{method}', [CloudController::class, 'cloudServiceModuleApi'])->name('service.module.delete');
 
+        // Upgrade/Downgrade API routes
+        Route::get('/service/{uuid}/upgrade/{method}', [CloudController::class, 'cloudServiceUpgradeApi'])->name('service.upgrade.get');
+        Route::post('/service/{uuid}/upgrade/{method}', [CloudController::class, 'cloudServiceUpgradeApi'])->name('service.upgrade.post');
+
+        // Billing Alignment API routes
+        Route::get('/service/{uuid}/proration/{method}', [CloudController::class, 'cloudServiceProrationApi'])->name('service.proration.get');
+        Route::post('/service/{uuid}/proration/{method}', [CloudController::class, 'cloudServiceProrationApi'])->name('service.proration.post');
+
+    });
+
+// Support ------------------------------------------------------------------------------------------------------
+Route::prefix('support')
+    ->name('support.')
+    ->group(function () {
+        Route::get('/tickets', [TicketController::class, 'getTickets'])->name('tickets.get');
+        Route::get('/ticket/{uuid}', [TicketController::class, 'getTicket'])->name('ticket.get');
+        Route::post('/ticket', [TicketController::class, 'postTicket'])->name('ticket.post');
+        Route::post('/ticket/{uuid}/reply', [TicketController::class, 'postTicketReply'])->name('ticket.reply.post');
+        Route::post('/ticket/{uuid}/close', [TicketController::class, 'closeTicket'])->name('ticket.close.post');
+        Route::post('/ticket/{uuid}/reopen', [TicketController::class, 'reopenTicket'])->name('ticket.reopen.post');
+        Route::get('/ticket_departments/select', [TicketController::class, 'getTicketDepartmentsSelect'])->name('ticket_departments.select.get');
+        Route::get('/ticket_department/{uuid}/file_settings', [TicketController::class, 'getTicketDepartmentFileSettings'])->name('ticket_department.file_settings.get');
+        Route::get('/ticket_services/select', [TicketController::class, 'getTicketServicesSelect'])->name('ticket_services.select.get');
+        Route::post('/ticket/attachment', [TicketController::class, 'postTicketAttachment'])->name('ticket.attachment.post');
+        Route::get('/ticket/attachment/{uuid}', [TicketController::class, 'getTicketReplyAttachment'])->name('ticket.attachment.get');
     });
 
 // Module ------------------------------------------------------------------------------------------------------

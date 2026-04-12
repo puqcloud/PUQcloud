@@ -21,6 +21,8 @@ use App\Models\Service;
 use App\Services\TranslationService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class ServiceUnsuspendServices extends Command
 {
@@ -37,12 +39,51 @@ class ServiceUnsuspendServices extends Command
 
     public function handle()
     {
-        Service::query()
-            ->where('status', 'suspended')
-            ->chunk(100, function ($services) {
-                foreach ($services as $service) {
-                    $service->unsuspend();
-                }
-            });
+        $lock = Cache::lock('billing:unsuspend-services', 3600);
+        if (! $lock->get()) {
+            return;
+        }
+
+        try {
+            $processed = 0;
+
+            // Prepaid services: existing logic (unsuspend when balance sufficient)
+            Service::query()
+                ->where('billing_mode', '!=', 'invoice')
+                ->where('status', 'suspended')
+                ->chunk(100, function ($services) use (&$processed) {
+                    foreach ($services as $service) {
+                        $service->unsuspend();
+                        $processed++;
+                    }
+                });
+
+            // Invoice-mode services: unsuspend if paid invoice covers the current period (fallback for handleSuccessfulPayment)
+            Service::query()
+                ->where('billing_mode', 'invoice')
+                ->where('status', 'suspended')
+                ->chunk(100, function ($services) use (&$processed) {
+                    foreach ($services as $service) {
+                        $hasPaidInvoice = DB::table('invoice_items')
+                            ->join('invoices', 'invoice_items.invoice_uuid', '=', 'invoices.uuid')
+                            ->where('invoice_items.service_uuid', $service->uuid)
+                            ->where('invoices.billing_purpose', 'service_billing')
+                            ->whereIn('invoices.status', ['paid', 'invoiced'])
+                            ->where('invoice_items.period_stop', '>', now())
+                            ->exists();
+
+                        if ($hasPaidInvoice) {
+                            $service->unsuspendInvoiceMode();
+                            $processed++;
+                        }
+                    }
+                });
+
+            if ($processed > 0) {
+                logActivity('info', 'Service:UnsuspendServices completed. Processed: '.$processed.' services', 'cron');
+            }
+        } finally {
+            $lock->release();
+        }
     }
 }

@@ -19,6 +19,7 @@ namespace App\Providers;
 
 use App\Models\Module;
 use App\Services\HookService;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
@@ -45,9 +46,13 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         try {
-            // Hook AdminAreaFooterOutput
-            $AdminAreaFooterOutput = '';
-            app()->instance('AdminAreaFooterOutput', $AdminAreaFooterOutput);
+            // Hook Output instances
+            app()->instance('AdminAreaHeadOutput', '');
+            app()->instance('AdminAreaHeaderOutput', '');
+            app()->instance('AdminAreaFooterOutput', '');
+            app()->instance('ClientAreaHeadOutput', '');
+            app()->instance('ClientAreaHeaderOutput', '');
+            app()->instance('ClientAreaFooterOutput', '');
         } catch (Throwable $e) {
             Log::error('Error initializing AdminAreaFooterOutput', [
                 'message' => $e->getMessage(),

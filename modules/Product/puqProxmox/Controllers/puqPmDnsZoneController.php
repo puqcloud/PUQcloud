@@ -24,6 +24,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Modules\Product\puqProxmox\Models\PuqPmDnsZone;
+use OpenApi\Attributes as OA;
 use Yajra\DataTables\DataTables;
 
 class puqPmDnsZoneController extends Controller
@@ -35,6 +36,7 @@ class puqPmDnsZoneController extends Controller
         return view_admin_module('Product', 'puqProxmox', 'admin_area.dns_zones.dns_zones', compact('title'));
     }
 
+    #[OA\Get(path: 'admin.api.Product.puqProxmox.dns_zones.get', description: 'Returns a list of DNS zones.', summary: 'Get DNS zones list', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], responses: [new OA\Response(response: 200, description: 'DNS zones list returned successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function getDnsZones(Request $request): JsonResponse
     {
         $query = PuqPmDnsZone::query();
@@ -77,6 +79,7 @@ class puqPmDnsZoneController extends Controller
         ], 200);
     }
 
+    #[OA\Post(path: 'admin.api.Product.puqProxmox.dns_zone.post', description: 'Creates a new DNS zone.', summary: 'Create DNS zone', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(required: ['name'], properties: [new OA\Property(property: 'name', type: 'string')], type: 'object')), responses: [new OA\Response(response: 200, description: 'DNS zone created successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string'), new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function postDnsZone(Request $request): JsonResponse
     {
         $name = $request->input('name');
@@ -131,6 +134,7 @@ class puqPmDnsZoneController extends Controller
     }
 
 
+    #[OA\Delete(path: 'admin.api.Product.puqProxmox.dns_zone.delete', description: 'Deletes a specific DNS zone.', summary: 'Delete DNS zone', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the DNS zone', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], responses: [new OA\Response(response: 200, description: 'DNS zone deleted successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string')], type: 'object'))])]
     public function deleteDnsZone(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmDnsZone::find($uuid);
@@ -160,6 +164,7 @@ class puqPmDnsZoneController extends Controller
         ]);
     }
 
+    #[OA\Get(path: 'admin.api.Product.puqProxmox.dns_zone.get', description: 'Returns details of a specific DNS zone.', summary: 'Get DNS zone details', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the DNS zone', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], responses: [new OA\Response(response: 200, description: 'DNS zone details returned successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function getDnsZone(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmDnsZone::find($uuid);
@@ -191,6 +196,7 @@ class puqPmDnsZoneController extends Controller
         ]);
     }
 
+    #[OA\Put(path: 'admin.api.Product.puqProxmox.dns_zone.put', description: 'Updates a specific DNS zone.', summary: 'Update DNS zone', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the DNS zone', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(required: ['name', 'ttl'], properties: [new OA\Property(property: 'name', type: 'string'), new OA\Property(property: 'ttl', type: 'integer')], type: 'object')), responses: [new OA\Response(response: 200, description: 'DNS zone updated successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string'), new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function putDnsZone(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmDnsZone::find($uuid);
@@ -265,6 +271,7 @@ class puqPmDnsZoneController extends Controller
         return view_admin_module('Product', 'puqProxmox', 'admin_area.dns_zones.dns_zone', compact('title', 'uuid'));
     }
 
+    #[OA\Get(path: 'admin.api.Product.puqProxmox.dns_zones.forward.select.get', description: 'Returns forward DNS zones for select dropdown.', summary: 'Get forward DNS zones select', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], responses: [new OA\Response(response: 200, description: 'Forward DNS zones select returned successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function getDnsZonesForwardSelect(Request $request): JsonResponse
     {
         $search = $request->input('q');
@@ -296,6 +303,7 @@ class puqPmDnsZoneController extends Controller
         ]);
     }
 
+    #[OA\Get(path: 'admin.api.Product.puqProxmox.dns_zones.reverse.select.get', description: 'Returns reverse DNS zones for select dropdown.', summary: 'Get reverse DNS zones select', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], responses: [new OA\Response(response: 200, description: 'Reverse DNS zones select returned successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function getDnsZonesReverseSelect(Request $request): JsonResponse
     {
         $search = $request->input('q');
@@ -330,6 +338,7 @@ class puqPmDnsZoneController extends Controller
     }
 
 
+    #[OA\Get(path: 'admin.api.Product.puqProxmox.dns_zone.records.get', description: 'Returns DNS records for a specific DNS zone.', summary: 'Get DNS zone records', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the DNS zone', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], responses: [new OA\Response(response: 200, description: 'DNS zone records returned successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function getDnsZoneRecords(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmDnsZone::find($uuid);
@@ -428,6 +437,7 @@ class puqPmDnsZoneController extends Controller
         ], 200);
     }
 
+    #[OA\Put(path: 'admin.api.Product.puqProxmox.dns_zone.push_records.put', description: 'Pushes DNS records for a specific DNS zone.', summary: 'Push DNS zone records', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the DNS zone', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], responses: [new OA\Response(response: 200, description: 'DNS records pushed successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string')], type: 'object'))])]
     public function putDnsZonePushRecords(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmDnsZone::find($uuid);

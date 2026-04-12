@@ -30,6 +30,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\View\View;
+use OpenApi\Attributes as OA;
 use Yajra\DataTables\DataTables;
 
 class ClientController extends Controller
@@ -41,6 +42,25 @@ class ClientController extends Controller
         return view_client('client.profile', compact('title'));
     }
 
+    #[OA\Get(
+        path: 'client.api.client.profile.get',
+        description: 'Returns the client profile.',
+        summary: 'Get client profile',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Client'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Client profile returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getProfile(): JsonResponse
     {
         $client = app('client');
@@ -103,6 +123,49 @@ class ClientController extends Controller
         ], 200);
     }
 
+    #[OA\Put(
+        path: 'client.api.client.profile.put',
+        description: 'Updates the client profile.',
+        summary: 'Update client profile',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Client'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'firstname', type: 'string'),
+                    new OA\Property(property: 'lastname', type: 'string'),
+                    new OA\Property(property: 'company_name', type: 'string'),
+                    new OA\Property(property: 'tax_id', type: 'string'),
+                    new OA\Property(property: 'language', type: 'string'),
+                    new OA\Property(property: 'contact_email', type: 'string', format: 'email'),
+                    new OA\Property(property: 'address_1', type: 'string'),
+                    new OA\Property(property: 'address_2', type: 'string'),
+                    new OA\Property(property: 'city', type: 'string'),
+                    new OA\Property(property: 'postcode', type: 'string'),
+                    new OA\Property(property: 'country_uuid', type: 'string', format: 'uuid'),
+                    new OA\Property(property: 'region_uuid', type: 'string', format: 'uuid'),
+                    new OA\Property(property: 'country_code', type: 'string'),
+                    new OA\Property(property: 'phone_number', type: 'string'),
+                ],
+                type: 'object'
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Client profile updated successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string'),
+                        new OA\Property(property: 'message', type: 'string'),
+                    ],
+                    type: 'object'
+                )
+            ),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
     public function putProfile(Request $request): JsonResponse
     {
         $client = app('client');
@@ -205,6 +268,26 @@ class ClientController extends Controller
         return view_client('client.invoices', compact('title'));
     }
 
+    #[OA\Get(
+        path: 'client.api.client.invoices.get',
+        description: 'Returns a list of client invoices.',
+        summary: 'Get client invoices',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Client'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Client invoices returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+            new OA\Response(response: 404, description: 'Client not found'),
+        ]
+    )]
     public function getInvoices(Request $request): JsonResponse
     {
         $client = app('client');
@@ -267,6 +350,26 @@ class ClientController extends Controller
         ], 200);
     }
 
+    #[OA\Get(
+        path: 'client.api.client.invoice.pdf.get',
+        description: 'Downloads the invoice PDF.',
+        summary: 'Get invoice PDF',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Client'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'UUID of the invoice',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Invoice PDF downloaded successfully'),
+            new OA\Response(response: 404, description: 'Invoice not found'),
+        ]
+    )]
     public function getInvoicePdf(Request $request, $uuid): Response|JsonResponse
     {
         $client = app('client');
@@ -289,6 +392,35 @@ class ClientController extends Controller
         return view_client('client.invoice_details', compact('title', 'uuid'));
     }
 
+    #[OA\Get(
+        path: 'client.api.client.invoice.get',
+        description: 'Returns the details of a specific invoice.',
+        summary: 'Get invoice details',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Client'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'UUID of the invoice',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Invoice details returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+            new OA\Response(response: 404, description: 'Invoice not found'),
+        ]
+    )]
     public function getInvoice(Request $request, $uuid): JsonResponse
     {
         $client = app('client');
@@ -344,6 +476,35 @@ class ClientController extends Controller
         ]);
     }
 
+    #[OA\Get(
+        path: 'client.api.client.invoice.items.get',
+        description: 'Returns the line items for a specific invoice.',
+        summary: 'Get invoice items',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Client'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'UUID of the invoice',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Invoice items returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+            new OA\Response(response: 404, description: 'Invoice not found'),
+        ]
+    )]
     public function getInvoiceItems(Request $request, $uuid): JsonResponse
     {
         $client = app('client');
@@ -431,6 +592,35 @@ class ClientController extends Controller
         ], 200);
     }
 
+    #[OA\Get(
+        path: 'client.api.client.invoice.transactions.get',
+        description: 'Returns the transactions for a specific invoice.',
+        summary: 'Get invoice transactions',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Client'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'UUID of the invoice',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Invoice transactions returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+            new OA\Response(response: 404, description: 'Invoice not found'),
+        ]
+    )]
     public function getInvoiceTransactions(Request $request, $uuid): JsonResponse
     {
         $client = app('client');
@@ -490,6 +680,35 @@ class ClientController extends Controller
         ], 200);
     }
 
+    #[OA\Get(
+        path: 'client.api.client.invoice.payment_gateways.get',
+        description: 'Returns available payment gateways for a specific invoice.',
+        summary: 'Get invoice payment gateways',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Client'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'UUID of the invoice',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Invoice payment gateways returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'array', items: new OA\Items(type: 'object')),
+                    ],
+                    type: 'object'
+                )
+            ),
+            new OA\Response(response: 404, description: 'Invoice not found'),
+        ]
+    )]
     public function getInvoicePaymentGateways(Request $request, $uuid): JsonResponse
     {
         $client = app('client');
@@ -534,6 +753,26 @@ class ClientController extends Controller
         return view_client('client.transactions', compact('title'));
     }
 
+    #[OA\Get(
+        path: 'client.api.client.transactions.get',
+        description: 'Returns a list of client transactions.',
+        summary: 'Get client transactions',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Client'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Client transactions returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+            new OA\Response(response: 404, description: 'Client not found'),
+        ]
+    )]
     public function getTransactions(Request $request): JsonResponse
     {
         $client = app('client');
@@ -631,6 +870,42 @@ class ClientController extends Controller
         return view_client('client.invoice_payment', compact('title', 'uuid', 'invoice'));
     }
 
+    #[OA\Get(
+        path: 'client.api.client.invoice.payment_gateway.get',
+        description: 'Returns details of a specific payment gateway for an invoice.',
+        summary: 'Get invoice payment gateway',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Client'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'UUID of the invoice',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+            new OA\Parameter(
+                name: 'pg_uuid',
+                description: 'UUID of the payment gateway',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Payment gateway details returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+            new OA\Response(response: 404, description: 'Invoice or payment gateway not found'),
+        ]
+    )]
     public function getInvoicePaymentGateway(Request $request, $uuid, $pg_uuid): JsonResponse
     {
         $client = app('client');
@@ -686,6 +961,37 @@ class ClientController extends Controller
         return view_client('client.add_funds', compact('title', 'funds_params'));
     }
 
+    #[OA\Post(
+        path: 'client.api.client.add_funds.top_up.post',
+        description: 'Creates a proforma invoice to top up the client balance.',
+        summary: 'Top up client balance',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Client'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'amount', type: 'number', format: 'float'),
+                ],
+                type: 'object'
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Top up invoice created successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string'),
+                        new OA\Property(property: 'message', type: 'string'),
+                        new OA\Property(property: 'redirect', type: 'string'),
+                    ],
+                    type: 'object'
+                )
+            ),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
     public function postAddFundsTopUp(Request $request): JsonResponse
     {
         $client = app('client');

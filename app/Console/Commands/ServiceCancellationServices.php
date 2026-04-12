@@ -21,6 +21,7 @@ use App\Models\Service;
 use App\Services\TranslationService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Cache;
 
 class ServiceCancellationServices extends Command
 {
@@ -36,12 +37,27 @@ class ServiceCancellationServices extends Command
 
     public function handle()
     {
-        Service::query()
-            ->where('status', 'pending')
-            ->chunk(100, function ($services) {
-                foreach ($services as $service) {
-                    $service->cancellation();
-                }
-            });
+        $lock = Cache::lock('billing:cancellation-services', 3600);
+        if (! $lock->get()) {
+            return;
+        }
+
+        try {
+            $processed = 0;
+            Service::query()
+                ->where('status', 'pending')
+                ->chunk(100, function ($services) use (&$processed) {
+                    foreach ($services as $service) {
+                        $service->cancellation();
+                        $processed++;
+                    }
+                });
+
+            if ($processed > 0) {
+                logActivity('info', 'Service:CancellationServices completed. Processed: '.$processed.' services', 'cron');
+            }
+        } finally {
+            $lock->release();
+        }
     }
 }

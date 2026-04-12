@@ -63,8 +63,18 @@ class InvoiceItem extends Model
         'taxed',
         'relation_model',
         'relation_model_uuid',
+        'service_uuid',
+        'period_start',
+        'period_stop',
         'amount',
+        'metadata',
         'notes',
+    ];
+
+    protected $casts = [
+        'period_start' => 'datetime:Y-m-d H:i',
+        'period_stop' => 'datetime:Y-m-d H:i',
+        'metadata' => 'array',
     ];
 
     public function invoice(): belongsTo

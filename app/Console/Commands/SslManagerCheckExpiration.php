@@ -19,6 +19,7 @@ namespace App\Console\Commands;
 
 use App\Models\SslCertificate;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
 
 class SslManagerCheckExpiration extends Command
@@ -28,16 +29,25 @@ class SslManagerCheckExpiration extends Command
 
     public function handle()
     {
-        $certificates = SslCertificate::all();
-
-        foreach ($certificates as $certificate) {
-            if ($certificate->expires_at && Carbon::parse($certificate->expires_at)->isPast()) {
-                $certificate->status = 'expired';
-                $certificate->save();
-                $this->line("Certificate {$certificate->domain} set to expired.");
-            }
+        $lock = Cache::lock('ssl-manager:check-expiration', 3600);
+        if (! $lock->get()) {
+            return;
         }
 
-        $this->info('Expiration check completed.');
+        try {
+            $certificates = SslCertificate::all();
+
+            foreach ($certificates as $certificate) {
+                if ($certificate->expires_at && Carbon::parse($certificate->expires_at)->isPast()) {
+                    $certificate->status = 'expired';
+                    $certificate->save();
+                    $this->line("Certificate {$certificate->domain} set to expired.");
+                }
+            }
+
+            $this->info('Expiration check completed.');
+        } finally {
+            $lock->release();
+        }
     }
 }

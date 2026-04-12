@@ -99,7 +99,7 @@
                     render: function (data, type, row) {
                         var btn = '';
                         if (row.urls.edit) {
-                            btn += renderEditButton(row.urls.edit);
+                            btn += renderEditLink(row.urls.edit);
                         }
                         if (row.urls.delete) {
                             btn += renderDeleteButton(row.urls.delete);
@@ -115,24 +115,11 @@
                 return {};
             }
 
-            $tableId.on('click', 'button.delete-btn', function (e) {
+            $dataTable.on('click', 'button.delete-btn', function (e) {
                 e.preventDefault();
-                var modelUrl = $(this).data('model-url');
-
-                if (confirm(translate('Are you sure you want to delete this record?'))) {
-                    PUQajax(modelUrl, null, 3000, $(this), 'DELETE')
-                        .then(function (response) {
-                            if (response.status === "success") {
-                                $dataTable.ajax.reload(null, false);
-                            }
-                        });
-                }
+                handleDelete($dataTable, this);
             });
 
-            $tableId.on('click', 'button.edit-btn', function (e) {
-                e.preventDefault();
-                window.location.href = $(this).data('model-url');
-            });
 
             $('#create').on('click', function () {
                 var $modalTitle = $('#universalModal .modal-title');

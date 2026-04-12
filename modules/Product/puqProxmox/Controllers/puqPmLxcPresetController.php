@@ -25,6 +25,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Modules\Product\puqProxmox\Models\PuqPmLxcPreset;
 use Modules\Product\puqProxmox\Models\PuqPmLxcPresetClusterGroup;
+use OpenApi\Attributes as OA;
 use Yajra\DataTables\DataTables;
 
 class puqPmLxcPresetController extends Controller
@@ -36,6 +37,7 @@ class puqPmLxcPresetController extends Controller
         return view_admin_module('Product', 'puqProxmox', 'admin_area.lxc_presets.lxc_presets', compact('title'));
     }
 
+    #[OA\Get(path: 'admin.api.Product.puqProxmox.lxc_presets.get', description: 'Returns a list of LXC presets.', summary: 'Get LXC presets list', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], responses: [new OA\Response(response: 200, description: 'LXC presets list returned successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function getLxcPresets(Request $request): JsonResponse
     {
         $query = PuqPmLxcPreset::query();
@@ -99,6 +101,7 @@ class puqPmLxcPresetController extends Controller
         return view_admin_module('Product', 'puqProxmox', 'admin_area.lxc_presets.lxc_preset', compact('title'));
     }
 
+    #[OA\Post(path: 'admin.api.Product.puqProxmox.lxc_preset.post', description: 'Creates a new LXC preset.', summary: 'Create LXC preset', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(required: ['name'], properties: [new OA\Property(property: 'name', type: 'string'), new OA\Property(property: 'puq_pm_dns_zone_uuid', type: 'string', format: 'uuid')], type: 'object')), responses: [new OA\Response(response: 200, description: 'LXC preset created successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string'), new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function postLxcPreset(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
@@ -129,6 +132,7 @@ class puqPmLxcPresetController extends Controller
         ]);
     }
 
+    #[OA\Get(path: 'admin.api.Product.puqProxmox.lxc_preset.get', description: 'Returns details of a specific LXC preset.', summary: 'Get LXC preset details', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the LXC preset', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], responses: [new OA\Response(response: 200, description: 'LXC preset details returned successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function getLxcPreset(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmLxcPreset::find($uuid);
@@ -152,6 +156,7 @@ class puqPmLxcPresetController extends Controller
         ]);
     }
 
+    #[OA\Put(path: 'admin.api.Product.puqProxmox.lxc_preset.put', description: 'Updates a specific LXC preset.', summary: 'Update LXC preset', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the LXC preset', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(type: 'object')), responses: [new OA\Response(response: 200, description: 'LXC preset updated successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string'), new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function putLxcPreset(Request $request, $uuid): JsonResponse
     {
         $validator = Validator::make($request->all(), [
@@ -326,6 +331,7 @@ class puqPmLxcPresetController extends Controller
         ]);
     }
 
+    #[OA\Put(path: 'admin.api.Product.puqProxmox.lxc_preset.env_variables.put', description: 'Updates environment variables for a specific LXC preset.', summary: 'Update LXC preset environment variables', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the LXC preset', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(type: 'object')), responses: [new OA\Response(response: 200, description: 'LXC preset environment variables updated successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string'), new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function putLxcPresetEnvVariables(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmLxcPreset::find($uuid);
@@ -391,6 +397,7 @@ class puqPmLxcPresetController extends Controller
     }
 
 
+    #[OA\Delete(path: 'admin.api.Product.puqProxmox.lxc_preset.delete', description: 'Deletes a specific LXC preset.', summary: 'Delete LXC preset', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the LXC preset', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], responses: [new OA\Response(response: 200, description: 'LXC preset deleted successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string')], type: 'object'))])]
     public function deleteLxcPreset(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmLxcPreset::find($uuid);
@@ -420,6 +427,7 @@ class puqPmLxcPresetController extends Controller
         ]);
     }
 
+    #[OA\Get(path: 'admin.api.Product.puqProxmox.lxc_preset.lxc_preset_cluster_groups.get', description: 'Returns cluster groups for a specific LXC preset.', summary: 'Get LXC preset cluster groups', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the LXC preset', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], responses: [new OA\Response(response: 200, description: 'LXC preset cluster groups returned successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function getLxcPresetLxcPresetClusterGroups(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmLxcPreset::find($uuid);
@@ -494,6 +502,7 @@ class puqPmLxcPresetController extends Controller
         ], 200);
     }
 
+    #[OA\Get(path: 'admin.api.Product.puqProxmox.lxc_preset_cluster_groups.get', description: 'Returns a list of all LXC preset cluster groups.', summary: 'Get all LXC preset cluster groups', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], responses: [new OA\Response(response: 200, description: 'LXC preset cluster groups list returned successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function getLxcPresetClusterGroups(Request $request): JsonResponse
     {
         $query = PuqPmLxcPresetClusterGroup::query()
@@ -560,6 +569,7 @@ class puqPmLxcPresetController extends Controller
         ], 200);
     }
 
+    #[OA\Post(path: 'admin.api.Product.puqProxmox.lxc_preset_cluster_group.post', description: 'Creates a new LXC preset cluster group relation.', summary: 'Create LXC preset cluster group', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(required: ['puq_pm_lxc_preset_uuid', 'puq_pm_cluster_group_uuid'], properties: [new OA\Property(property: 'puq_pm_lxc_preset_uuid', type: 'string', format: 'uuid'), new OA\Property(property: 'puq_pm_cluster_group_uuid', type: 'string', format: 'uuid')], type: 'object')), responses: [new OA\Response(response: 200, description: 'LXC preset cluster group created successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string'), new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function postLxcPresetClusterGroups(Request $request): JsonResponse
     {
 
@@ -601,6 +611,7 @@ class puqPmLxcPresetController extends Controller
         ]);
     }
 
+    #[OA\Delete(path: 'admin.api.Product.puqProxmox.lxc_preset_cluster_group.delete', description: 'Deletes a specific LXC preset cluster group.', summary: 'Delete LXC preset cluster group', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the LXC preset cluster group', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], responses: [new OA\Response(response: 200, description: 'LXC preset cluster group deleted successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string')], type: 'object'))])]
     public function deleteLxcPresetClusterGroup(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmLxcPresetClusterGroup::find($uuid);
@@ -630,6 +641,7 @@ class puqPmLxcPresetController extends Controller
         ]);
     }
 
+    #[OA\Get(path: 'admin.api.Product.puqProxmox.lxc_preset.lxc_os_templates.get', description: 'Returns OS templates for a specific LXC preset.', summary: 'Get LXC preset OS templates', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the LXC preset', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], responses: [new OA\Response(response: 200, description: 'LXC preset OS templates returned successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function getLxcPresetLxcPresetLxcOsTemplates(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmLxcPreset::find($uuid);
@@ -674,6 +686,7 @@ class puqPmLxcPresetController extends Controller
         ], 200);
     }
 
+    #[OA\Post(path: 'admin.api.Product.puqProxmox.lxc_preset.lxc_os_template.post', description: 'Attaches an OS template to a specific LXC preset.', summary: 'Attach OS template to LXC preset', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the LXC preset', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(required: ['puq_pm_lxc_os_template_uuid'], properties: [new OA\Property(property: 'puq_pm_lxc_os_template_uuid', type: 'string', format: 'uuid')], type: 'object')), responses: [new OA\Response(response: 200, description: 'OS template attached successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string'), new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function postLxcPresetLxcPresetLxcOsTemplate(Request $request, $uuid): JsonResponse
     {
         $validator = Validator::make($request->all(), [
@@ -710,6 +723,7 @@ class puqPmLxcPresetController extends Controller
         ]);
     }
 
+    #[OA\Delete(path: 'admin.api.Product.puqProxmox.lxc_preset.lxc_os_template.delete', description: 'Detaches an OS template from a specific LXC preset.', summary: 'Detach OS template from LXC preset', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the LXC preset', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')), new OA\Parameter(name: 'lxc_os_template_uuid', description: 'UUID of the LXC OS template', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], responses: [new OA\Response(response: 200, description: 'OS template detached successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string')], type: 'object'))])]
     public function deleteLxcPresetLxcPresetLxcOsTemplate(Request $request, $uuid, $lxc_os_template_uuid): JsonResponse
     {
         $model = PuqPmLxcPreset::find($uuid);
@@ -730,6 +744,7 @@ class puqPmLxcPresetController extends Controller
         ]);
     }
 
+    #[OA\Get(path: 'admin.api.Product.puqProxmox.lxc_presets.select.get', description: 'Returns LXC presets for select dropdown.', summary: 'Get LXC presets select', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], responses: [new OA\Response(response: 200, description: 'LXC presets select returned successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function getLxcPresetsSelect(Request $request): JsonResponse
     {
         $search = $request->input('q');

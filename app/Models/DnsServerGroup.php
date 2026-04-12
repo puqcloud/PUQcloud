@@ -17,6 +17,7 @@
 
 namespace App\Models;
 
+use App\Traits\ModelActivityLogger;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -26,6 +27,7 @@ use Illuminate\Support\Str;
 class DnsServerGroup extends Model
 {
     use HasFactory;
+    use ModelActivityLogger;
 
     protected $primaryKey = 'uuid';
     public $incrementing = false;

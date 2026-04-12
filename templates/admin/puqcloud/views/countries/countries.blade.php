@@ -111,10 +111,6 @@
                             btn = btn + renderViewButton(row.urls.regions);
                         }
 
-                        if (row.urls.post) {
-                            btn = btn + renderEditButton(row.urls.post);
-                        }
-
                         if (row.urls.delete) {
                             btn = btn + renderDeleteButton(row.urls.delete);
                         }

@@ -1,0 +1,7 @@
+{
+    "name": "New Ticket from Client",
+    "category": "staffOperational",
+    "custom": false,
+    "subject": "[Ticket #{{ $ticket->number }}] New: {{ $ticket->subject }}",
+    "text_mini": "New support ticket #{{ $ticket->number }} from {{ $ticket->name ?? $ticket->email }}."
+}

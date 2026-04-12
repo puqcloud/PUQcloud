@@ -21,6 +21,7 @@ use App\Models\Service;
 use App\Services\TranslationService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Cache;
 
 class ServiceTerminationServices extends Command
 {
@@ -37,12 +38,33 @@ class ServiceTerminationServices extends Command
 
     public function handle()
     {
-        Service::query()
-            ->whereIn('status', ['active', 'suspended'])
-            ->chunk(100, function ($services) {
-                foreach ($services as $service) {
-                    $service->termination();
-                }
-            });
+        $lock = Cache::lock('billing:termination-services', 3600);
+        if (! $lock->get()) {
+            return;
+        }
+
+        try {
+            $processed = 0;
+            Service::query()
+                ->where(function ($q) {
+                    $q->where('status', 'suspended')
+                        ->orWhere(function ($q2) {
+                            $q2->where('status', 'active')
+                                ->where('termination_request', true);
+                        });
+                })
+                ->chunk(100, function ($services) use (&$processed) {
+                    foreach ($services as $service) {
+                        $service->termination();
+                        $processed++;
+                    }
+                });
+
+            if ($processed > 0) {
+                logActivity('info', 'Service:TerminationServices completed. Processed: '.$processed.' services', 'cron');
+            }
+        } finally {
+            $lock->release();
+        }
     }
 }

@@ -21,6 +21,7 @@ use App\Models\Task;
 use App\Services\TranslationService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Cache;
 
 class SystemClearingLostTasks extends Command
 {
@@ -37,13 +38,22 @@ class SystemClearingLostTasks extends Command
 
     public function handle()
     {
-        Task::query()->whereIn('status', ['duplicate'])->delete();
-        $tasks = Task::query()->whereIn('status', ['pending', 'processing', 'duplicate'])->get();
-        foreach ($tasks as $task) {
-            if ($task->getHorizonStatus() == 'deleted') {
-                $task->status = 'failed';
-                $task->save();
+        $lock = Cache::lock('system:clearing-lost-tasks', 3600);
+        if (! $lock->get()) {
+            return;
+        }
+
+        try {
+            Task::query()->whereIn('status', ['duplicate'])->delete();
+            $tasks = Task::query()->whereIn('status', ['pending', 'processing', 'duplicate'])->get();
+            foreach ($tasks as $task) {
+                if ($task->getHorizonStatus() == 'deleted') {
+                    $task->status = 'failed';
+                    $task->save();
+                }
             }
+        } finally {
+            $lock->release();
         }
     }
 }

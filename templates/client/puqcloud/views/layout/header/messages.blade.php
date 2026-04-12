@@ -85,7 +85,9 @@
                                 <p class="mb-3">{{ $incident['description'] }}</p>
                             @endif
 
+                            @if(!empty($incident['created']) || !empty($incident['updated']))
                             <div class="row g-2 small mb-0">
+                                @if(!empty($incident['created']))
                                 <div class="col-md-6">
                                     <div class="d-flex align-items-center">
                                         <i class="bi bi-calendar-plus me-2 text-muted"></i>
@@ -93,6 +95,8 @@
                                         <span class="text-muted">{{ $incident['created'] }}</span>
                                     </div>
                                 </div>
+                                @endif
+                                @if(!empty($incident['updated']))
                                 <div class="col-md-6">
                                     <div class="d-flex align-items-center">
                                         <i class="bi bi-arrow-clockwise me-2 text-muted"></i>
@@ -100,7 +104,9 @@
                                         <span class="text-muted">{{ $incident['updated'] }}</span>
                                     </div>
                                 </div>
+                                @endif
                             </div>
+                            @endif
                         </div>
 
                         <div class="ms-3 d-flex flex-column align-items-end gap-2">

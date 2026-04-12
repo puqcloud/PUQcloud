@@ -15,6 +15,45 @@
  * Do not remove this header.
  */
 
+/*
+ * WEB Routes:
+ *   GET  products                                              -> products()                                [admin.web.products]
+ *   GET  product/{uuid}/{tab}                                  -> productTab()                              [admin.web.product.tab]
+ *
+ * API Routes:
+ *   GET    products                                            -> getProducts()                             [admin.api.products.get]
+ *   POST   product                                             -> postProduct()                             [admin.api.product.post]
+ *   GET    product/{uuid}                                      -> getProduct()                              [admin.api.product.get]
+ *   PUT    product/{uuid}                                      -> putProduct()                              [admin.api.product.put]
+ *   DELETE product/{uuid}                                      -> deleteProduct()                           [admin.api.product.delete]
+ *   PUT    product/{uuid}/module                               -> putProductModule()                        [admin.api.product.module.put]
+ *   GET    product/{uuid}/module                               -> getProductModule()                        [admin.api.product.module.get]
+ *   GET    product/{uuid}/prices                               -> getProductPrices()                        [admin.api.product.prices.get]
+ *   GET    product/{uuid}/price/{p_uuid}                       -> getProductPrice()                         [admin.api.product.price.get]
+ *   PUT    product/{uuid}/price                                -> putProductPrice()                         [admin.api.product.price.put]
+ *   POST   product/{uuid}/price                                -> postProductPrice()                        [admin.api.product.price.post]
+ *   DELETE product/{uuid}/price/{p_uuid}                       -> deleteProductPrice()                      [admin.api.product.price.delete]
+ *   GET    product/{uuid}/product_attributes                   -> getProductProductAttributes()             [admin.api.product.product_attributes.get]
+ *   POST   product/{uuid}/product_attribute                    -> postProductProductAttribute()             [admin.api.product.product_attribute.post]
+ *   GET    product/{uuid}/product_attributes/select            -> getProductProductAttributesSelect()       [admin.api.product.product_attributes.select.get]
+ *   DELETE product/{uuid}/product_attribute/{pa_uuid}          -> deleteProductProductAttribute()           [admin.api.product.product_attribute.delete]
+ *   GET    product/{uuid}/product_option_groups                -> getProductProductOptionGroups()           [admin.api.product.product_option_groups.get]
+ *   POST   product/{uuid}/product_option_group                 -> postProductProductOptionGroup()           [admin.api.product.product_option_group.post]
+ *   GET    product/{uuid}/product_option_groups/select         -> getProductProductOptionsGroupsSelect()    [admin.api.product.product_option_groups.select.get]
+ *   DELETE product/{uuid}/product_option_group/{pog_uuid}      -> deleteProductProductOptionGroups()        [admin.api.product.product_option_group.delete]
+ *   POST   product_group/{uuid}/product_option_group/update_order -> postProductProductOptionGroupsUpdateOrder() [admin.api.product.product_option_group.update_order.post]
+ *   GET    product/{uuid}/modules/select                       -> getProductModulesSelect()                 [admin.api.product.module.select.get]
+ *   GET    products/select                                     -> getProductsSelect()                       [admin.api.products.select.get]
+ *   GET    product/prices/select                               -> getProductPricesSelect()                  [admin.api.product.prices.select.get]
+ *   GET    product_option_groups/by_product                    -> getProductOptionGroupsByProduct()         [admin.api.product_option_groups.by_product.get]
+ *   GET    price/periods/select                                -> getPricePeriods()                         [admin.api.price.periods.select.get]
+ *
+ * Other Product domains live in dedicated controllers:
+ *   AdminProductGroupsController       — Product Groups + Templates selects
+ *   AdminProductAttributesController   — Product Attribute Groups + Attributes
+ *   AdminProductOptionsController      — Product Option Groups + Options + Prices
+ */
+
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
@@ -23,9 +62,6 @@ use App\Models\Module;
 use App\Models\Price;
 use App\Models\Product;
 use App\Models\ProductAttribute;
-use App\Models\ProductAttributeGroup;
-use App\Models\ProductGroup;
-use App\Models\ProductOption;
 use App\Models\ProductOptionGroup;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
@@ -33,6 +69,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use OpenApi\Attributes as OA;
 use Yajra\DataTables\DataTables;
 
 class AdminProductsController extends Controller
@@ -44,6 +81,25 @@ class AdminProductsController extends Controller
         return view_admin('products.products', compact('title'));
     }
 
+    #[OA\Get(
+        path: 'admin.api.products.get',
+        description: 'Returns a DataTable list of products.',
+        summary: 'Get products list',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Products'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Products list returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getProducts(Request $request): JsonResponse
     {
         $query = Product::query();
@@ -79,6 +135,41 @@ class AdminProductsController extends Controller
         ], 200);
     }
 
+    #[OA\Post(
+        path: 'admin.api.product.post',
+        description: 'Creates a new product with the given key.',
+        summary: 'Create a new product',
+        security: [['apiKeyAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'application/json',
+                schema: new OA\Schema(
+                    required: ['key'],
+                    properties: [
+                        new OA\Property(property: 'key', type: 'string'),
+                    ]
+                )
+            )
+        ),
+        tags: ['Products'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Product created successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string'),
+                        new OA\Property(property: 'message', type: 'string'),
+                        new OA\Property(property: 'data', type: 'object'),
+                        new OA\Property(property: 'redirect', type: 'string'),
+                    ],
+                    type: 'object'
+                )
+            ),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
     public function postProduct(Request $request): JsonResponse
     {
         $product = new Product;
@@ -100,6 +191,8 @@ class AdminProductsController extends Controller
         $product->save();
         $product->refresh();
 
+        app(\App\Services\HookService::class)->callHooks('ProductCreated', ['product' => $product]);
+
         return response()->json([
             'status' => 'success',
             'message' => __('message.Created successfully'),
@@ -111,7 +204,7 @@ class AdminProductsController extends Controller
     public function productTab(Request $request, $uuid, $tab): View|RedirectResponse
     {
         $validTabs = [
-            'general', 'images', 'attributes', 'pricing', 'options', 'module',
+            'general', 'settings', 'images', 'attributes', 'pricing', 'options', 'module',
         ];
 
         if (!in_array($tab, $validTabs)) {
@@ -124,6 +217,30 @@ class AdminProductsController extends Controller
         return view_admin('products.product_'.$tab, compact('title', 'uuid', 'tab', 'locales'));
     }
 
+    #[OA\Get(
+        path: 'admin.api.product.get',
+        description: 'Returns detailed information about a product by UUID.',
+        summary: 'Get product by UUID',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Products'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'UUID of the product', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+            new OA\Parameter(name: 'locale', description: 'Locale for translations', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Product data returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+            new OA\Response(response: 404, description: 'Product not found'),
+        ]
+    )]
     public function getProduct(Request $request, $uuid): JsonResponse
     {
         $product = Product::find($uuid);
@@ -143,6 +260,58 @@ class AdminProductsController extends Controller
         ]);
     }
 
+    #[OA\Put(
+        path: 'admin.api.product.put',
+        description: 'Updates an existing product by UUID, including key, name, description, and various settings.',
+        summary: 'Update product by UUID',
+        security: [['apiKeyAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'application/json',
+                schema: new OA\Schema(
+                    required: ['key'],
+                    properties: [
+                        new OA\Property(property: 'key', type: 'string'),
+                        new OA\Property(property: 'locale', type: 'string'),
+                        new OA\Property(property: 'name', type: 'string'),
+                        new OA\Property(property: 'description', type: 'string'),
+                        new OA\Property(property: 'short_description', type: 'string'),
+                        new OA\Property(property: 'notes', type: 'string'),
+                        new OA\Property(property: 'cancellation_delay_hours', type: 'integer'),
+                        new OA\Property(property: 'termination_delay_hours', type: 'integer'),
+                        new OA\Property(property: 'hidden', type: 'string', enum: ['yes', 'no']),
+                        new OA\Property(property: 'retired', type: 'string', enum: ['yes', 'no']),
+                        new OA\Property(property: 'hourly_billing', type: 'string', enum: ['yes', 'no']),
+                        new OA\Property(property: 'allow_idle', type: 'string', enum: ['yes', 'no']),
+                        new OA\Property(property: 'convert_price', type: 'string', enum: ['yes', 'no']),
+                        new OA\Property(property: 'stock_control', type: 'string', enum: ['yes', 'no']),
+                        new OA\Property(property: 'quantity', type: 'integer'),
+                    ]
+                )
+            )
+        ),
+        tags: ['Products'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'UUID of the product', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Product updated successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string'),
+                        new OA\Property(property: 'message', type: 'string'),
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+            new OA\Response(response: 404, description: 'Product not found'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
     public function putProduct(Request $request, $uuid): JsonResponse
     {
         $product = Product::find($uuid);
@@ -153,8 +322,10 @@ class AdminProductsController extends Controller
             ], 404);
         }
 
+        // Partial updates: `key` is validated only when actually submitted. This lets the
+        // General tab save localized name/description/notes without re-sending the product key.
         $validator = Validator::make($request->all(), [
-            'key' => 'required|unique:products,key,'.$product->uuid.',uuid',
+            'key' => 'sometimes|required|unique:products,key,'.$product->uuid.',uuid',
         ], [
             'key.required' => __('error.The key field is required'),
             'key.unique' => __('error.The key has already been taken'),
@@ -166,7 +337,9 @@ class AdminProductsController extends Controller
             ], 422);
         }
 
-        $product->key = $request->input('key');
+        if ($request->has('key')) {
+            $product->key = $request->input('key');
+        }
 
         if (!empty($request->input('locale'))) {
             $product->setLocale($request->input('locale'));
@@ -197,6 +370,42 @@ class AdminProductsController extends Controller
             }
         }
 
+        // Resolve the final billing mode + hourly_billing together so the compatibility check
+        // uses the NEW values from the request, not stale DB state. Hourly billing only makes
+        // sense for prepaid services — for invoice/both we silently disable it (the UI already
+        // hides the toggle in those modes).
+        $newBillingMode = $request->has('billing_mode')
+            ? $request->input('billing_mode')
+            : $product->billing_mode;
+
+        if ($request->has('billing_mode') && ! in_array($newBillingMode, ['prepaid', 'invoice', 'both'], true)) {
+            $newBillingMode = $product->billing_mode;
+        }
+
+        $hourlyRequested = $request->has('hourly_billing')
+            ? ($request->input('hourly_billing') == 'yes')
+            : (bool) $product->hourly_billing;
+
+        // Only reject when the user EXPLICITLY sent hourly_billing=yes together with an
+        // incompatible billing mode. Implicit stale DB values get auto-corrected below.
+        if (
+            $request->has('hourly_billing')
+            && $request->input('hourly_billing') == 'yes'
+            && in_array($newBillingMode, ['invoice', 'both'], true)
+        ) {
+            return response()->json([
+                'status' => 'error',
+                'errors' => ['Hourly billing is not compatible with invoice billing mode'],
+            ], 422);
+        }
+
+        if (in_array($newBillingMode, ['invoice', 'both'], true)) {
+            $hourlyRequested = false; // force-disable for incompatible modes
+        }
+
+        $product->billing_mode = $newBillingMode;
+        $product->hourly_billing = $hourlyRequested;
+
         if ($request->has('hidden')) {
             $product->hidden = false;
             if ($request->input('hidden') == 'yes') {
@@ -207,12 +416,6 @@ class AdminProductsController extends Controller
             $product->retired = false;
             if ($request->input('retired') == 'yes') {
                 $product->retired = true;
-            }
-        }
-        if ($request->has('hourly_billing')) {
-            $product->hourly_billing = false;
-            if ($request->input('hourly_billing') == 'yes') {
-                $product->hourly_billing = true;
             }
         }
         if ($request->has('allow_idle')) {
@@ -237,6 +440,15 @@ class AdminProductsController extends Controller
             $value = $request->input('quantity');
             $product->quantity = is_numeric($value) && intval($value) == $value ? (int) $value : 0;
         }
+        if ($request->has('allow_upgrade')) {
+            $product->allow_upgrade = $request->input('allow_upgrade') == 'yes';
+        }
+        if ($request->has('allow_downgrade')) {
+            $product->allow_downgrade = $request->input('allow_downgrade') == 'yes';
+        }
+        if ($request->has('allow_proration_alignment')) {
+            $product->allow_proration_alignment = $request->input('allow_proration_alignment') == 'yes';
+        }
 
         $product->save();
         $product->refresh();
@@ -245,6 +457,8 @@ class AdminProductsController extends Controller
             $product->convertPrice();
         }
 
+        app(\App\Services\HookService::class)->callHooks('ProductEdit', ['product' => $product]);
+
         return response()->json([
             'status' => 'success',
             'message' => __('message.Updated successfully'),
@@ -252,6 +466,32 @@ class AdminProductsController extends Controller
         ]);
     }
 
+    #[OA\Delete(
+        path: 'admin.api.product.delete',
+        description: 'Deletes a product by UUID if it has no associated services.',
+        summary: 'Delete product',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Products'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'UUID of the product', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Product deleted successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string'),
+                        new OA\Property(property: 'message', type: 'string'),
+                    ],
+                    type: 'object'
+                )
+            ),
+            new OA\Response(response: 400, description: 'Cannot delete product with active services'),
+            new OA\Response(response: 404, description: 'Product not found'),
+            new OA\Response(response: 500, description: 'Deletion failed'),
+        ]
+    )]
     public function deleteProduct(Request $request, $uuid): JsonResponse
     {
         $product = Product::find($uuid);
@@ -267,6 +507,8 @@ class AdminProductsController extends Controller
             ], 400);
         }
 
+        $productData = ['uuid' => $product->uuid, 'key' => $product->key];
+
         try {
             $deleted = $product->delete();
             if (!$deleted) {
@@ -280,12 +522,36 @@ class AdminProductsController extends Controller
             ], 500);
         }
 
+        app(\App\Services\HookService::class)->callHooks('ProductDeleted', $productData);
+
         return response()->json([
             'status' => 'success',
             'message' => __('message.Deleted successfully'),
         ]);
     }
 
+    #[OA\Get(
+        path: 'admin.api.price.periods.select.get',
+        description: 'Returns a select list of price periods.',
+        summary: 'Get price periods select',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Products'],
+        parameters: [
+            new OA\Parameter(name: 'q', description: 'Search query', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Price periods list returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getPricePeriods(Request $request): JsonResponse
     {
         $categories = [];
@@ -312,6 +578,49 @@ class AdminProductsController extends Controller
         ], 200);
     }
 
+    #[OA\Put(
+        path: 'admin.api.product.price.put',
+        description: 'Updates an existing price for a product.',
+        summary: 'Update product price',
+        security: [['apiKeyAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'application/json',
+                schema: new OA\Schema(
+                    required: ['price_uuid'],
+                    properties: [
+                        new OA\Property(property: 'price_uuid', type: 'string', format: 'uuid'),
+                        new OA\Property(property: 'setup', type: 'number'),
+                        new OA\Property(property: 'base', type: 'number'),
+                        new OA\Property(property: 'idle', type: 'number'),
+                        new OA\Property(property: 'switch_down', type: 'number'),
+                        new OA\Property(property: 'switch_up', type: 'number'),
+                        new OA\Property(property: 'uninstall', type: 'number'),
+                    ]
+                )
+            )
+        ),
+        tags: ['Products'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'UUID of the product', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Price updated successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string'),
+                        new OA\Property(property: 'message', type: 'string'),
+                    ],
+                    type: 'object'
+                )
+            ),
+            new OA\Response(response: 400, description: 'At least one price value must be provided'),
+            new OA\Response(response: 404, description: 'Not found'),
+        ]
+    )]
     public function putProductPrice(Request $request, $uuid): JsonResponse
     {
         $product = Product::find($uuid);
@@ -369,6 +678,51 @@ class AdminProductsController extends Controller
         ]);
     }
 
+    #[OA\Post(
+        path: 'admin.api.product.price.post',
+        description: 'Creates a new price entry for a product with currency, period, and price values.',
+        summary: 'Create product price',
+        security: [['apiKeyAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'application/json',
+                schema: new OA\Schema(
+                    required: ['currency_uuid', 'period'],
+                    properties: [
+                        new OA\Property(property: 'currency_uuid', type: 'string', format: 'uuid'),
+                        new OA\Property(property: 'period', type: 'string', enum: ['one-time', 'hourly', 'daily', 'weekly', 'bi-weekly', 'monthly', 'quarterly', 'semi-annually', 'annually', 'biennially', 'triennially']),
+                        new OA\Property(property: 'setup', type: 'number'),
+                        new OA\Property(property: 'base', type: 'number'),
+                        new OA\Property(property: 'idle', type: 'number'),
+                        new OA\Property(property: 'switch_down', type: 'number'),
+                        new OA\Property(property: 'switch_up', type: 'number'),
+                        new OA\Property(property: 'uninstall', type: 'number'),
+                    ]
+                )
+            )
+        ),
+        tags: ['Products'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'UUID of the product', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Price added successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string'),
+                        new OA\Property(property: 'message', type: 'string'),
+                    ],
+                    type: 'object'
+                )
+            ),
+            new OA\Response(response: 400, description: 'At least one price value must be provided'),
+            new OA\Response(response: 404, description: 'Product not found'),
+            new OA\Response(response: 422, description: 'Validation error or price already exists'),
+        ]
+    )]
     public function postProductPrice(Request $request, $uuid): JsonResponse
     {
         $product = Product::find($uuid);
@@ -443,6 +797,29 @@ class AdminProductsController extends Controller
         ]);
     }
 
+    #[OA\Get(
+        path: 'admin.api.product.prices.get',
+        description: 'Returns a list of prices for a product with DataTables support.',
+        summary: 'Get product prices',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Products'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'UUID of the product', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Product prices returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+            new OA\Response(response: 404, description: 'Product not found'),
+        ]
+    )]
     public function getProductPrices(Request $request, $uuid): JsonResponse
     {
         $product = Product::find($uuid);
@@ -487,6 +864,30 @@ class AdminProductsController extends Controller
         ], 200);
     }
 
+    #[OA\Get(
+        path: 'admin.api.product.price.get',
+        description: 'Returns a specific price for a product by price UUID.',
+        summary: 'Get product price',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Products'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'UUID of the product', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+            new OA\Parameter(name: 'p_uuid', description: 'UUID of the price', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Price data returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+            new OA\Response(response: 404, description: 'Not found'),
+        ]
+    )]
     public function getProductPrice(Request $request, $uuid, $p_uuid): JsonResponse
     {
         $product = Product::find($uuid);
@@ -507,6 +908,32 @@ class AdminProductsController extends Controller
         return response()->json(['data' => $price], 200);
     }
 
+    #[OA\Delete(
+        path: 'admin.api.product.price.delete',
+        description: 'Deletes a price from a product if it has no active service relationships.',
+        summary: 'Delete product price',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Products'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'UUID of the product', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+            new OA\Parameter(name: 'p_uuid', description: 'UUID of the price', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Price deleted successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string'),
+                        new OA\Property(property: 'message', type: 'string'),
+                    ],
+                    type: 'object'
+                )
+            ),
+            new OA\Response(response: 400, description: 'Cannot delete price with active relationships'),
+            new OA\Response(response: 404, description: 'Not found'),
+        ]
+    )]
     public function deleteProductPrice(Request $request, $uuid, $p_uuid): JsonResponse
     {
         $product = Product::find($uuid);
@@ -537,6 +964,28 @@ class AdminProductsController extends Controller
         ]);
     }
 
+    #[OA\Get(
+        path: 'admin.api.product.product_attributes.get',
+        description: 'Returns a list of product attributes for a product with DataTables support.',
+        summary: 'Get product attributes for a product',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Products'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'UUID of the product', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Product attributes returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getProductProductAttributes(Request $request, $uuid): JsonResponse
     {
         $query = Product::query()->find($uuid)->productAttributes();
@@ -574,6 +1023,29 @@ class AdminProductsController extends Controller
         ], 200);
     }
 
+    #[OA\Get(
+        path: 'admin.api.product.product_attributes.select.get',
+        description: 'Returns a select list of product attributes for a product.',
+        summary: 'Get product attributes select',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Products'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'UUID of the product', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+            new OA\Parameter(name: 'q', description: 'Search query', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Product attributes select list returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getProductProductAttributesSelect(Request $request, $uuid): JsonResponse
     {
         $search = $request->input('q');
@@ -619,6 +1091,43 @@ class AdminProductsController extends Controller
         ], 200);
     }
 
+    #[OA\Post(
+        path: 'admin.api.product.product_attribute.post',
+        description: 'Attaches an existing product attribute to a product.',
+        summary: 'Add product attribute to product',
+        security: [['apiKeyAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'application/json',
+                schema: new OA\Schema(
+                    required: ['product_attribute_uuid'],
+                    properties: [
+                        new OA\Property(property: 'product_attribute_uuid', type: 'string', format: 'uuid'),
+                    ]
+                )
+            )
+        ),
+        tags: ['Products'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'UUID of the product', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Attribute attached successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string'),
+                        new OA\Property(property: 'message', type: 'string'),
+                    ],
+                    type: 'object'
+                )
+            ),
+            new OA\Response(response: 400, description: 'Product already has this attribute'),
+            new OA\Response(response: 404, description: 'Product or attribute not found'),
+        ]
+    )]
     public function postProductProductAttribute(Request $request, $uuid): JsonResponse
     {
         $product = Product::find($uuid);
@@ -653,6 +1162,31 @@ class AdminProductsController extends Controller
         ]);
     }
 
+    #[OA\Delete(
+        path: 'admin.api.product.product_attribute.delete',
+        description: 'Detaches a product attribute from a product.',
+        summary: 'Remove product attribute from product',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Products'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'UUID of the product', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+            new OA\Parameter(name: 'pa_uuid', description: 'UUID of the product attribute', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Attribute detached successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string'),
+                        new OA\Property(property: 'message', type: 'string'),
+                    ],
+                    type: 'object'
+                )
+            ),
+            new OA\Response(response: 404, description: 'Product, attribute, or association not found'),
+        ]
+    )]
     public function deleteProductProductAttribute(Request $request, $uuid, $pa_uuid): JsonResponse
     {
         $product = Product::where('uuid', $uuid)->first();
@@ -690,6 +1224,28 @@ class AdminProductsController extends Controller
         ]);
     }
 
+    #[OA\Get(
+        path: 'admin.api.product.product_option_groups.get',
+        description: 'Returns a list of product option groups for a product with DataTables support.',
+        summary: 'Get product option groups for a product',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Products'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'UUID of the product', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Product option groups returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getProductProductOptionGroups(Request $request, $uuid): JsonResponse
     {
         $query = Product::query()->find($uuid)->productOptionGroups();
@@ -728,6 +1284,29 @@ class AdminProductsController extends Controller
         ], 200);
     }
 
+    #[OA\Get(
+        path: 'admin.api.product.product_option_groups.select.get',
+        description: 'Returns a select list of product option groups for a product.',
+        summary: 'Get product option groups select',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Products'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'UUID of the product', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+            new OA\Parameter(name: 'q', description: 'Search query', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Product option groups select list returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getProductProductOptionsGroupsSelect(Request $request, $uuid): JsonResponse
     {
         $search = $request->input('q');
@@ -773,6 +1352,43 @@ class AdminProductsController extends Controller
         ], 200);
     }
 
+    #[OA\Post(
+        path: 'admin.api.product.product_option_group.post',
+        description: 'Attaches an existing product option group to a product.',
+        summary: 'Add product option group to product',
+        security: [['apiKeyAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'application/json',
+                schema: new OA\Schema(
+                    required: ['product_option_group_uuid'],
+                    properties: [
+                        new OA\Property(property: 'product_option_group_uuid', type: 'string', format: 'uuid'),
+                    ]
+                )
+            )
+        ),
+        tags: ['Products'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'UUID of the product', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Product option group attached successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string'),
+                        new OA\Property(property: 'message', type: 'string'),
+                    ],
+                    type: 'object'
+                )
+            ),
+            new OA\Response(response: 400, description: 'Product already has this product option group'),
+            new OA\Response(response: 404, description: 'Product or product option group not found'),
+        ]
+    )]
     public function postProductProductOptionGroup(Request $request, $uuid): JsonResponse
     {
         $product = Product::find($uuid);
@@ -807,6 +1423,31 @@ class AdminProductsController extends Controller
         ]);
     }
 
+    #[OA\Delete(
+        path: 'admin.api.product.product_option_group.delete',
+        description: 'Detaches a product option group from a product.',
+        summary: 'Remove product option group from product',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Products'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'UUID of the product', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+            new OA\Parameter(name: 'pog_uuid', description: 'UUID of the product option group', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Product option group detached successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string'),
+                        new OA\Property(property: 'message', type: 'string'),
+                    ],
+                    type: 'object'
+                )
+            ),
+            new OA\Response(response: 404, description: 'Product, option group, or association not found'),
+        ]
+    )]
     public function deleteProductProductOptionGroups(Request $request, $uuid, $pog_uuid): JsonResponse
     {
         $product = Product::where('uuid', $uuid)->first();
@@ -843,6 +1484,44 @@ class AdminProductsController extends Controller
         ]);
     }
 
+    #[OA\Post(
+        path: 'admin.api.product.product_option_group.update_order.post',
+        description: 'Updates the display order of a product option group within a product.',
+        summary: 'Update product option group order',
+        security: [['apiKeyAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'application/json',
+                schema: new OA\Schema(
+                    required: ['product_uuid', 'new_order'],
+                    properties: [
+                        new OA\Property(property: 'product_uuid', type: 'string', format: 'uuid'),
+                        new OA\Property(property: 'new_order', type: 'integer'),
+                    ]
+                )
+            )
+        ),
+        tags: ['Products'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'UUID of the product', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Order updated successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string'),
+                        new OA\Property(property: 'message', type: 'string'),
+                    ],
+                    type: 'object'
+                )
+            ),
+            new OA\Response(response: 404, description: 'Product or option group not found'),
+            new OA\Response(response: 422, description: 'Validation error or cannot move'),
+        ]
+    )]
     public function postProductProductOptionGroupsUpdateOrder(Request $request, $uuid): JsonResponse
     {
         $validator = Validator::make($request->all(), [
@@ -931,1729 +1610,30 @@ class AdminProductsController extends Controller
         ]);
     }
 
-    public function productGroups(): View
-    {
-        $title = __('main.Product Groups');
 
-        return view_admin('product_groups.product_groups', compact('title'));
-    }
 
-    public function getProductGroups(Request $request): JsonResponse
-    {
-        $query = ProductGroup::query();
-
-        return response()->json([
-            'data' => DataTables::of($query)
-                ->filter(function ($query) use ($request) {
-                    if ($request->has('search') && !empty($request->search['value'])) {
-                        $search = $request->search['value'];
-                        $query->where(function ($q) use ($search) {
-                            $q->where('uuid', 'like', "%{$search}%")
-                                ->orWhere('key', 'like', "%{$search}%")
-                                ->orWhere('notes', 'like', "%{$search}%");
-                        });
-                    }
-                })
-                ->addColumn('name', function ($product_group) {
-                    return $product_group->name;
-                })
-                ->addColumn('images', function ($product_group) {
-                    return $product_group->images;
-                })
-                ->order(function ($product_group) use ($request) {
-                    $direction = $request->get('dir', 'asc');
-                    $product_group->orderBy('order', $direction);
-                })
-                ->addColumn('products_count', function ($product_group) {
-                    return $product_group->products->count();
-                })
-                ->addColumn('urls', function ($product_group) {
-                    $urls['edit'] = route('admin.web.product_group.tab',
-                        ['uuid' => $product_group->uuid, 'tab' => 'general']);
-                    $urls['delete'] = route('admin.api.product_group.delete', $product_group->uuid);
-
-                    return $urls;
-                })
-                ->make(true),
-        ], 200);
-    }
-
-    public function postProductGroup(Request $request): JsonResponse
-    {
-        $product_group = new ProductGroup;
-
-        $validator = Validator::make($request->all(), [
-            'key' => 'required|unique:product_groups,key',
-        ], [
-            'key.required' => __('error.The key field is required'),
-            'key.unique' => __('error.The key has already been taken'),
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => $validator->errors(),
-            ], 422);
-        }
-        $product_group->key = $request->input('key');
-        $product_group->save();
-        $product_group->refresh();
-
-        return response()->json([
-            'status' => 'success',
-            'message' => __('message.Created successfully'),
-            'data' => $product_group,
-            'redirect' => route('admin.web.product_group.tab', ['uuid' => $product_group->uuid, 'tab' => 'general']),
-        ]);
-    }
-
-    public function postProductGroupsUpdateOrder(Request $request): JsonResponse
-    {
-        $validator = Validator::make($request->all(), [
-            'uuid' => 'required|exists:product_groups,uuid',
-            'new_order' => 'required|integer',
-        ], [
-            'uuid.required' => __('error.The uuid field is required'),
-            'uuid.exists' => __('error.The uuid does not exist in the product_groups table'),
-            'new_order.required' => __('error.The new_order field is required'),
-            'new_order.integer' => __('error.The new_order must be an integer'),
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => $validator->errors(),
-            ], 422);
-        }
-
-        $productGroup = ProductGroup::where('uuid', $request->input('uuid'))->first();
-
-        if (!$productGroup) {
-            return response()->json([
-                'status' => 'error',
-                'errors' => [__('error.Product group not found')],
-            ], 404);
-        }
-
-        $productGroups = ProductGroup::orderBy('order')->get();
-
-        $minOrder = $productGroups->first()->order;
-        $maxOrder = $productGroups->last()->order;
-
-        if ($productGroup->order == $minOrder && $request->input('new_order') < $minOrder) {
-            return response()->json([
-                'status' => 'error',
-                'errors' => [__('error.The first item cannot be moved up')],
-            ], 422);
-        }
-
-        if ($productGroup->order == $maxOrder && $request->input('new_order') > $maxOrder) {
-            return response()->json([
-                'status' => 'error',
-                'errors' => [__('error.The last item cannot be moved down')],
-            ], 422);
-        }
-
-        $currentOrder = $productGroup->order;
-        $newOrder = $request->input('new_order');
-
-        if ($newOrder > $currentOrder) {
-            ProductGroup::where('order', '>', $currentOrder)
-                ->where('order', '<=', $newOrder)
-                ->decrement('order');
-        } else {
-            ProductGroup::where('order', '<', $currentOrder)
-                ->where('order', '>=', $newOrder)
-                ->increment('order');
-        }
-
-        $productGroup->order = $newOrder;
-        $productGroup->save();
-
-        return response()->json([
-            'status' => 'success',
-            'message' => __('message.Updated successfully'),
-        ]);
-    }
-
-    public function productGroupTab(Request $request, $uuid, $tab): View|RedirectResponse
-    {
-        $validTabs = [
-            'general', 'images', 'products',
-        ];
-
-        if (!in_array($tab, $validTabs)) {
-            return redirect()->route('admin.web.product_group.tab', ['uuid' => $uuid, 'tab' => 'general']);
-        }
-
-        $title = __('main.Product Group');
-        $locales = config('locale.client.locales');
-
-        return view_admin('product_groups.product_group_'.$tab, compact('title', 'uuid', 'tab', 'locales'));
-    }
-
-    public function getProductGroup(Request $request, $uuid): JsonResponse
-    {
-        $product_group = ProductGroup::find($uuid);
-
-        if (empty($product_group)) {
-            return response()->json([
-                'errors' => [__('error.Not found')],
-            ], 404);
-        }
-
-        // $product_group->loadImagesField();
-
-        if (!empty($request->input('locale'))) {
-            $product_group->setLocale($request->input('locale'));
-        }
-
-        return response()->json([
-            'data' => $product_group,
-        ]);
-    }
-
-    public function putProductGroup(Request $request, $uuid): JsonResponse
-    {
-        $product_group = ProductGroup::find($uuid);
-
-        if (empty($product_group)) {
-            return response()->json([
-                'errors' => [__('error.Not found')],
-            ], 404);
-        }
-
-        $validator = Validator::make($request->all(), [
-            'key' => 'required|unique:product_groups,key,'.$product_group->uuid.',uuid',
-        ], [
-            'key.required' => __('error.The key field is required'),
-            'key.unique' => __('error.The key has already been taken'),
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => $validator->errors(),
-            ], 422);
-        }
-
-        $product_group->key = $request->input('key');
-
-        if (!empty($request->input('locale'))) {
-            $product_group->setLocale($request->input('locale'));
-        }
-
-        if ($request->has('name')) {
-            $product_group->name = $request->input('name');
-        }
-        if ($request->has('description')) {
-            $product_group->description = $request->input('description');
-        }
-        if ($request->has('short_description')) {
-            $product_group->short_description = $request->input('short_description');
-        }
-        if ($request->has('notes')) {
-            $product_group->notes = $request->input('notes');
-        }
-
-        if ($request->has('icon')) {
-            $product_group->icon = $request->input('icon');
-        }
-
-        if ($request->has('list_template')) {
-            $product_group->list_template = $request->input('list_template');
-        }
-
-        if ($request->has('order_template')) {
-            $product_group->order_template = $request->input('order_template');
-        }
-
-        if ($request->has('manage_template')) {
-            $product_group->manage_template = $request->input('manage_template');
-        }
-
-        if ($request->has('hidden')) {
-            $product_group->hidden = false;
-            if ($request->input('hidden') == 'yes') {
-                $product_group->hidden = true;
-            }
-        }
-
-        $product_group->save();
-        $product_group->refresh();
-
-        return response()->json([
-            'status' => 'success',
-            'message' => __('message.Updated successfully'),
-            'data' => $product_group,
-        ]);
-    }
-
-    public function deleteProductGroup(Request $request, $uuid): JsonResponse
-    {
-        $product_group = ProductGroup::find($uuid);
-        if (empty($product_group)) {
-            return response()->json([
-                'errors' => [__('error.Not found')],
-            ], 404);
-        }
-
-        if ($product_group->products()->count() != 0) {
-            return response()->json([
-                'errors' => [__('error.Cannot delete Product Group with associated products')],
-            ], 400);
-        }
-
-        try {
-            $deleted = $product_group->delete();
-            if (!$deleted) {
-                return response()->json([
-                    'errors' => [__('error.Deletion failed')],
-                ], 500);
-            }
-        } catch (\Exception $e) {
-            return response()->json([
-                'errors' => [__('error.Deletion failed:').' '.$e->getMessage()],
-            ], 500);
-        }
-
-        ProductGroup::reorder();
-
-        return response()->json([
-            'status' => 'success',
-            'message' => __('message.Deleted successfully'),
-        ]);
-    }
-
-    public function getProductGroupProducts(Request $request, $uuid): JsonResponse
-    {
-        $query = Product::query()
-            ->whereHas('productGroups', function ($q) use ($uuid) {
-                $q->where('product_groups.uuid', $uuid);
-            })
-            ->join('product_x_product_group', 'products.uuid', '=', 'product_x_product_group.product_uuid')
-            ->where('product_x_product_group.product_group_uuid', $uuid)
-            ->select('products.*', 'product_x_product_group.order as pivot_order');
-
-        return response()->json([
-            'data' => DataTables::of($query)
-                ->filter(function ($query) use ($request) {
-                    if ($request->has('search') && !empty($request->search['value'])) {
-                        $search = $request->search['value'];
-                        $query->where(function ($q) use ($search) {
-                            $q->where('products.uuid', 'like', "%{$search}%")
-                                ->orWhere('products.notes', 'like', "%{$search}%");
-                        });
-                    }
-                })
-                ->order(function ($query) use ($request) {
-                    $direction = $request->get('dir', 'asc');
-                    $query->orderBy('pivot_order', $direction);
-                })
-                ->addColumn('name', function ($product) {
-                    return $product->name;
-                })
-                ->addColumn('order', function ($product) {
-                    return $product->pivot_order;
-                })
-                ->addColumn('urls', function ($product) use ($uuid) {
-                    $urls['edit'] = route('admin.web.product.tab', ['uuid' => $product->uuid, 'tab' => 'general']);
-                    $urls['delete'] = route('admin.api.product_group_product.delete',
-                        ['uuid' => $uuid, 'p_uuid' => $product->uuid]);
-
-                    return $urls;
-                })
-                ->make(true),
-        ], 200);
-    }
-
-    public function getProductGroupProductsSelect(Request $request, $uuid): JsonResponse
-    {
-        $search = $request->input('q');
-
-        $existingProductUuids = DB::table('product_x_product_group')
-            ->where('product_group_uuid', $uuid)
-            ->pluck('product_uuid')
-            ->toArray();
-
-        $query = Product::query();
-
-        if (!empty($search)) {
-            $query->where('uuid', 'like', '%'.$search.'%')
-                ->orWhere('key', 'like', '%'.$search.'%');
-        }
-
-        $query->whereNotIn('uuid', $existingProductUuids);
-
-        $products = $query->get();
-
-        $results = [];
-        foreach ($products as $product) {
-            $results[] = [
-                'id' => $product->uuid,
-                'text' => $product->key,
-            ];
-        }
-
-        return response()->json([
-            'data' => [
-                'results' => $results,
-                'pagination' => [
-                    'more' => false,
-                ],
-            ],
-        ], 200);
-    }
-
-    public function postProductGroupProduct(Request $request, $uuid): JsonResponse
-    {
-        $product_group = ProductGroup::find($uuid);
-
-        if (empty($product_group)) {
-            return response()->json([
-                'errors' => [__('error.Product group not found')],
-            ], 404);
-        }
-
-        $product = Product::find($request->input('product_uuid'));
-
-        if (empty($product)) {
-            return response()->json([
-                'errors' => [__('error.Product not found')],
-            ], 404);
-        }
-
-        $existingRelation = $product_group->products()->where('product_uuid', $product->uuid)->exists();
-
-        if ($existingRelation) {
-            return response()->json([
-                'errors' => [__('error.Product already exists in this group')],
-            ], 400);
-        }
-        $product_group->addProduct($product);
-
-        return response()->json([
-            'status' => 'success',
-            'message' => __('message.Updated successfully'),
-        ]);
-    }
-
-    public function postProductGroupProductsUpdateOrder(Request $request, $uuid): JsonResponse
-    {
-        $validator = Validator::make($request->all(), [
-            'product_uuid' => 'required|exists:products,uuid',
-            'new_order' => 'required|integer',
-        ], [
-            'product_uuid.required' => __('error.Product uuid is required'),
-            'product_uuid.exists' => __('error.Product not found'),
-            'new_order.required' => __('error.New order is required'),
-            'new_order.integer' => __('error.New order must be an integer'),
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => 'error',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
-        $productGroup = ProductGroup::where('uuid', $uuid)->first();
-
-        if (!$productGroup) {
-            return response()->json([
-                'status' => 'error',
-                'errors' => [__('error.Product group not found')],
-            ], 404);
-        }
-
-        $product = Product::where('uuid', $request->input('product_uuid'))->first();
-
-        if (!$product) {
-            return response()->json([
-                'status' => 'error',
-                'errors' => [__('error.Product not found')],
-            ], 404);
-        }
-
-        $pivot = $productGroup->products()->where('product_uuid', $product->uuid)->first();
-
-        if (!$pivot) {
-            return response()->json([
-                'status' => 'error',
-                'errors' => [__('error.Product is not associated with this group')],
-            ], 404);
-        }
-
-        $oldOrder = $pivot->pivot->order;
-        $newOrder = $request->input('new_order');
-
-        $minOrder = $productGroup->products()->min('product_x_product_group.order');
-        $maxOrder = $productGroup->products()->max('product_x_product_group.order');
-
-        if ($oldOrder == $minOrder && $newOrder < $minOrder) {
-            return response()->json([
-                'status' => 'error',
-                'errors' => [__('error.The first item cannot be moved up')],
-            ], 422);
-        }
-
-        if ($oldOrder == $maxOrder && $newOrder > $maxOrder) {
-            return response()->json([
-                'status' => 'error',
-                'errors' => [__('error.The last item cannot be moved down')],
-            ], 422);
-        }
-
-        if ($newOrder > $oldOrder) {
-            DB::table('product_x_product_group')
-                ->where('product_group_uuid', $uuid)
-                ->where('order', '>', $oldOrder)
-                ->where('order', '<=', $newOrder)
-                ->decrement('order');
-        } elseif ($newOrder < $oldOrder) {
-            DB::table('product_x_product_group')
-                ->where('product_group_uuid', $uuid)
-                ->where('order', '<', $oldOrder)
-                ->where('order', '>=', $newOrder)
-                ->increment('order');
-        }
-
-        $productGroup->products()->updateExistingPivot($product->uuid, ['order' => $newOrder]);
-
-        return response()->json([
-            'status' => 'success',
-            'message' => __('message.Updated successfully'),
-        ]);
-    }
-
-    public function deleteProductGroupProduct(Request $request, $uuid, $p_uuid): JsonResponse
-    {
-        $productGroup = ProductGroup::where('uuid', $uuid)->first();
-
-        if (!$productGroup) {
-            return response()->json([
-                'status' => 'error',
-                'errors' => [__('error.Product group not found')],
-            ], 404);
-        }
-
-        $product = Product::where('uuid', $p_uuid)->first();
-
-        if (!$product) {
-            return response()->json([
-                'status' => 'error',
-                'errors' => [__('error.Product not found')],
-            ], 404);
-        }
-
-        $pivot = $productGroup->products()->where('uuid', $product->uuid)->first();
-
-        if (!$pivot) {
-            return response()->json([
-                'status' => 'error',
-                'errors' => [__('error.Product is not associated with this group')],
-            ], 404);
-        }
-
-        $productGroup->removeProduct($product);
-
-        return response()->json([
-            'status' => 'success',
-            'message' => __('message.Deleted successfully'),
-        ]);
-    }
-
-    public function getListTemplatesSelect(Request $request): JsonResponse
-    {
-
-        $servicesPath = base_path('templates/client/'.env('TEMPLATE_CLIENT', 'puqcloud').'/views/service_views/list');
-
-        $folders = [];
-        if (is_dir($servicesPath)) {
-            $allItems = scandir($servicesPath);
-            foreach ($allItems as $item) {
-                if ($item === '.' || $item === '..') {
-                    continue;
-                }
-                $fullPath = $servicesPath.DIRECTORY_SEPARATOR.$item;
-                if (is_dir($fullPath)) {
-                    $folders[] = [
-                        'id' => $item,
-                        'text' => $item,
-                    ];
-                }
-            }
-        }
-
-        $searchTerm = $request->get('term', '');
-        $filteredFolders = array_filter($folders, function ($folder) use ($searchTerm) {
-            return empty($searchTerm) || stripos($folder['text'], $searchTerm) !== false;
-        });
-
-        return response()->json([
-            'data' => [
-                'results' => array_values($filteredFolders),
-                'pagination' => [
-                    'more' => false,
-                ],
-            ],
-        ], 200);
-    }
-
-    public function getOrderTemplatesSelect(Request $request): JsonResponse
-    {
-
-        $servicesPath = base_path('templates/client/'.env('TEMPLATE_CLIENT', 'puqcloud').'/views/service_views/order');
-
-        $folders = [];
-        if (is_dir($servicesPath)) {
-            $allItems = scandir($servicesPath);
-            foreach ($allItems as $item) {
-                if ($item === '.' || $item === '..') {
-                    continue;
-                }
-                $fullPath = $servicesPath.DIRECTORY_SEPARATOR.$item;
-                if (is_dir($fullPath)) {
-                    $folders[] = [
-                        'id' => $item,
-                        'text' => $item,
-                    ];
-                }
-            }
-        }
-
-        $searchTerm = $request->get('term', '');
-        $filteredFolders = array_filter($folders, function ($folder) use ($searchTerm) {
-            return empty($searchTerm) || stripos($folder['text'], $searchTerm) !== false;
-        });
-
-        return response()->json([
-            'data' => [
-                'results' => array_values($filteredFolders),
-                'pagination' => [
-                    'more' => false,
-                ],
-            ],
-        ], 200);
-    }
-
-    public function getManageTemplatesSelect(Request $request): JsonResponse
-    {
-
-        $servicesPath = base_path('templates/client/'.env('TEMPLATE_CLIENT', 'puqcloud').'/views/service_views/manage');
-
-        $folders = [];
-        if (is_dir($servicesPath)) {
-            $allItems = scandir($servicesPath);
-            foreach ($allItems as $item) {
-                if ($item === '.' || $item === '..') {
-                    continue;
-                }
-                $fullPath = $servicesPath.DIRECTORY_SEPARATOR.$item;
-                if (is_dir($fullPath)) {
-                    $folders[] = [
-                        'id' => $item,
-                        'text' => $item,
-                    ];
-                }
-            }
-        }
-
-        $searchTerm = $request->get('term', '');
-        $filteredFolders = array_filter($folders, function ($folder) use ($searchTerm) {
-            return empty($searchTerm) || stripos($folder['text'], $searchTerm) !== false;
-        });
-
-        return response()->json([
-            'data' => [
-                'results' => array_values($filteredFolders),
-                'pagination' => [
-                    'more' => false,
-                ],
-            ],
-        ], 200);
-    }
-
-    public function productAttributeGroups(): View
-    {
-        $title = __('main.Product Attribute Groups');
-
-        return view_admin('product_attribute_groups.product_attribute_groups', compact('title'));
-    }
-
-    public function productAttributeGroupTab(Request $request, $uuid, $tab): View|RedirectResponse
-    {
-        $validTabs = [
-            'general', 'images', 'attributes',
-        ];
-
-        if (!in_array($tab, $validTabs)) {
-            return redirect()->route('admin.web.product_attribute_group.tab', ['uuid' => $uuid, 'tab' => 'general']);
-        }
-
-        $title = __('main.Product Attribute Group');
-        $locales = config('locale.client.locales');
-
-        return view_admin('product_attribute_groups.product_attribute_group_'.$tab,
-            compact('title', 'uuid', 'tab', 'locales'));
-    }
-
-    public function getProductAttributeGroups(Request $request): JsonResponse
-    {
-        $query = ProductAttributeGroup::query();
-
-        return response()->json([
-            'data' => DataTables::of($query)
-                ->filter(function ($query) use ($request) {
-                    if ($request->has('search') && !empty($request->search['value'])) {
-                        $search = $request->search['value'];
-                        $query->where(function ($q) use ($search) {
-                            $q->where('uuid', 'like', "%{$search}%")
-                                ->orWhere('key', 'like', "%{$search}%")
-                                ->orWhere('notes', 'like', "%{$search}%");
-                        });
-                    }
-                })
-                ->addColumn('name', function ($product_attribute_group) {
-                    return $product_attribute_group->name;
-                })
-                ->addColumn('images', function ($product_attribute_group) {
-                    return $product_attribute_group->images;
-                })
-                ->addColumn('attributes_count', function ($product_attribute_group) {
-                    return $product_attribute_group->productAttributes->count();
-                })
-                ->addColumn('urls', function ($product_attribute_group) {
-                    $urls['edit'] = route('admin.web.product_attribute_group.tab',
-                        ['uuid' => $product_attribute_group->uuid, 'tab' => 'general']);
-                    $urls['delete'] = route('admin.api.product_attribute_group.delete', $product_attribute_group->uuid);
-
-                    return $urls;
-                })
-                ->make(true),
-        ], 200);
-    }
-
-    public function postProductAttributeGroup(Request $request): JsonResponse
-    {
-        $product_attribute_group = new ProductAttributeGroup;
-
-        $validator = Validator::make($request->all(), [
-            'key' => 'required|unique:product_attribute_groups,key',
-        ], [
-            'key.required' => __('error.The key field is required'),
-            'key.unique' => __('error.The key has already been taken'),
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => $validator->errors(),
-            ], 422);
-        }
-        $product_attribute_group->key = $request->input('key');
-        $product_attribute_group->save();
-        $product_attribute_group->refresh();
-
-        return response()->json([
-            'status' => 'success',
-            'message' => __('message.Created successfully'),
-            'data' => $product_attribute_group,
-            'redirect' => route('admin.web.product_attribute_group.tab',
-                ['uuid' => $product_attribute_group->uuid, 'tab' => 'general']),
-        ]);
-    }
-
-    public function deleteProductAttributeGroup(Request $request, $uuid): JsonResponse
-    {
-        $product_attribute_group = ProductAttributeGroup::find($uuid);
-        if (empty($product_attribute_group)) {
-            return response()->json([
-                'errors' => [__('error.Not found')],
-            ], 404);
-        }
-
-        if ($product_attribute_group->productAttributes()->count() != 0) {
-            return response()->json([
-                'errors' => [__('error.Cannot delete Product Attribute Group with associated Attributes')],
-            ], 400);
-        }
-
-        try {
-            $deleted = $product_attribute_group->delete();
-            if (!$deleted) {
-                return response()->json([
-                    'errors' => [__('error.Deletion failed')],
-                ], 500);
-            }
-        } catch (\Exception $e) {
-            return response()->json([
-                'errors' => [__('error.Deletion failed:').' '.$e->getMessage()],
-            ], 500);
-        }
-
-        return response()->json([
-            'status' => 'success',
-            'message' => __('message.Deleted successfully'),
-        ]);
-    }
-
-    public function getProductAttributeGroup(Request $request, $uuid): JsonResponse
-    {
-        $product_attribute_group = ProductAttributeGroup::find($uuid);
-
-        if (empty($product_attribute_group)) {
-            return response()->json([
-                'errors' => [__('error.Not found')],
-            ], 404);
-        }
-
-        // $product_attribute_group->loadImagesField();
-
-        if (!empty($request->input('locale'))) {
-            $product_attribute_group->setLocale($request->input('locale'));
-        }
-
-        return response()->json([
-            'data' => $product_attribute_group,
-        ]);
-    }
-
-    public function putProductAttributeGroup(Request $request, $uuid): JsonResponse
-    {
-        $product_attribute_group = ProductAttributeGroup::find($uuid);
-
-        if (empty($product_attribute_group)) {
-            return response()->json([
-                'errors' => [__('error.Not found')],
-            ], 404);
-        }
-
-        $validator = Validator::make($request->all(), [
-            'key' => 'required|unique:product_groups,key,'.$product_attribute_group->uuid.',uuid',
-        ], [
-            'key.required' => __('error.The key field is required'),
-            'key.unique' => __('error.The key has already been taken'),
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => $validator->errors(),
-            ], 422);
-        }
-
-        $product_attribute_group->key = $request->input('key');
-
-        if (!empty($request->input('locale'))) {
-            $product_attribute_group->setLocale($request->input('locale'));
-        }
-        if ($request->has('name')) {
-            $product_attribute_group->name = $request->input('name');
-        }
-        if ($request->has('description')) {
-            $product_attribute_group->description = $request->input('description');
-        }
-        if ($request->has('short_description')) {
-            $product_attribute_group->short_description = $request->input('short_description');
-        }
-        if ($request->has('notes')) {
-            $product_attribute_group->notes = $request->input('notes');
-        }
-        if ($request->has('hidden')) {
-            $product_attribute_group->hidden = false;
-            if ($request->input('hidden') == 'yes') {
-                $product_attribute_group->hidden = true;
-            }
-        }
-
-        $product_attribute_group->save();
-        $product_attribute_group->refresh();
-
-        return response()->json([
-            'status' => 'success',
-            'message' => __('message.Updated successfully'),
-            'data' => $product_attribute_group,
-        ]);
-    }
-
-    public function getProductAttributeGroupProductAttributes(Request $request, $uuid): JsonResponse
-    {
-        $query = ProductAttributeGroup::query()->find($uuid)->productAttributes();
-
-        return response()->json([
-            'data' => DataTables::of($query)
-                ->filter(function ($query) use ($request) {
-                    if ($request->has('search') && !empty($request->search['value'])) {
-                        $search = $request->search['value'];
-                        $query->where(function ($q) use ($search) {
-                            $q->where('uuid', 'like', "%{$search}%")
-                                ->orWhere('key', 'like', "%{$search}%")
-                                ->orWhere('notes', 'like', "%{$search}%");
-                        });
-                    }
-                })
-                ->addColumn('name', function ($query) {
-                    return $query->name;
-                })
-                ->addColumn('images', function ($query) {
-                    return $query->images;
-                })
-                ->addColumn('urls', function ($product_attribute) {
-                    $urls['edit'] = route('admin.web.product_attribute_group.tab', [
-                        'uuid' => $product_attribute->product_attribute_group_uuid, 'tab' => 'attributes',
-                        'edit' => $product_attribute->uuid,
-                    ]);
-                    $urls['delete'] = route('admin.api.product_attribute.delete', $product_attribute->uuid);
-
-                    return $urls;
-                })
-                ->make(true),
-        ], 200);
-    }
-
-    public function postProductAttributeGroupProductAttribute(Request $request, $uuid): JsonResponse
-    {
-        $product_attribute_group = ProductAttributeGroup::find($uuid);
-
-        if (empty($product_attribute_group)) {
-            return response()->json([
-                'errors' => [__('error.Not found')],
-            ], 404);
-        }
-
-        $product_attribute = new ProductAttribute;
-
-        $validator = Validator::make($request->all(), [
-            'key' => 'required|unique:product_attributes,key',
-        ], [
-            'key.required' => __('error.The key field is required'),
-            'key.unique' => __('error.The key has already been taken'),
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => $validator->errors(),
-            ], 422);
-        }
-        $product_attribute->key = $request->input('key');
-        $product_attribute->product_attribute_group_uuid = $uuid;
-        $product_attribute->save();
-        $product_attribute->refresh();
-
-        return response()->json([
-            'status' => 'success',
-            'message' => __('message.Created successfully'),
-            'data' => $product_attribute,
-            'redirect' => route('admin.web.product_attribute_group.tab',
-                ['uuid' => $product_attribute_group->uuid, 'tab' => 'attributes', 'edit' => $product_attribute->uuid]),
-        ]);
-    }
-
-    public function getProductAttribute(Request $request, $uuid): JsonResponse
-    {
-        $product_attribute = ProductAttribute::find($uuid);
-
-        if (empty($product_attribute)) {
-            return response()->json([
-                'errors' => [__('error.Not found')],
-            ], 404);
-        }
-
-        if (!empty($request->input('locale'))) {
-            $product_attribute->setLocale($request->input('locale'));
-        }
-
-        return response()->json([
-            'data' => $product_attribute,
-        ]);
-    }
-
-    public function putProductAttribute(Request $request, $uuid): JsonResponse
-    {
-        $product_attribute = ProductAttribute::find($uuid);
-
-        if (empty($product_attribute)) {
-            return response()->json([
-                'errors' => [__('error.Not found')],
-            ], 404);
-        }
-
-        $validator = Validator::make($request->all(), [
-            'key' => 'required|unique:product_groups,key,'.$product_attribute->uuid.',uuid',
-        ], [
-            'key.required' => __('error.The key field is required'),
-            'key.unique' => __('error.The key has already been taken'),
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => $validator->errors(),
-            ], 422);
-        }
-
-        $product_attribute->key = $request->input('key');
-
-        if (!empty($request->input('locale'))) {
-            $product_attribute->setLocale($request->input('locale'));
-        }
-        if ($request->has('name')) {
-            $product_attribute->name = $request->input('name');
-        }
-        if ($request->has('description')) {
-            $product_attribute->description = $request->input('description');
-        }
-        if ($request->has('short_description')) {
-            $product_attribute->short_description = $request->input('short_description');
-        }
-        if ($request->has('notes')) {
-            $product_attribute->notes = $request->input('notes');
-        }
-        if ($request->has('hidden')) {
-            $product_attribute->hidden = false;
-            if ($request->input('hidden') == 'yes') {
-                $product_attribute->hidden = true;
-            }
-        }
-
-        $product_attribute->save();
-        $product_attribute->refresh();
-
-        return response()->json([
-            'status' => 'success',
-            'message' => __('message.Updated successfully'),
-            'data' => $product_attribute,
-        ]);
-    }
-
-    public function deleteProductAttribute(Request $request, $uuid): JsonResponse
-    {
-        $product_attribute = ProductAttribute::find($uuid);
-        if (empty($product_attribute)) {
-            return response()->json([
-                'errors' => [__('error.Not found')],
-            ], 404);
-        }
-
-        try {
-            $deleted = $product_attribute->delete();
-            if (!$deleted) {
-                return response()->json([
-                    'errors' => [__('error.Deletion failed')],
-                ], 500);
-            }
-        } catch (\Exception $e) {
-            return response()->json([
-                'errors' => [__('error.Deletion failed:').' '.$e->getMessage()],
-            ], 500);
-        }
-
-        return response()->json([
-            'status' => 'success',
-            'message' => __('message.Deleted successfully'),
-        ]);
-    }
-
-    public function productOptionGroups(): View
-    {
-        $title = __('main.Product Option Groups');
-
-        return view_admin('product_option_groups.product_option_groups', compact('title'));
-    }
-
-    public function productOptionGroupTab(Request $request, $uuid, $tab): View|RedirectResponse
-    {
-        $validTabs = [
-            'general', 'images', 'options',
-        ];
-
-        if (!in_array($tab, $validTabs)) {
-            return redirect()->route('admin.web.product_option_group.tab', ['uuid' => $uuid, 'tab' => 'general']);
-        }
-
-        $title = __('main.Product Option Group');
-        $locales = config('locale.client.locales');
-
-        return view_admin('product_option_groups.product_option_group_'.$tab,
-            compact('title', 'uuid', 'tab', 'locales'));
-    }
-
-    public function getProductOptionGroups(Request $request): JsonResponse
-    {
-        $query = ProductOptionGroup::withCount(['productOptions', 'products']);
-
-        return response()->json([
-            'data' => DataTables::of($query)
-                ->filter(function ($query) use ($request) {
-                    if ($request->has('search') && !empty($request->search['value'])) {
-                        $search = $request->search['value'];
-                        $query->where(function ($q) use ($search) {
-                            $q->where('uuid', 'like', "%{$search}%")
-                                ->orWhere('key', 'like', "%{$search}%")
-                                ->orWhere('notes', 'like', "%{$search}%");
-                        });
-                    }
-                })
-                ->addColumn('images', function ($query) {
-                    return $query->images;
-                })
-                ->addColumn('name', function ($query) {
-                    return $query->name;
-                })
-                ->addColumn('options_count', fn($query) => $query->product_options_count)
-                ->addColumn('products_count', fn($query) => $query->products_count)
-                ->addColumn('urls', function ($query) {
-                    return [
-                        'edit' => route('admin.web.product_option_group.tab',
-                            ['uuid' => $query->uuid, 'tab' => 'general']),
-                        'delete' => route('admin.api.product_option_group.delete', $query->uuid),
-                    ];
-                })
-                ->make(true),
-        ], 200);
-    }
-
-    public function postProductOptionGroup(Request $request): JsonResponse
-    {
-        $product_option_group = new ProductOptionGroup;
-
-        $validator = Validator::make($request->all(), [
-            'key' => 'required|unique:product_option_groups,key',
-        ], [
-            'key.required' => __('error.The key field is required'),
-            'key.unique' => __('error.The key has already been taken'),
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => $validator->errors(),
-            ], 422);
-        }
-        $product_option_group->key = $request->input('key');
-        $product_option_group->save();
-        $product_option_group->refresh();
-
-        return response()->json([
-            'status' => 'success',
-            'message' => __('message.Created successfully'),
-            'data' => $product_option_group,
-            'redirect' => route('admin.web.product_option_group.tab',
-                ['uuid' => $product_option_group->uuid, 'tab' => 'general']),
-        ]);
-    }
-
-    public function deleteProductOptionGroup(Request $request, $uuid): JsonResponse
-    {
-        $product_option_group = ProductOptionGroup::find($uuid);
-        if (empty($product_option_group)) {
-            return response()->json([
-                'errors' => [__('error.Not found')],
-            ], 404);
-        }
-
-        if ($product_option_group->productOptions()->count() != 0) {
-            return response()->json([
-                'errors' => [__('error.Cannot delete Product Option Group with associated Options')],
-            ], 400);
-        }
-
-        if ($product_option_group->products()->count() != 0) {
-            return response()->json([
-                'errors' => [__('error.Cannot delete Product Option Group because it is associated with active product')],
-            ], 400);
-        }
-
-        try {
-            $deleted = $product_option_group->delete();
-            if (!$deleted) {
-                return response()->json([
-                    'errors' => [__('error.Deletion failed')],
-                ], 500);
-            }
-        } catch (\Exception $e) {
-            return response()->json([
-                'errors' => [__('error.Deletion failed:').' '.$e->getMessage()],
-            ], 500);
-        }
-
-        return response()->json([
-            'status' => 'success',
-            'message' => __('message.Deleted successfully'),
-        ]);
-    }
-
-    public function getProductOptionGroup(Request $request, $uuid): JsonResponse
-    {
-        $product_option_group = ProductOptionGroup::find($uuid);
-
-        if (empty($product_option_group)) {
-            return response()->json([
-                'errors' => [__('error.Not found')],
-            ], 404);
-        }
-
-        // $product_option_group->loadImagesField();
-
-        if (!empty($request->input('locale'))) {
-            $product_option_group->setLocale($request->input('locale'));
-        }
-
-        return response()->json([
-            'data' => $product_option_group,
-        ]);
-    }
-
-    public function putProductOptionGroup(Request $request, $uuid): JsonResponse
-    {
-        $product_option_group = ProductOptionGroup::find($uuid);
-
-        if (empty($product_option_group)) {
-            return response()->json([
-                'errors' => [__('error.Not found')],
-            ], 404);
-        }
-
-        $validator = Validator::make($request->all(), [
-            'key' => 'required|unique:product_groups,key,'.$product_option_group->uuid.',uuid',
-        ], [
-            'key.required' => __('error.The key field is required'),
-            'key.unique' => __('error.The key has already been taken'),
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => $validator->errors(),
-            ], 422);
-        }
-
-        $product_option_group->key = $request->input('key');
-
-        if (!empty($request->input('locale'))) {
-            $product_option_group->setLocale($request->input('locale'));
-        }
-        if ($request->has('name')) {
-            $product_option_group->name = $request->input('name');
-        }
-        if ($request->has('description')) {
-            $product_option_group->description = $request->input('description');
-        }
-        if ($request->has('short_description')) {
-            $product_option_group->short_description = $request->input('short_description');
-        }
-        if ($request->has('notes')) {
-            $product_option_group->notes = $request->input('notes');
-        }
-        if ($request->has('hidden')) {
-            $product_option_group->hidden = false;
-            if ($request->input('hidden') == 'yes') {
-                $product_option_group->hidden = true;
-            }
-        }
-        if ($request->has('convert_price')) {
-            $product_option_group->convert_price = false;
-            if ($request->input('convert_price') == 'yes') {
-                $product_option_group->convert_price = true;
-            }
-        }
-
-        $product_option_group->save();
-        $product_option_group->refresh();
-
-        if (!empty($product_option_group->convert_price)) {
-            $product_option_group->convertPrice();
-        }
-
-        return response()->json([
-            'status' => 'success',
-            'message' => __('message.Updated successfully'),
-            'data' => $product_option_group,
-        ]);
-    }
-
-    public function getProductOptionGroupProductOptions(Request $request, $uuid): JsonResponse
-    {
-        $query = ProductOptionGroup::query()->find($uuid)->productOptions();
-
-        return response()->json([
-            'data' => DataTables::of($query)
-                ->filter(function ($query) use ($request) {
-                    if ($request->has('search') && !empty($request->search['value'])) {
-                        $search = $request->search['value'];
-                        $query->where(function ($q) use ($search) {
-                            $q->where('uuid', 'like', "%{$search}%")
-                                ->orWhere('key', 'like', "%{$search}%")
-                                ->orWhere('notes', 'like', "%{$search}%");
-                        });
-                    }
-                })
-                ->addColumn('images', function ($query) {
-                    return $query->images;
-                })
-                ->addColumn('name', function ($query) {
-                    return $query->name;
-                })
-                ->order(function ($query) use ($request) {
-                    $direction = $request->get('dir', 'asc');
-                    $query->orderBy('order', $direction);
-                })
-                ->addColumn('urls', function ($product_option) {
-                    $urls['edit'] = route('admin.web.product_option_group.tab', [
-                        'uuid' => $product_option->product_option_group_uuid, 'tab' => 'options',
-                        'edit' => $product_option->uuid,
-                    ]);
-                    $urls['delete'] = route('admin.api.product_option.delete', $product_option->uuid);
-
-                    return $urls;
-                })
-                ->make(true),
-        ], 200);
-    }
-
-    public function postProductOptionGroupProductOption(Request $request, $uuid): JsonResponse
-    {
-        $product_option_group = ProductOptionGroup::find($uuid);
-
-        if (empty($product_option_group)) {
-            return response()->json([
-                'errors' => [__('error.Not found')],
-            ], 404);
-        }
-
-        $product_option = new ProductOption;
-
-        $validator = Validator::make($request->all(), [
-            'key' => 'required|unique:product_options,key',
-        ], [
-            'key.required' => __('error.The key field is required'),
-            'key.unique' => __('error.The key has already been taken'),
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => $validator->errors(),
-            ], 422);
-        }
-        $product_option->key = $request->input('key');
-        $product_option->value = '';
-        $product_option->product_option_group_uuid = $uuid;
-        $product_option->save();
-        $product_option->refresh();
-        ProductOption::reorder($uuid);
-
-        return response()->json([
-            'status' => 'success',
-            'message' => __('message.Created successfully'),
-            'data' => $product_option,
-            'redirect' => route('admin.web.product_option_group.tab',
-                ['uuid' => $product_option_group->uuid, 'tab' => 'options', 'edit' => $product_option->uuid]),
-        ]);
-    }
-
-    public function getProductOption(Request $request, $uuid): JsonResponse
-    {
-        $product_option = ProductOption::find($uuid);
-
-        if (empty($product_option)) {
-            return response()->json([
-                'errors' => [__('error.Not found')],
-            ], 404);
-        }
-
-        if (!empty($request->input('locale'))) {
-            $product_option->setLocale($request->input('locale'));
-        }
-
-        return response()->json([
-            'data' => $product_option,
-        ]);
-    }
-
-    public function putProductOption(Request $request, $uuid): JsonResponse
-    {
-        $product_option = ProductOption::find($uuid);
-
-        if (empty($product_option)) {
-            return response()->json([
-                'errors' => [__('error.Not found')],
-            ], 404);
-        }
-
-        $validator = Validator::make($request->all(), [
-            'key' => 'required|unique:product_groups,key,'.$product_option->uuid.',uuid',
-        ], [
-            'key.required' => __('error.The key field is required'),
-            'key.unique' => __('error.The key has already been taken'),
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => $validator->errors(),
-            ], 422);
-        }
-
-        $product_option->key = $request->input('key');
-
-        if (!empty($request->input('locale'))) {
-            $product_option->setLocale($request->input('locale'));
-        }
-        if ($request->has('name')) {
-            $product_option->name = $request->input('name');
-        }
-        if ($request->has('value')) {
-            $product_option->value = $request->input('value');
-        }
-        if ($request->has('description')) {
-            $product_option->description = $request->input('description');
-        }
-        if ($request->has('short_description')) {
-            $product_option->short_description = $request->input('short_description');
-        }
-        if ($request->has('notes')) {
-            $product_option->notes = $request->input('notes');
-        }
-        if ($request->has('hidden')) {
-            $product_option->hidden = false;
-            if ($request->input('hidden') == 'yes') {
-                $product_option->hidden = true;
-            }
-        }
-
-        $product_option->save();
-        $product_option->refresh();
-
-        return response()->json([
-            'status' => 'success',
-            'message' => __('message.Updated successfully'),
-            'data' => $product_option,
-        ]);
-    }
-
-    public function deleteProductOption(Request $request, $uuid): JsonResponse
-    {
-        $product_option = ProductOption::find($uuid);
-        if (empty($product_option)) {
-            return response()->json([
-                'errors' => [__('error.Not found')],
-            ], 404);
-        }
-        $product_option_group_uuid = $product_option->product_option_group_uuid;
-        try {
-            $deleted = $product_option->delete();
-            if (!$deleted) {
-                return response()->json([
-                    'errors' => [__('error.Deletion failed')],
-                ], 500);
-            }
-        } catch (\Exception $e) {
-            return response()->json([
-                'errors' => [__('error.Deletion failed:').' '.$e->getMessage()],
-            ], 500);
-        }
-
-        ProductOption::reorder($product_option_group_uuid);
-
-        return response()->json([
-            'status' => 'success',
-            'message' => __('message.Deleted successfully'),
-        ]);
-    }
-
-    public function getProductOptionPrices(Request $request, $uuid): JsonResponse
-    {
-        $product_option = ProductOption::find($uuid);
-
-        if (!$product_option) {
-            return response()->json([
-                'errors' => [__('error.Not found')],
-            ], 404);
-        }
-
-        $query = $product_option->prices();
-
-        return response()->json([
-            'data' => DataTables::of($query)
-                ->filter(function ($query) use ($request) {
-                    if ($request->has('search') && !empty($request->search['value'])) {
-                        $search = $request->search['value'];
-                        $query->where(function ($q) use ($search) {
-                            $q->where('period', 'like', "%{$search}%")
-                                ->orWhere('setup', 'like', "%{$search}%")
-                                ->orWhere('base', 'like', "%{$search}%")
-                                ->orWhere('idle', 'like', "%{$search}%")
-                                ->orWhere('switch_down', 'like', "%{$search}%")
-                                ->orWhere('switch_up', 'like', "%{$search}%")
-                                ->orWhere('uninstall', 'like', "%{$search}%");
-                        });
-                    }
-                })
-                ->addColumn('currency', function ($price) {
-                    return $price->currency->code ?? '';
-                })
-                ->addColumn('default', function ($price) {
-                    return $price->currency->default ?? false;
-                })
-                ->addColumn('urls', function ($price) use ($uuid) {
-                    $urls['edit'] = route('admin.api.product_option.price.get',
-                        ['uuid' => $uuid, 'p_uuid' => $price->uuid]);
-                    $urls['delete'] = route('admin.api.product_option.price.delete',
-                        ['uuid' => $uuid, 'p_uuid' => $price->uuid]);
-
-                    return $urls;
-                })
-                ->make(true),
-        ], 200);
-    }
-
-    public function putProductOptionPrice(Request $request, $uuid): JsonResponse
-    {
-        $product_option = ProductOption::find($uuid);
-
-        if (empty($product_option)) {
-            return response()->json([
-                'errors' => [__('error.Not found')],
-            ], 404);
-        }
-
-        $price = $product_option->prices()->find($request->input('price_uuid'));
-        if (empty($price)) {
-            return response()->json([
-                'errors' => [__('error.Not found')],
-            ], 404);
-        }
-
-        $currency = $price->currency;
-        if (empty($currency)) {
-            return response()->json([
-                'errors' => [__('error.Not found')],
-            ], 404);
-        }
-
-        $setup = $request->input('setup');
-        $base = $request->input('base');
-        $idle = $request->input('idle');
-        $switch_down = $request->input('switch_down');
-        $switch_up = $request->input('switch_up');
-        $uninstall = $request->input('uninstall');
-
-        if (empty($setup) && empty($base) && empty($idle) && empty($switch_down) && empty($switch_up) && empty($uninstall)) {
-            return response()->json([
-                'errors' => [__('error.At least one price value must be provided')],
-            ], 400);
-        }
-
-        $price->setup = $setup ?? null;
-        $price->base = $base ?? null;
-        $price->idle = $idle ?? null;
-        $price->switch_down = $switch_down ?? null;
-        $price->switch_up = $switch_up ?? null;
-        $price->uninstall = $uninstall ?? null;
-
-        $price->save();
-        $price->refresh();
-
-        $product_option_group = $product_option->productOptionGroup;
-        if (!empty($product_option_group->convert_price)) {
-            $product_option_group->convertPrice();
-        }
-
-        return response()->json([
-            'status' => 'success',
-            'message' => __('message.Edited successfully'),
-        ]);
-    }
-
-    public function postProductOptionPrice(Request $request, $uuid): JsonResponse
-    {
-        $product_option = ProductOption::find($uuid);
-
-        if (empty($product_option)) {
-            return response()->json([
-                'errors' => [__('error.Not found')],
-            ], 404);
-        }
-
-        $validator = Validator::make($request->all(), [
-            'currency_uuid' => 'required|exists:currencies,uuid',
-            'period' => 'required|string|in:one-time,hourly,daily,weekly,bi-weekly,monthly,quarterly,semi-annually,annually,biennially,triennially',
-        ], [
-            'currency_uuid.required' => __('error.Currency is required'),
-            'currency_uuid.exists' => __('error.Currency not found in the system'),
-            'period.required' => __('error.Period is required'),
-            'period.in' => __('error.Invalid period selected. Please choose a valid option'),
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => $validator->errors(),
-            ], 422);
-        }
-
-        $setup = $request->input('setup');
-        $base = $request->input('base');
-        $idle = $request->input('idle');
-        $switch_down = $request->input('switch_down');
-        $switch_up = $request->input('switch_up');
-        $uninstall = $request->input('uninstall');
-
-        if (empty($setup) && empty($base) && empty($idle) && empty($switch_down) && empty($switch_up) && empty($uninstall)) {
-            return response()->json([
-                'errors' => [__('error.At least one price value must be provided')],
-            ], 400);
-        }
-
-        $existingPrice = $product_option->prices()
-            ->where('currency_uuid', $request->input('currency_uuid'))
-            ->where('period', $request->input('period'))
-            ->first();
-
-        if ($existingPrice) {
-            return response()->json([
-                'errors' => [__('error.Price already exists for this type, period, and currency')],
-            ], 422);
-        }
-
-        $price = new Price;
-        $price->currency_uuid = $request->input('currency_uuid');
-        $price->period = $request->input('period');
-        $price->setup = $setup ?? null;
-        $price->base = $base ?? null;
-        $price->idle = $idle ?? null;
-        $price->switch_down = $switch_down ?? null;
-        $price->switch_up = $switch_up ?? null;
-        $price->uninstall = $uninstall ?? null;
-
-        $price->save();
-        $price->refresh();
-        $product_option->prices()->attach($price->uuid);
-
-        $product_option_group = $product_option->productOptionGroup;
-        if (!empty($product_option_group->convert_price)) {
-            $product_option_group->convertPrice();
-        }
-
-        return response()->json([
-            'status' => 'success',
-            'message' => __('message.Added successfully'),
-        ]);
-    }
-
-    public function getProductOptionPrice(Request $request, $uuid, $p_uuid): JsonResponse
-    {
-        $product_option = ProductOption::find($uuid);
-        if (empty($product_option)) {
-            return response()->json([
-                'errors' => [__('error.Not found')],
-            ], 404);
-        }
-
-        $price = $product_option->prices()->find($p_uuid);
-        if (empty($price)) {
-            return response()->json([
-                'errors' => [__('error.Not found')],
-            ], 404);
-        }
-        $price->load('currency');
-
-        return response()->json(['data' => $price], 200);
-    }
-
-    public function deleteProductOptionPrice(Request $request, $uuid, $p_uuid): JsonResponse
-    {
-        $product_option = ProductOption::find($uuid);
-        if (empty($product_option)) {
-            return response()->json([
-                'errors' => [__('error.Not found')],
-            ], 404);
-        }
-
-        $price = $product_option->prices()->find($p_uuid);
-        if (empty($price)) {
-            return response()->json([
-                'errors' => [__('error.Not found')],
-            ], 404);
-        }
-
-        if ($price->services()->exists()) {
-            return response()->json([
-                'errors' => [__('error.Cannot delete price, there are active relationships')],
-            ], 400);
-        }
-
-        $price->delete();
-
-        return response()->json([
-            'status' => 'success',
-            'message' => __('message.Deleted successfully'),
-        ]);
-    }
-
-    public function postProductOptionsUpdateOrder(Request $request): JsonResponse
-    {
-        $validator = Validator::make($request->all(), [
-            'uuid' => 'required|exists:product_options,uuid',
-            'new_order' => 'required|integer',
-        ], [
-            'uuid.required' => __('error.The uuid field is required'),
-            'uuid.exists' => __('error.The uuid does not exist in the product_options table'),
-            'new_order.required' => __('error.The new_order field is required'),
-            'new_order.integer' => __('error.The new_order must be an integer'),
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => $validator->errors(),
-            ], 422);
-        }
-
-        $productOption = ProductOption::where('uuid', $request->input('uuid'))->first();
-
-        if (!$productOption) {
-            return response()->json([
-                'status' => 'error',
-                'errors' => [__('error.Product group not found')],
-            ], 404);
-        }
-
-        $productOptions = ProductOption::orderBy('order')
-            ->where('product_option_group_uuid', $productOption->product_option_group_uuid)
-            ->get();
-
-        $minOrder = $productOptions->first()->order;
-        $maxOrder = $productOptions->last()->order;
-
-        if ($productOption->order == $minOrder && $request->input('new_order') < $minOrder) {
-            return response()->json([
-                'status' => 'error',
-                'errors' => [__('error.The first item cannot be moved up')],
-            ], 422);
-        }
-
-        if ($productOption->order == $maxOrder && $request->input('new_order') > $maxOrder) {
-            return response()->json([
-                'status' => 'error',
-                'errors' => [__('error.The last item cannot be moved down')],
-            ], 422);
-        }
-
-        $currentOrder = $productOption->order;
-        $newOrder = $request->input('new_order');
-
-        if ($newOrder > $currentOrder) {
-            ProductOption::where('order', '>', $currentOrder)
-                ->where('product_option_group_uuid', $productOption->product_option_group_uuid)
-                ->where('order', '<=', $newOrder)
-                ->decrement('order');
-        } else {
-            ProductOption::where('order', '<', $currentOrder)
-                ->where('product_option_group_uuid', $productOption->product_option_group_uuid)
-                ->where('order', '>=', $newOrder)
-                ->increment('order');
-        }
-
-        $productOption->order = $newOrder;
-        $productOption->save();
-
-        return response()->json([
-            'status' => 'success',
-            'message' => __('message.Updated successfully'),
-        ]);
-    }
-
+    #[OA\Get(
+        path: 'admin.api.products.select.get',
+        description: 'Returns a select list of products.',
+        summary: 'Get products select',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Products'],
+        parameters: [
+            new OA\Parameter(name: 'q', description: 'Search query', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Products select list returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getProductsSelect(Request $request): JsonResponse
     {
         $search = $request->input('q');
@@ -2680,6 +1660,7 @@ class AdminProductsController extends Controller
             return [
                 'id' => $product->uuid,
                 'text' => $product->name ?: $product->key,
+                'billing_mode' => $product->billing_mode ?? 'prepaid',
             ];
         });
 
@@ -2693,6 +1674,28 @@ class AdminProductsController extends Controller
         ]);
     }
 
+    #[OA\Get(
+        path: 'admin.api.product.prices.select.get',
+        description: 'Returns a select list of product prices.',
+        summary: 'Get product prices select',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Products'],
+        parameters: [
+            new OA\Parameter(name: 'q', description: 'Search query', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Product prices select list returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getProductPricesSelect(Request $request): JsonResponse
     {
         $client_uuid = $request->input('client_uuid');
@@ -2738,6 +1741,29 @@ class AdminProductsController extends Controller
         ], 200);
     }
 
+    #[OA\Get(
+        path: 'admin.api.product_option_groups.by_product.get',
+        description: 'Returns option groups filtered by product.',
+        summary: 'Get product option groups by product',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Products'],
+        parameters: [
+            new OA\Parameter(name: 'product_uuid', description: 'UUID of the product', in: 'query', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+            new OA\Parameter(name: 'product_price_uuid', description: 'UUID of the product price', in: 'query', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Product option groups returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getProductOptionGroupsByProduct(Request $request): JsonResponse
     {
         $product_uuid = $request->input('product_uuid');
@@ -2759,6 +1785,29 @@ class AdminProductsController extends Controller
         ]);
     }
 
+    #[OA\Get(
+        path: 'admin.api.product.module.select.get',
+        description: 'Returns a select list of product modules.',
+        summary: 'Get product modules select',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Products'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'UUID of the product', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+            new OA\Parameter(name: 'q', description: 'Search query', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Product modules select list returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getProductModulesSelect(Request $request, $uuid): JsonResponse
     {
         $product = Product::findOrFail($uuid);
@@ -2794,6 +1843,31 @@ class AdminProductsController extends Controller
         ], 200);
     }
 
+    #[OA\Get(
+        path: 'admin.api.product.module.get',
+        description: 'Returns the module settings page data for a product.',
+        summary: 'Get product module settings',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Products'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'UUID of the product', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Module settings returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string'),
+                        new OA\Property(property: 'message', type: 'string', nullable: true),
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+            new OA\Response(response: 404, description: 'Product not found'),
+        ]
+    )]
     public function getProductModule(Request $request, $uuid): JsonResponse
     {
         $product = Product::find($uuid);
@@ -2811,6 +1885,42 @@ class AdminProductsController extends Controller
         ]);
     }
 
+    #[OA\Put(
+        path: 'admin.api.product.module.put',
+        description: 'Updates the module assignment or module data for a product.',
+        summary: 'Update product module',
+        security: [['apiKeyAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'application/json',
+                schema: new OA\Schema(
+                    properties: [
+                        new OA\Property(property: 'module_uuid', type: 'string', format: 'uuid'),
+                    ]
+                )
+            )
+        ),
+        tags: ['Products'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'UUID of the product', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Module updated successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string'),
+                        new OA\Property(property: 'message', type: 'string'),
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+            new OA\Response(response: 404, description: 'Product not found'),
+        ]
+    )]
     public function putProductModule(Request $request, $uuid): JsonResponse
     {
         $product = Product::find($uuid);

@@ -9,12 +9,10 @@
 @endsection
 
 @section('content')
-    @parent
+    @if(!empty($data['blade']))
+        {!! \Illuminate\Support\Facades\View::file($data['blade'], $data['variables'])->render() !!}
+    @endif
 @endsection
-
-@if(!empty($data['blade']))
-    {!! \Illuminate\Support\Facades\View::file($data['blade'], $data['variables'])->render() !!}
-@endif
 
 @section('js')
     @parent

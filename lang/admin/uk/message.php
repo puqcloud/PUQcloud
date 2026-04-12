@@ -5,6 +5,7 @@ return [
     'Logout out successfully' => 'Успішний вихід із системи',
     'Updated successfully' => 'Успішно оновлено',
     'Deleted successfully' => 'Успішно видалено',
+    'Connection successful' => 'З\'єднання успішне',
     'Created successfully' => 'Створено успішно',
     'Successfully' => 'Успішно',
     'Association deleted successfully' => 'Зв’язок успішно видалено',
@@ -19,4 +20,7 @@ return [
     'Status forcibly changed' => 'Статус примусово змінено',
     'Idle forcibly changed' => 'Стан простою примусово змінено',
     'Reload successfully' => 'Перезавантажено успішно',
+    'Notification sent successfully' => 'Сповіщення успішно надіслано',
+    'Bulk action completed on :count ticket(s)' => 'Масову дію виконано для :count тікет(ів)',
+    'Ticket reopened successfully' => 'Тікет успішно відкрито повторно',
 ];

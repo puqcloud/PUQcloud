@@ -89,61 +89,7 @@
 
     <script>
         $(document).ready(function () {
-            function validatePassword(password) {
-                const hasLength = password.length >= 6;
-                const hasNumber = /[0-9]/.test(password);
-                const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-                return hasLength && hasNumber && hasSpecial;
-            }
-
-            function updateStrengthBar(strength) {
-                const $bar = $('#passwordStrengthBar .progress-bar');
-                let color = 'bg-danger';
-                let value = 33;
-
-                if (strength === 2) {
-                    color = 'bg-warning';
-                    value = 66;
-                } else if (strength === 3) {
-                    color = 'bg-success';
-                    value = 100;
-                }
-
-                $bar.removeClass('bg-success bg-warning bg-danger').addClass(color);
-                $bar.css('width', value + '%').text(value + '%');
-            }
-
-            $('#inputNewPassword1').on('input', function () {
-                const password = $(this).val();
-                const $input = $(this);
-
-                const hasLength = password.length >= 6;
-                const hasNumber = /[0-9]/.test(password);
-                const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-
-                const strength = [hasLength, hasNumber, hasSpecial].filter(Boolean).length;
-                updateStrengthBar(strength);
-
-                if (validatePassword(password)) {
-                    $input.removeClass('is-invalid').addClass('is-valid');
-                } else {
-                    $input.removeClass('is-valid').addClass('is-invalid');
-                }
-
-                $('#inputNewPassword2').trigger('input');
-            });
-
-            $('#inputNewPassword2').on('input', function () {
-                const pw1 = $('#inputNewPassword1').val();
-                const pw2 = $(this).val();
-                const $input = $(this);
-
-                if (pw1 === pw2 && validatePassword(pw1)) {
-                    $input.removeClass('is-invalid').addClass('is-valid');
-                } else {
-                    $input.removeClass('is-valid').addClass('is-invalid');
-                }
-            });
+            initPasswordValidation('#inputNewPassword1', '#inputNewPassword2');
 
             $("#save").on("click", function (event) {
                 var $form = $("#changePasswordForm");

@@ -765,4 +765,7 @@ return [
     'LXC deployment is pending' => 'Le déploiement de LXC est en attente',
     'LXC deployment is running' => 'Le déploiement de LXC est en cours',
     'LXC deployed successfully' => 'LXC déployé avec succès',
+
+    'Product Options' => 'Options de produit',
+    'Product options description' => 'Liste des groupes d\'options et des options que le module puqProxmox attend sous des clés stables. Cliquez sur "Créer les manquants" pour générer ce qui n\'existe pas encore. Les options Emplacement et Modèle OS sont générées dynamiquement à partir des groupes de clusters et des modèles OS LXC.',
 ];

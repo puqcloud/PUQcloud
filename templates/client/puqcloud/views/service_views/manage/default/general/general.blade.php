@@ -1,6 +1,16 @@
+@php
+    // Resolve the manage view state from the core state machine. This drives whether we
+    // render the normal active content, a deploying spinner, a suspended banner, or a
+    // terminated view. `$manageState` is also read inside the sub-views (pending.blade.php)
+    // so all templates share one source of truth for the phase + polling config.
+    $manageState = $service->getManageViewState();
+@endphp
+
 @section('content')
     @parent
     <div class="container px-0">
+        {{-- Label + Service Details + Price cards are always visible — they give the client
+             useful context (label, status, ordered/activated dates, price) in every phase. --}}
         <div class="row align-items-stretch">
             <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6 col-xl-6 col-xxl-4 d-flex">
                 <div class="card w-100 mb-2 d-flex flex-column">
@@ -91,7 +101,7 @@
             <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6 col-xl-6 col-xxl-4 d-flex">
                 <div class="card w-100 mb-2 d-flex flex-column">
                     <div class="card-body d-flex flex-column">
-                        @include(config('template.client.view') . '.service_views.manage.' . $product_group->manage_template . '.general.service_details')
+                        @include($serviceViewBase . '.general.service_details')
                     </div>
                 </div>
             </div>
@@ -99,7 +109,7 @@
             <div class="col-xs-12 col-sm-12 col-md-12 col-lg-6 col-xl-6 col-xxl-4">
                 <div class="row d-flex">
                     <div class="col-12">
-                        @include(config('template.client.view') . '.service_views.manage.' . $product_group->manage_template . '.general.price_details')
+                        @include($serviceViewBase . '.general.price_details')
                     </div>
                     @php
                         $product_options = $service->product_options;
@@ -107,7 +117,7 @@
 
                     @if($product_options->count() != 0)
                         <div class="col-12">
-                            @include(config('template.client.view') . '.service_views.manage.' . $product_group->manage_template . '.general.options')
+                            @include($serviceViewBase . '.general.options')
                         </div>
                     @endif
 
@@ -115,6 +125,26 @@
             </div>
 
         </div>
+
+        {{-- Phase-specific sub-views rendered BELOW the normal cards. The state machine
+             guarantees mutually-exclusive show_* flags, so at most one of these renders.
+             Suspended / terminated / deploying each take over the bottom half of the page
+             with their own full-width banner or spinner. --}}
+        @if($manageState['show_suspended'])
+            @include($serviceViewBase . '.general.suspended')
+        @endif
+
+        @if($manageState['show_terminated'])
+            @include($serviceViewBase . '.general.terminated')
+        @endif
+
+        @if($manageState['show_awaiting_payment'] ?? false)
+            @include($serviceViewBase . '.general.awaiting_payment')
+        @endif
+
+        @if($manageState['show_deploying'])
+            @include($serviceViewBase . '.general.pending')
+        @endif
     </div>
 @endsection
 
@@ -134,6 +164,23 @@
             <i class="fa fa-trash-alt"></i>
             {{__('main.Termination Request')}}
         </button>
+    @endif
+    @if($service->product->billing_mode === 'both' && $service->status === 'active' && !$service->termination_request)
+        @if($service->billing_mode === 'invoice')
+            <button type="button"
+                    class="mb-2 me-2 btn-icon btn-outline-2x btn btn-outline-info"
+                    id="switch_billing_mode" data-mode="prepaid">
+                <i class="fa fa-exchange-alt"></i>
+                {{__('main.Switch to Prepaid')}}
+            </button>
+        @else
+            <button type="button"
+                    class="mb-2 me-2 btn-icon btn-outline-2x btn btn-outline-info"
+                    id="switch_billing_mode" data-mode="invoice">
+                <i class="fa fa-exchange-alt"></i>
+                {{__('main.Switch to Invoice')}}
+            </button>
+        @endif
     @endif
 @endsection
 
@@ -195,6 +242,27 @@
                 });
             });
 
+            $('#switch_billing_mode').on('click', function (e) {
+                e.preventDefault();
+                const newMode = $(this).data('mode');
+                const modeLabel = newMode === 'prepaid' ? translate('Prepaid') : translate('Invoice');
+                openConfirmActionModal({
+                    actionUrl: '{{ route('client.api.cloud.service.manage.post', ['uuid' => $service->uuid, 'method' => 'SwitchBillingMode']) }}',
+                    actionMethod: 'POST',
+                    hiddenInputs: {billing_mode: newMode},
+                    actionText: translate('Confirm switching billing mode to') + ' <strong>' + modeLabel + '</strong>' +
+                        '<br>{{ $product->name }} - <span class="badge bg-secondary ms-2">{{ $service->client_label }}</span>',
+                    actionType: 'info',
+                    confirmButtonText: '<i class="fa fa-exchange-alt"></i> ' + translate('Switch'),
+                    titleText: translate('Switch Billing Mode'),
+                    onSuccess: function (res) {
+                        location.reload();
+                    },
+                    onError: function (res) {
+                    },
+                    button: $(this)
+                });
+            });
 
         });
     </script>

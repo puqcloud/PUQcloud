@@ -15,6 +15,33 @@
  * Do not remove this header.
  */
 
+/*
+ * WEB Routes:
+ *   GET  certificate_authorities                               -> certificateAuthorities()                  [admin.web.certificate_authorities]
+ *   GET  certificate_authority/{uuid}                          -> certificateAuthority()                    [admin.web.certificate_authority]
+ *   GET  ssl_certificates                                      -> sslCertificates()                         [admin.web.ssl_certificates]
+ *   GET  ssl_certificate/{uuid}                                -> sslCertificate()                          [admin.web.ssl_certificate]
+ *
+ * API Routes:
+ *   GET    certificate_authorities                             -> getCertificateAuthorities()               [admin.api.certificate_authorities.get]
+ *   POST   certificate_authority                               -> postCertificateAuthority()                [admin.api.certificate_authority.post]
+ *   GET    certificate_authority/{uuid}                        -> getCertificateAuthority()                 [admin.api.certificate_authority.get]
+ *   PUT    certificate_authority/{uuid}                        -> putCertificateAuthority()                 [admin.api.certificate_authority.put]
+ *   DELETE certificate_authority/{uuid}                        -> deleteCertificateAuthority()              [admin.api.certificate_authority.delete]
+ *   GET    certificate_authority/{uuid}/test_connection        -> getCertificateAuthorityTestConnection()   [admin.api.certificate_authority.test_connection.get]
+ *   GET    ssl_certificates                                    -> getSslCertificates()                      [admin.api.ssl_certificates.get]
+ *   POST   ssl_certificate                                     -> postSslCertificate()                      [admin.api.ssl_certificate.post]
+ *   GET    ssl_certificate/{uuid}                              -> getSslCertificate()                       [admin.api.ssl_certificate.get]
+ *   PUT    ssl_certificate/{uuid}                              -> putSslCertificate()                       [admin.api.ssl_certificate.put]
+ *   DELETE ssl_certificate/{uuid}                              -> deleteSslCertificate()                    [admin.api.ssl_certificate.delete]
+ *   GET    ssl_certificate/{uuid}/generate_csr                 -> getSslCertificateGenerateCsr()            [admin.api.ssl_certificate.generate_csr.get]
+ *   PUT    ssl_certificate/{uuid}/status                       -> putSslCertificateStatus()                 [admin.api.ssl_certificate.status.put]
+ *   DELETE ssl_certificates/delete_expired                     -> deleteSslCertificatesExpired()            [admin.api.ssl_certificates.delete_expired.delete]
+ *   DELETE ssl_certificates/delete_draft                       -> deleteSslCertificatesDraft()              [admin.api.ssl_certificates.delete_draft.delete]
+ *   GET    certificate_authority_modules/select                -> getCertificateAuthorityModulesSelect()    [admin.api.certificate_authority_modules.select.get]
+ *   GET    certificate_authorities/select                      -> getCertificateAuthoritiesSelect()         [admin.api.certificate_authorities.select.get]
+ */
+
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
@@ -26,6 +53,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
+use OpenApi\Attributes as OA;
 use Yajra\DataTables\DataTables;
 
 class AdminSslManagerController extends Controller
@@ -44,6 +72,25 @@ class AdminSslManagerController extends Controller
         return view_admin('certificate_authorities.certificate_authority', compact('title', 'uuid'));
     }
 
+    #[OA\Get(
+        path: 'admin.api.certificate_authorities.get',
+        description: 'Returns a DataTable list of certificate authorities.',
+        summary: 'Get certificate authorities list',
+        security: [['apiKeyAuth' => []]],
+        tags: ['SSL Manager'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Certificate authorities list returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getCertificateAuthorities(Request $request): JsonResponse
     {
         $query = CertificateAuthority::query();
@@ -79,6 +126,42 @@ class AdminSslManagerController extends Controller
         ], 200);
     }
 
+    #[OA\Post(
+        path: 'admin.api.certificate_authority.post',
+        description: 'Creates a new certificate authority with specified name, module, and description.',
+        summary: 'Create a new certificate authority',
+        security: [['apiKeyAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'application/json',
+                schema: new OA\Schema(
+                    required: ['name', 'module'],
+                    properties: [
+                        new OA\Property(property: 'name', description: 'Certificate authority name (must be unique)', type: 'string'),
+                        new OA\Property(property: 'module', description: 'UUID of the module', type: 'string', format: 'uuid'),
+                        new OA\Property(property: 'description', description: 'Certificate authority description', type: 'string', nullable: true),
+                    ]
+                )
+            )
+        ),
+        tags: ['SSL Manager'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Certificate authority created successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string', example: 'success'),
+                        new OA\Property(property: 'message', type: 'string', example: 'Created successfully'),
+                        new OA\Property(property: 'data', type: 'object'),
+                        new OA\Property(property: 'redirect', type: 'string'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function postCertificateAuthority(Request $request): JsonResponse
     {
         $model = new CertificateAuthority();
@@ -121,6 +204,35 @@ class AdminSslManagerController extends Controller
         ]);
     }
 
+    #[OA\Get(
+        path: 'admin.api.certificate_authority.get',
+        description: 'Returns detailed information about a certificate authority.',
+        summary: 'Get certificate authority by UUID',
+        security: [['apiKeyAuth' => []]],
+        tags: ['SSL Manager'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'UUID of the certificate authority',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Certificate authority data returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string', example: 'success'),
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getCertificateAuthority(Request $request, $uuid): JsonResponse
     {
         $model = CertificateAuthority::find($uuid);
@@ -142,6 +254,48 @@ class AdminSslManagerController extends Controller
         ], 200);
     }
 
+    #[OA\Put(
+        path: 'admin.api.certificate_authority.put',
+        description: 'Updates an existing certificate authority by UUID.',
+        summary: 'Update certificate authority by UUID',
+        security: [['apiKeyAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'application/json',
+                schema: new OA\Schema(
+                    properties: [
+                        new OA\Property(property: 'name', description: 'Certificate authority name (must be unique)', type: 'string'),
+                        new OA\Property(property: 'description', description: 'Certificate authority description', type: 'string', nullable: true),
+                    ]
+                )
+            )
+        ),
+        tags: ['SSL Manager'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'UUID of the certificate authority',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Certificate authority updated successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string', example: 'success'),
+                        new OA\Property(property: 'message', type: 'string', example: 'Updated successfully'),
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function putCertificateAuthority(Request $request, $uuid): JsonResponse
     {
 
@@ -187,6 +341,35 @@ class AdminSslManagerController extends Controller
         ]);
     }
 
+    #[OA\Delete(
+        path: 'admin.api.certificate_authority.delete',
+        description: 'Deletes a certificate authority by UUID.',
+        summary: 'Delete certificate authority by UUID',
+        security: [['apiKeyAuth' => []]],
+        tags: ['SSL Manager'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'UUID of the certificate authority to delete',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Certificate authority deleted successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string', example: 'success'),
+                        new OA\Property(property: 'message', type: 'string', example: 'Deleted successfully'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function deleteCertificateAuthority(Request $request, $uuid): JsonResponse
     {
         $model = CertificateAuthority::find($uuid);
@@ -217,6 +400,25 @@ class AdminSslManagerController extends Controller
 
     }
 
+    #[OA\Get(
+        path: 'admin.api.certificate_authority_modules.select.get',
+        description: 'Returns a list of certificate authority modules for select2 dropdown.',
+        summary: 'Get certificate authority modules select list',
+        security: [['apiKeyAuth' => []]],
+        tags: ['SSL Manager'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Certificate authority modules select list returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getCertificateAuthorityModulesSelect(Request $request): JsonResponse
     {
         $Module_models = Module::all();
@@ -248,6 +450,35 @@ class AdminSslManagerController extends Controller
         ], 200);
     }
 
+    #[OA\Get(
+        path: 'admin.api.certificate_authority.test_connection.get',
+        description: 'Tests the connection to a certificate authority.',
+        summary: 'Test certificate authority connection',
+        security: [['apiKeyAuth' => []]],
+        tags: ['SSL Manager'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'UUID of the certificate authority',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Connection test result returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string', example: 'success'),
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getCertificateAuthorityTestConnection(Request $request, $uuid): JsonResponse
     {
         $model = CertificateAuthority::find($uuid);
@@ -289,6 +520,25 @@ class AdminSslManagerController extends Controller
         return view_admin('ssl_certificates.ssl_certificate', compact('title', 'uuid'));
     }
 
+    #[OA\Get(
+        path: 'admin.api.ssl_certificates.get',
+        description: 'Returns a DataTable list of SSL certificates.',
+        summary: 'Get SSL certificates list',
+        security: [['apiKeyAuth' => []]],
+        tags: ['SSL Manager'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'SSL certificates list returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getSslCertificates(Request $request): JsonResponse
     {
         $columns = Schema::getColumnListing('ssl_certificates');
@@ -346,6 +596,42 @@ class AdminSslManagerController extends Controller
         ], 200);
     }
 
+    #[OA\Post(
+        path: 'admin.api.ssl_certificate.post',
+        description: 'Creates a new SSL certificate with specified domain, certificate authority, and aliases.',
+        summary: 'Create a new SSL certificate',
+        security: [['apiKeyAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'application/json',
+                schema: new OA\Schema(
+                    required: ['domain', 'certificate_authority_uuid'],
+                    properties: [
+                        new OA\Property(property: 'domain', description: 'Domain name for the certificate', type: 'string', example: 'example.com'),
+                        new OA\Property(property: 'certificate_authority_uuid', description: 'UUID of the certificate authority', type: 'string', format: 'uuid'),
+                        new OA\Property(property: 'aliases', description: 'Newline-separated list of domain aliases', type: 'string', nullable: true),
+                    ]
+                )
+            )
+        ),
+        tags: ['SSL Manager'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'SSL certificate created successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string', example: 'success'),
+                        new OA\Property(property: 'message', type: 'string', example: 'Created successfully'),
+                        new OA\Property(property: 'data', type: 'object'),
+                        new OA\Property(property: 'redirect', type: 'string'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function postSslCertificate(Request $request): JsonResponse
     {
         $model = new SslCertificate();
@@ -415,6 +701,56 @@ class AdminSslManagerController extends Controller
         ]);
     }
 
+    #[OA\Put(
+        path: 'admin.api.ssl_certificate.put',
+        description: 'Updates an existing SSL certificate by UUID. Fields depend on certificate status (draft vs non-draft).',
+        summary: 'Update SSL certificate by UUID',
+        security: [['apiKeyAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'application/json',
+                schema: new OA\Schema(
+                    properties: [
+                        new OA\Property(property: 'domain', description: 'Domain name (required for draft certificates)', type: 'string', example: 'example.com'),
+                        new OA\Property(property: 'auto_renew_days', description: 'Number of days before expiry to auto-renew', type: 'integer', example: 30),
+                        new OA\Property(property: 'aliases', description: 'Newline-separated list of domain aliases', type: 'string', nullable: true),
+                        new OA\Property(property: 'wildcard', description: 'Whether to issue a wildcard certificate', type: 'string', enum: ['yes', 'no', '1', '0'], nullable: true),
+                        new OA\Property(property: 'email', description: 'Contact email address', type: 'string', format: 'email', nullable: true),
+                        new OA\Property(property: 'organization', description: 'Organization name', type: 'string', nullable: true),
+                        new OA\Property(property: 'organizational_unit', description: 'Organizational unit name', type: 'string', nullable: true),
+                        new OA\Property(property: 'country', description: 'ISO 3166-1 alpha-2 country code', type: 'string', nullable: true),
+                        new OA\Property(property: 'state', description: 'State or province name', type: 'string', nullable: true),
+                        new OA\Property(property: 'locality', description: 'Locality or city name', type: 'string', nullable: true),
+                    ]
+                )
+            )
+        ),
+        tags: ['SSL Manager'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'UUID of the SSL certificate',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'SSL certificate updated successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string', example: 'success'),
+                        new OA\Property(property: 'message', type: 'string', example: 'Updated successfully'),
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function putSslCertificate(Request $request, $uuid): JsonResponse
     {
         $model = SslCertificate::find($uuid);
@@ -553,6 +889,35 @@ class AdminSslManagerController extends Controller
     }
 
 
+    #[OA\Get(
+        path: 'admin.api.ssl_certificate.get',
+        description: 'Returns detailed information about an SSL certificate including PEM data.',
+        summary: 'Get SSL certificate by UUID',
+        security: [['apiKeyAuth' => []]],
+        tags: ['SSL Manager'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'UUID of the SSL certificate',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'SSL certificate data returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string', example: 'success'),
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getSslCertificate(Request $request, $uuid): JsonResponse
     {
         $model = SslCertificate::find($uuid);
@@ -579,6 +944,35 @@ class AdminSslManagerController extends Controller
         ], 200);
     }
 
+    #[OA\Delete(
+        path: 'admin.api.ssl_certificate.delete',
+        description: 'Deletes an SSL certificate by UUID.',
+        summary: 'Delete SSL certificate by UUID',
+        security: [['apiKeyAuth' => []]],
+        tags: ['SSL Manager'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'UUID of the SSL certificate to delete',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'SSL certificate deleted successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string', example: 'success'),
+                        new OA\Property(property: 'message', type: 'string', example: 'Deleted successfully'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function deleteSslCertificate(Request $request, $uuid): JsonResponse
     {
         $model = SslCertificate::find($uuid);
@@ -609,6 +1003,96 @@ class AdminSslManagerController extends Controller
 
     }
 
+    #[OA\Delete(
+        path: 'admin.api.ssl_certificates.delete_expired.delete',
+        description: 'Deletes all expired SSL certificates.',
+        summary: 'Delete all expired SSL certificates',
+        security: [['apiKeyAuth' => []]],
+        tags: ['SSL Manager'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Expired SSL certificates deleted successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string', example: 'success'),
+                        new OA\Property(property: 'message', type: 'string', example: 'Deleted successfully'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
+    public function deleteSslCertificatesExpired(): JsonResponse
+    {
+        $deleted = SslCertificate::where('status', 'expired')->delete();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => __('message.Deleted successfully') . ' (' . $deleted . ')',
+        ]);
+    }
+
+    #[OA\Delete(
+        path: 'admin.api.ssl_certificates.delete_draft.delete',
+        description: 'Deletes all draft SSL certificates.',
+        summary: 'Delete all draft SSL certificates',
+        security: [['apiKeyAuth' => []]],
+        tags: ['SSL Manager'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Draft SSL certificates deleted successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string', example: 'success'),
+                        new OA\Property(property: 'message', type: 'string', example: 'Deleted successfully'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
+    public function deleteSslCertificatesDraft(): JsonResponse
+    {
+        $deleted = SslCertificate::where('status', 'draft')->delete();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => __('message.Deleted successfully') . ' (' . $deleted . ')',
+        ]);
+    }
+
+    #[OA\Get(
+        path: 'admin.api.ssl_certificate.generate_csr.get',
+        description: 'Generates a CSR (Certificate Signing Request) for an SSL certificate.',
+        summary: 'Generate CSR for SSL certificate',
+        security: [['apiKeyAuth' => []]],
+        tags: ['SSL Manager'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'UUID of the SSL certificate',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'CSR generated successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string', example: 'success'),
+                        new OA\Property(property: 'message', type: 'string', example: 'Updated successfully'),
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getSslCertificateGenerateCsr(Request $request, $uuid): JsonResponse
     {
         $model = SslCertificate::find($uuid);
@@ -634,6 +1118,48 @@ class AdminSslManagerController extends Controller
         ]);
     }
 
+    #[OA\Put(
+        path: 'admin.api.ssl_certificate.status.put',
+        description: 'Updates the status of an SSL certificate.',
+        summary: 'Update SSL certificate status',
+        security: [['apiKeyAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'application/json',
+                schema: new OA\Schema(
+                    required: ['status'],
+                    properties: [
+                        new OA\Property(property: 'status', description: 'New status value', type: 'string', enum: ['draft', 'pending', 'processing', 'active', 'expired', 'revoked', 'failed']),
+                    ]
+                )
+            )
+        ),
+        tags: ['SSL Manager'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'UUID of the SSL certificate',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'SSL certificate status updated successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string', example: 'success'),
+                        new OA\Property(property: 'message', type: 'string', example: 'Updated successfully'),
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function putSslCertificateStatus(Request $request, $uuid): JsonResponse
     {
         $model = SslCertificate::find($uuid);
@@ -667,6 +1193,41 @@ class AdminSslManagerController extends Controller
     }
 
 
+    #[OA\Get(
+        path: 'admin.api.certificate_authorities.select.get',
+        description: 'Returns a paginated list of certificate authorities for select2 dropdown.',
+        summary: 'Get certificate authorities select list',
+        security: [['apiKeyAuth' => []]],
+        tags: ['SSL Manager'],
+        parameters: [
+            new OA\Parameter(
+                name: 'q',
+                description: 'Search query',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'string')
+            ),
+            new OA\Parameter(
+                name: 'page',
+                description: 'Page number',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'integer')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Certificate authorities select list returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getCertificateAuthoritiesSelect(Request $request): JsonResponse
     {
         $search = $request->input('q');

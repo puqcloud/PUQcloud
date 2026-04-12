@@ -26,6 +26,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Modules\Product\puqProxmox\Models\PuqPmLxcInstance;
 use Modules\Product\puqProxmox\Models\PuqPmSshPublicKey;
+use OpenApi\Attributes as OA;
 use Yajra\DataTables\DataTables;
 
 class puqPmController extends Controller
@@ -39,6 +40,7 @@ class puqPmController extends Controller
     }
 
 
+    #[OA\Get(path: 'admin.api.Product.puqProxmox.settings.get', description: 'Returns module settings.', summary: 'Get settings', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], responses: [new OA\Response(response: 200, description: 'Settings returned successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function getSettings(Request $request): JsonResponse
     {
         $settings = [
@@ -52,6 +54,7 @@ class puqPmController extends Controller
     }
 
 
+    #[OA\Put(path: 'admin.api.Product.puqProxmox.settings.put', description: 'Updates module settings.', summary: 'Update settings', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(required: ['global_private_network'], properties: [new OA\Property(property: 'global_private_network', type: 'string')], type: 'object')), responses: [new OA\Response(response: 200, description: 'Settings updated successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string')], type: 'object'))])]
     public function putSettings(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
@@ -79,6 +82,7 @@ class puqPmController extends Controller
     }
 
 
+    #[OA\Get(path: 'admin.api.Product.puqProxmox.certificate_authorities.select.get', description: 'Returns certificate authorities for select dropdown.', summary: 'Get certificate authorities select', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], responses: [new OA\Response(response: 200, description: 'Certificate authorities select returned successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function getCertificateAuthoritiesSelect(Request $request): JsonResponse
     {
         $search = $request->input('q');
@@ -128,6 +132,7 @@ class puqPmController extends Controller
         return view_admin_module('Product', 'puqProxmox', 'admin_area.other.lxc_instances', compact('title'));
     }
 
+    #[OA\Get(path: 'admin.api.Product.puqProxmox.lxc_instances.get', description: 'Returns a list of LXC instances.', summary: 'Get LXC instances list', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], responses: [new OA\Response(response: 200, description: 'LXC instances list returned successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function getLxcInstances(Request $request): JsonResponse
     {
         $query = PuqPmLxcInstance::query()->orderByDesc('created_at');

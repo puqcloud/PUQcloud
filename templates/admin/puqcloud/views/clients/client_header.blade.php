@@ -50,8 +50,9 @@
                 'invoices' => __('main.Invoices'),
                 //'domains' => __('main.Domains'),
                 'transactions' => __('main.Transactions'),
-                //'tickets' => __('main.Tickets'),
-                //'notifications' => __('main.Notifications'),
+                'notifications' => __('main.Notifications'),
+                'activity-log' => __('main.Activity Log'),
+                'tickets' => __('main.Tickets'),
                 //'session-log' => __('main.Session Log'),
             ];
         @endphp
@@ -81,7 +82,7 @@
                     var $spanElement = $('[data-key="client"]');
                     if ($spanElement.length) {
 
-                        status = `<div style="margin-left: 10px;" class="badge bg-${getClientStatusLabelClass(response.data.status)}">${translate(response.data.status)}</div>`;
+                        let status = `<div style="margin-left: 10px;" class="badge bg-${getClientStatusLabelClass(response.data.status)}">${translate(response.data.status)}</div>`;
                         if (response.data.company_name) {
                             $spanElement.text(response.data.company_name);
                         } else {

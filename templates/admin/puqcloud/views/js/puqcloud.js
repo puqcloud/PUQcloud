@@ -517,37 +517,17 @@ function initializeAutoReloadTable(options) {
 }
 
 function formatDateISO(isoString) {
-    return isoString;
     if (!isoString) {
         return '';
     }
-    const date = new Date(isoString);
-    if (isNaN(date.getTime())) {
-        throw new Error(translate('Invalid date string'));
-    }
-    const pad = (num) => num.toString().padStart(2, '0');
-    const year = date.getFullYear();
-    const month = pad(date.getMonth() + 1);
-    const day = pad(date.getDate());
-    const hours = pad(date.getHours());
-    const minutes = pad(date.getMinutes());
-    const seconds = pad(date.getSeconds());
-    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    return isoString;
 }
 
 function formatDateWithoutTimezone(isoString) {
-    return isoString;
     if (!isoString) {
         return '';
     }
-    const date = new Date(isoString);
-    const day = String(date.getUTCDate()).padStart(2, '0');
-    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-    const year = date.getUTCFullYear();
-    const hours = String(date.getUTCHours()).padStart(2, '0');
-    const minutes = String(date.getUTCMinutes()).padStart(2, '0');
-    const seconds = String(date.getUTCSeconds()).padStart(2, '0');
-    return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
+    return isoString;
 }
 
 function renderStatus(data) {
@@ -716,6 +696,12 @@ function renderEditButton(modelUrl) {
 
 function renderEditLink(modelUrl) {
     return `<a href="${modelUrl}" class="edit-btn mb-2 me-2 btn-icon-only btn-outline-2x btn btn-outline-warning">
+                <i class="fa fa-edit"></i>
+            </a>`;
+}
+
+function renderEditLinkBlank(modelUrl) {
+    return `<a href="${modelUrl}" target="_blank" rel="noopener" class="edit-btn mb-2 me-2 btn-icon-only btn-outline-2x btn btn-outline-warning">
                 <i class="fa fa-edit"></i>
             </a>`;
 }
@@ -1593,6 +1579,114 @@ function stringToColor(str) {
     return color;
 }
 
+function handleDelete($table, button, message = 'Are you sure you want to delete this item?', timeout = 60000) {
+    const modelUrl = $(button).data('model-url');
+    if (!modelUrl) return;
+
+    const $modal = $('#deleteConfirmModal');
+    const $progress = $('#deleteConfirmProgress');
+
+    $('#deleteConfirmMessage').text(translate(message));
+
+    $progress.css({
+        transition: 'none',
+        width: '100%'
+    });
+
+    $modal.modal('show');
+
+    $modal.one('shown.bs.modal', function() {
+        $progress[0].offsetHeight;
+
+        setTimeout(() => {
+            $progress.css({
+                transition: `width ${timeout}ms linear`,
+                width: '0%',
+                willChange: 'width',
+                transform: 'translateZ(0)'
+            });
+        }, 50);
+    });
+
+    const autoCloseTimer = setTimeout(() => {
+        $modal.modal('hide');
+    }, timeout);
+
+    $('#deleteConfirmBtn')
+        .off('click')
+        .one('click', function () {
+            clearTimeout(autoCloseTimer);
+
+            PUQajax(modelUrl, null, 3000, $(button), 'DELETE')
+                .then(response => {
+                    if (response.status === 'success') {
+                        $table.ajax.reload(null, false);
+                    }
+                });
+
+            $modal.modal('hide');
+        });
+
+    $modal.off('hidden.bs.modal').on('hidden.bs.modal', function () {
+        clearTimeout(autoCloseTimer);
+        $progress.css({
+            transition: 'none',
+            width: '100%',
+            willChange: 'auto',
+            transform: 'none'
+        });
+    });
+}
+
+function handleConfirmAction(options) {
+    var message = options.message || 'Are you sure?';
+    var onConfirm = options.onConfirm;
+    var timeout = options.timeout || 60000;
+    var style = options.style || 'danger'; // danger, warning, primary, info
+
+    var $modal = $('#confirmActionModal');
+    var $progress = $('#confirmActionProgress');
+
+    $('#confirmActionMessage').text(translate(message));
+    $('#confirmActionHeader').attr('class', 'modal-header bg-' + style);
+    $('#confirmActionBtn').attr('class', 'btn btn-' + style);
+    $progress.attr('class', 'progress-bar bg-' + style);
+
+    $progress.css({transition: 'none', width: '100%'});
+    $modal.modal('show');
+
+    $modal.one('shown.bs.modal', function () {
+        $progress[0].offsetHeight;
+        setTimeout(function () {
+            $progress.css({
+                transition: 'width ' + timeout + 'ms linear',
+                width: '0%',
+                willChange: 'width',
+                transform: 'translateZ(0)'
+            });
+        }, 50);
+    });
+
+    var autoCloseTimer = setTimeout(function () {
+        $modal.modal('hide');
+    }, timeout);
+
+    $('#confirmActionBtn')
+        .off('click')
+        .one('click', function () {
+            clearTimeout(autoCloseTimer);
+            $modal.modal('hide');
+            if (typeof onConfirm === 'function') {
+                onConfirm();
+            }
+        });
+
+    $modal.off('hidden.bs.modal').on('hidden.bs.modal', function () {
+        clearTimeout(autoCloseTimer);
+        $progress.css({transition: 'none', width: '100%', willChange: 'auto', transform: 'none'});
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     NProgress.configure({
         showSpinner: false,
@@ -1830,3 +1924,4 @@ document.addEventListener('DOMContentLoaded', function () {
         }, 500);
     });
 });
+

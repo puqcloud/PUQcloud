@@ -6,11 +6,6 @@
 
 @section('head')
     @parent
-    <style>
-        .iti {
-            width: 100%;
-        }
-    </style>
 @endsection
 
 @section('content')

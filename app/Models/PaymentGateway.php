@@ -135,18 +135,14 @@ class PaymentGateway extends Model
         }
 
         $data_array = $this->module->moduleExecute('saveModuleData', $data);
+
         if ($data_array['status'] == 'error') {
             $data_array['code'] = $data_array['code'] ?? 500;
 
             return $data_array;
         }
-        if ($data_array['data']['status'] == 'error') {
-            $data_array['code'] = $data_array['code'] ?? 500;
 
-            return $data_array['data'];
-        }
-
-        $this->configuration = $data_array['data']['data'];
+        $this->configuration = $data_array['data'];
 
         return $data_array;
     }

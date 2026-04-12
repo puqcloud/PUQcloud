@@ -1,0 +1,7 @@
+{
+    "name": "Admin Invoice Overdue Notification",
+    "category": "staffOperational",
+    "custom": false,
+    "subject": "Invoice Overdue Alert",
+    "text_mini": "Invoice #{{ $invoice->number }} for client {{ $invoice->client_firstname }} {{ $invoice->client_lastname }} is overdue"
+}

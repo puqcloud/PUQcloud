@@ -49,7 +49,7 @@
                     </div>
 
                     <div class="col-12 col-sm-3 col-md-3 col-lg-2 col-xl-2">
-                        <label class="form-label" for="hidden">{{__('main.Convert Price')}}</label>
+                        <label class="form-label" for="convert_price">{{__('main.Convert Price')}}</label>
                         <div>
                             <input type="checkbox" data-toggle="toggle" data-on="{{__('main.Yes')}}"
                                    id="convert_price"

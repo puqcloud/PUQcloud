@@ -33,6 +33,7 @@ use Modules\Product\puqProxmox\Models\PuqPmNode;
 use Modules\Product\puqProxmox\Models\PuqPmPrivateNetwork;
 use Modules\Product\puqProxmox\Models\PuqPmPublicNetwork;
 use Modules\Product\puqProxmox\Models\PuqPmStorage;
+use OpenApi\Attributes as OA;
 use Yajra\DataTables\DataTables;
 
 class puqPmClusterController extends Controller
@@ -44,6 +45,25 @@ class puqPmClusterController extends Controller
         return view_admin_module('Product', 'puqProxmox', 'admin_area.clusters.clusters', compact('title'));
     }
 
+    #[OA\Get(
+        path: 'admin.api.Product.puqProxmox.clusters.get',
+        description: 'Returns a list of clusters.',
+        summary: 'Get clusters list',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqProxmox'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Clusters list returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getClusters(Request $request): JsonResponse
     {
         $query = PuqPmCluster::query();
@@ -110,6 +130,37 @@ class puqPmClusterController extends Controller
         );
     }
 
+    #[OA\Post(
+        path: 'admin.api.Product.puqProxmox.cluster.post',
+        description: 'Creates a new cluster.',
+        summary: 'Create cluster',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqProxmox'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['name'],
+                properties: [
+                    new OA\Property(property: 'name', type: 'string'),
+                ],
+                type: 'object'
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Cluster created successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string', example: 'success'),
+                        new OA\Property(property: 'message', type: 'string'),
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function postCluster(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
@@ -147,6 +198,35 @@ class puqPmClusterController extends Controller
         ]);
     }
 
+    #[OA\Get(
+        path: 'admin.api.Product.puqProxmox.cluster.get',
+        description: 'Returns details of a specific cluster.',
+        summary: 'Get cluster details',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqProxmox'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'UUID of the cluster',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Cluster details returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string', example: 'success'),
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getCluster(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmCluster::find($uuid);
@@ -172,6 +252,51 @@ class puqPmClusterController extends Controller
         ]);
     }
 
+    #[OA\Put(
+        path: 'admin.api.Product.puqProxmox.cluster.put',
+        description: 'Updates a specific cluster.',
+        summary: 'Update cluster',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqProxmox'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'UUID of the cluster',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['name'],
+                properties: [
+                    new OA\Property(property: 'name', type: 'string'),
+                    new OA\Property(property: 'puq_pm_cluster_group_uuid', type: 'string', format: 'uuid'),
+                    new OA\Property(property: 'default', type: 'string'),
+                    new OA\Property(property: 'disable', type: 'string'),
+                    new OA\Property(property: 'vncwebproxy_domain', type: 'string'),
+                    new OA\Property(property: 'vncwebproxy_api_key', type: 'string'),
+                ],
+                type: 'object'
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Cluster updated successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string', example: 'success'),
+                        new OA\Property(property: 'message', type: 'string'),
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function putCluster(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmCluster::find($uuid);
@@ -229,6 +354,45 @@ class puqPmClusterController extends Controller
         ]);
     }
 
+    #[OA\Put(
+        path: 'admin.api.Product.puqProxmox.cluster.env_variables.put',
+        description: 'Updates environment variables for a specific cluster.',
+        summary: 'Update cluster environment variables',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqProxmox'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'UUID of the cluster',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'env_variables', type: 'string', description: 'JSON-encoded array of environment variables'),
+                ],
+                type: 'object'
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Environment variables updated successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string', example: 'success'),
+                        new OA\Property(property: 'message', type: 'string'),
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function putClusterEnvVariables(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmCluster::find($uuid);
@@ -288,6 +452,35 @@ class puqPmClusterController extends Controller
         ]);
     }
 
+    #[OA\Delete(
+        path: 'admin.api.Product.puqProxmox.cluster.delete',
+        description: 'Deletes a specific cluster.',
+        summary: 'Delete cluster',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqProxmox'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'UUID of the cluster',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Cluster deleted successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string', example: 'success'),
+                        new OA\Property(property: 'message', type: 'string'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function deleteCluster(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmCluster::find($uuid);
@@ -318,6 +511,35 @@ class puqPmClusterController extends Controller
         ]);
     }
 
+    #[OA\Get(
+        path: 'admin.api.Product.puqProxmox.cluster.vncwebproxy_test_connection.get',
+        description: 'Tests the VNC web proxy connection for a specific cluster.',
+        summary: 'Test VNC web proxy connection',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqProxmox'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'UUID of the cluster',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Connection test result returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string', example: 'success'),
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getClusterVncwebproxyTestConnection(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmCluster::find($uuid);
@@ -343,6 +565,34 @@ class puqPmClusterController extends Controller
     }
 
     // Access Servers ------------------------------------------------------------------------------
+    #[OA\Get(
+        path: 'admin.api.Product.puqProxmox.cluster.access_servers.get',
+        description: 'Returns access servers for a specific cluster.',
+        summary: 'Get cluster access servers',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqProxmox'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'UUID of the cluster',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Access servers list returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getClusterAccessServers(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmCluster::find($uuid);
@@ -380,6 +630,47 @@ class puqPmClusterController extends Controller
         ], 200);
     }
 
+    #[OA\Post(
+        path: 'admin.api.Product.puqProxmox.access_server.post',
+        description: 'Creates a new access server.',
+        summary: 'Create access server',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqProxmox'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['name', 'ssh_host', 'ssh_port', 'ssh_username', 'ssh_password', 'puq_pm_cluster_uuid', 'api_port', 'api_host', 'api_token', 'api_token_id'],
+                properties: [
+                    new OA\Property(property: 'name', type: 'string'),
+                    new OA\Property(property: 'description', type: 'string'),
+                    new OA\Property(property: 'ssh_host', type: 'string'),
+                    new OA\Property(property: 'ssh_port', type: 'integer'),
+                    new OA\Property(property: 'ssh_username', type: 'string'),
+                    new OA\Property(property: 'ssh_password', type: 'string'),
+                    new OA\Property(property: 'puq_pm_cluster_uuid', type: 'string', format: 'uuid'),
+                    new OA\Property(property: 'api_port', type: 'integer'),
+                    new OA\Property(property: 'api_host', type: 'string'),
+                    new OA\Property(property: 'api_token', type: 'string'),
+                    new OA\Property(property: 'api_token_id', type: 'string'),
+                ],
+                type: 'object'
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Access server created successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string', example: 'success'),
+                        new OA\Property(property: 'message', type: 'string'),
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function postAccessServer(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
@@ -496,6 +787,35 @@ class puqPmClusterController extends Controller
         ]);
     }
 
+    #[OA\Delete(
+        path: 'admin.api.Product.puqProxmox.access_server.delete',
+        description: 'Deletes a specific access server.',
+        summary: 'Delete access server',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqProxmox'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'UUID of the access server',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Access server deleted successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string', example: 'success'),
+                        new OA\Property(property: 'message', type: 'string'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function deleteAccessServer(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmAccessServer::find($uuid);
@@ -525,6 +845,36 @@ class puqPmClusterController extends Controller
         ]);
     }
 
+    #[OA\Get(
+        path: 'admin.api.Product.puqProxmox.access_server.test_connection.get',
+        description: 'Tests the connection to a specific access server.',
+        summary: 'Test access server connection',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqProxmox'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'UUID of the access server',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Connection test result returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string', example: 'success'),
+                        new OA\Property(property: 'message', type: 'string'),
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getAccessServerTestConnection(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmAccessServer::find($uuid);
@@ -557,6 +907,34 @@ class puqPmClusterController extends Controller
     }
 
     // Nodes --------------------------------------------------------------------------------------
+    #[OA\Get(
+        path: 'admin.api.Product.puqProxmox.cluster.nodes.get',
+        description: 'Returns nodes for a specific cluster.',
+        summary: 'Get cluster nodes',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqProxmox'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'UUID of the cluster',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Nodes list returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getClusterNodes(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmCluster::find($uuid);
@@ -596,6 +974,35 @@ class puqPmClusterController extends Controller
         ], 200);
     }
 
+    #[OA\Delete(
+        path: 'admin.api.Product.puqProxmox.node.delete',
+        description: 'Deletes a specific node.',
+        summary: 'Delete node',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqProxmox'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'UUID of the node',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Node deleted successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string', example: 'success'),
+                        new OA\Property(property: 'message', type: 'string'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function deleteNode(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmNode::find($uuid);
@@ -626,6 +1033,34 @@ class puqPmClusterController extends Controller
     }
 
     // Storages -----------------------------------------------------------------------------------
+    #[OA\Get(
+        path: 'admin.api.Product.puqProxmox.cluster.storages.get',
+        description: 'Returns storages for a specific cluster.',
+        summary: 'Get cluster storages',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqProxmox'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'UUID of the cluster',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Storages list returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getClusterStorages(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmCluster::find($uuid);
@@ -670,6 +1105,35 @@ class puqPmClusterController extends Controller
         ], 200);
     }
 
+    #[OA\Delete(
+        path: 'admin.api.Product.puqProxmox.storage.delete',
+        description: 'Deletes a specific storage.',
+        summary: 'Delete storage',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqProxmox'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'UUID of the storage',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Storage deleted successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string', example: 'success'),
+                        new OA\Property(property: 'message', type: 'string'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function deleteStorage(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmStorage::find($uuid);
@@ -700,6 +1164,19 @@ class puqPmClusterController extends Controller
     }
 
     // Public Networks ----------------------------------------------------------------------------
+    #[OA\Get(
+        path: 'admin.api.Product.puqProxmox.cluster.public_networks.get',
+        description: 'Returns public networks for a specific cluster.',
+        summary: 'Get cluster public networks',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqProxmox'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'UUID of the cluster', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Public networks list returned successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'data', type: 'object')], type: 'object')),
+        ]
+    )]
     public function getClusterPublicNetworks(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmCluster::find($uuid);
@@ -757,6 +1234,19 @@ class puqPmClusterController extends Controller
         ], 200);
     }
 
+    #[OA\Get(
+        path: 'admin.api.Product.puqProxmox.public_network.get',
+        description: 'Returns details of a specific public network.',
+        summary: 'Get public network details',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqProxmox'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'UUID of the public network', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Public network details returned successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'data', type: 'object')], type: 'object')),
+        ]
+    )]
     public function getPublicNetwork(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmPublicNetwork::find($uuid);
@@ -798,6 +1288,31 @@ class puqPmClusterController extends Controller
         ]);
     }
 
+    #[OA\Post(
+        path: 'admin.api.Product.puqProxmox.public_network.post',
+        description: 'Creates a new public network.',
+        summary: 'Create public network',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqProxmox'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['name', 'puq_pm_cluster_uuid', 'puq_pm_mac_pool_uuid', 'bridge', 'vlan_tag'],
+                properties: [
+                    new OA\Property(property: 'name', type: 'string'),
+                    new OA\Property(property: 'puq_pm_cluster_uuid', type: 'string', format: 'uuid'),
+                    new OA\Property(property: 'puq_pm_mac_pool_uuid', type: 'string'),
+                    new OA\Property(property: 'puq_pm_ip_pool_uuid', type: 'string'),
+                    new OA\Property(property: 'bridge', type: 'string'),
+                    new OA\Property(property: 'vlan_tag', type: 'integer'),
+                ],
+                type: 'object'
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Public network created successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string'), new OA\Property(property: 'data', type: 'object')], type: 'object')),
+        ]
+    )]
     public function postPublicNetwork(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
@@ -861,6 +1376,20 @@ class puqPmClusterController extends Controller
         ]);
     }
 
+    #[OA\Put(
+        path: 'admin.api.Product.puqProxmox.public_network.put',
+        description: 'Updates a specific public network.',
+        summary: 'Update public network',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqProxmox'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'UUID of the public network', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(type: 'object')),
+        responses: [
+            new OA\Response(response: 200, description: 'Public network updated successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string'), new OA\Property(property: 'data', type: 'object')], type: 'object')),
+        ]
+    )]
     public function putPublicNetwork(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmPublicNetwork::find($uuid);
@@ -932,6 +1461,19 @@ class puqPmClusterController extends Controller
         ]);
     }
 
+    #[OA\Delete(
+        path: 'admin.api.Product.puqProxmox.public_network.delete',
+        description: 'Deletes a specific public network.',
+        summary: 'Delete public network',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqProxmox'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'UUID of the public network', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Public network deleted successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string')], type: 'object')),
+        ]
+    )]
     public function deletePublicNetwork(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmPublicNetwork::find($uuid);
@@ -962,6 +1504,19 @@ class puqPmClusterController extends Controller
     }
 
     // Private Networks ----------------------------------------------------------------------------
+    #[OA\Get(
+        path: 'admin.api.Product.puqProxmox.cluster.private_networks.get',
+        description: 'Returns private networks for a specific cluster.',
+        summary: 'Get cluster private networks',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqProxmox'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'UUID of the cluster', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Private networks list returned successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'data', type: 'object')], type: 'object')),
+        ]
+    )]
     public function getClusterPrivateNetworks(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmCluster::find($uuid);
@@ -1013,6 +1568,19 @@ class puqPmClusterController extends Controller
         ], 200);
     }
 
+    #[OA\Get(
+        path: 'admin.api.Product.puqProxmox.private_network.get',
+        description: 'Returns details of a specific private network.',
+        summary: 'Get private network details',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqProxmox'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'UUID of the private network', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Private network details returned successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'data', type: 'object')], type: 'object')),
+        ]
+    )]
     public function getPrivateNetwork(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmPrivateNetwork::find($uuid);
@@ -1040,6 +1608,17 @@ class puqPmClusterController extends Controller
         ]);
     }
 
+    #[OA\Post(
+        path: 'admin.api.Product.puqProxmox.private_network.post',
+        description: 'Creates a new private network.',
+        summary: 'Create private network',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqProxmox'],
+        requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(required: ['name', 'puq_pm_cluster_uuid', 'puq_pm_mac_pool_uuid', 'bridge', 'type'], properties: [new OA\Property(property: 'name', type: 'string'), new OA\Property(property: 'puq_pm_cluster_uuid', type: 'string', format: 'uuid'), new OA\Property(property: 'puq_pm_mac_pool_uuid', type: 'string'), new OA\Property(property: 'bridge', type: 'string'), new OA\Property(property: 'type', type: 'string')], type: 'object')),
+        responses: [
+            new OA\Response(response: 200, description: 'Private network created successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string'), new OA\Property(property: 'data', type: 'object')], type: 'object')),
+        ]
+    )]
     public function postPrivateNetwork(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
@@ -1087,6 +1666,20 @@ class puqPmClusterController extends Controller
         ]);
     }
 
+    #[OA\Put(
+        path: 'admin.api.Product.puqProxmox.private_network.put',
+        description: 'Updates a specific private network.',
+        summary: 'Update private network',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqProxmox'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'UUID of the private network', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(type: 'object')),
+        responses: [
+            new OA\Response(response: 200, description: 'Private network updated successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string'), new OA\Property(property: 'data', type: 'object')], type: 'object')),
+        ]
+    )]
     public function putPrivateNetwork(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmPrivateNetwork::find($uuid);
@@ -1142,6 +1735,19 @@ class puqPmClusterController extends Controller
         ]);
     }
 
+    #[OA\Delete(
+        path: 'admin.api.Product.puqProxmox.private_network.delete',
+        description: 'Deletes a specific private network.',
+        summary: 'Delete private network',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqProxmox'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'UUID of the private network', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Private network deleted successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string')], type: 'object')),
+        ]
+    )]
     public function deletePrivateNetwork(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmPrivateNetwork::find($uuid);
@@ -1174,6 +1780,19 @@ class puqPmClusterController extends Controller
 
     // Sync ----------------------------------------------------------------------------------------
 
+    #[OA\Get(
+        path: 'admin.api.Product.puqProxmox.sync.cluster.info.get',
+        description: 'Synchronizes cluster info from Proxmox.',
+        summary: 'Sync cluster info',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqProxmox'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'UUID of the cluster', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Cluster info synced successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string')], type: 'object')),
+        ]
+    )]
     public function getSyncClusterInfo(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmCluster::find($uuid);
@@ -1204,6 +1823,19 @@ class puqPmClusterController extends Controller
         ]);
     }
 
+    #[OA\Get(
+        path: 'admin.api.Product.puqProxmox.sync.cluster.nodes.get',
+        description: 'Synchronizes cluster nodes from Proxmox.',
+        summary: 'Sync cluster nodes',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqProxmox'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'UUID of the cluster', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Cluster nodes synced successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string')], type: 'object')),
+        ]
+    )]
     public function getSyncClusterNodes(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmCluster::find($uuid);
@@ -1234,6 +1866,19 @@ class puqPmClusterController extends Controller
         ]);
     }
 
+    #[OA\Get(
+        path: 'admin.api.Product.puqProxmox.sync.cluster.storages.get',
+        description: 'Synchronizes cluster storages from Proxmox.',
+        summary: 'Sync cluster storages',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqProxmox'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'UUID of the cluster', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Cluster storages synced successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string')], type: 'object')),
+        ]
+    )]
     public function getSyncClusterStorages(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmCluster::find($uuid);
@@ -1264,6 +1909,19 @@ class puqPmClusterController extends Controller
         ]);
     }
 
+    #[OA\Get(
+        path: 'admin.api.Product.puqProxmox.sync.cluster.storages.sync_templates.get',
+        description: 'Synchronizes LXC templates to cluster storages.',
+        summary: 'Sync templates to cluster storages',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqProxmox'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'UUID of the cluster', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Templates syncing started successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string')], type: 'object')),
+        ]
+    )]
     public function getSyncClusterStoragesSyncTemplates(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmCluster::find($uuid);

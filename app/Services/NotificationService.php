@@ -52,6 +52,8 @@ class NotificationService
                 'layout_text' => html_entity_decode($notification->layout ?? ''),
                 'text_mini' => $notification->text_mini ?? '',
                 'attachments' => $data['attachments'] ?? [],
+                'reply_to_email' => $data['reply_to_email'] ?? null,
+                'reply_to_name' => $data['reply_to_name'] ?? null,
             ]
         );
 
@@ -167,6 +169,8 @@ class NotificationService
                 'notification_uuid' => $notification->uuid,
                 'notification_sender_uuid' => $sender->uuid,
                 'attachments' => $data['attachments'] ?? [],
+                'reply_to_email' => $data['reply_to_email'] ?? null,
+                'reply_to_name' => $data['reply_to_name'] ?? null,
             ];
 
             Task::add('NotificationJob', ucfirst($role).'Notification', $taskData, $tags);
@@ -425,6 +429,193 @@ class NotificationService
                 'ClientNotificationJob',
             ];
             Task::add('ClientNotificationJob', 'System', $data, $tags);
+        });
+
+        // Ticket hooks ---------------------------------------------------------------------------------
+
+        add_hook('TicketCreated', 0, function ($vars) {
+            $ticket = $vars['ticket'];
+            $replyTo = $ticket->department?->email;
+            $replyToName = $ticket->department?->name;
+
+            // Notify client
+            if ($ticket->client) {
+                $data = [
+                    'data' => [
+                        'ticket' => $ticket,
+                        'reply_to_email' => $replyTo,
+                        'reply_to_name' => $replyToName,
+                    ],
+                    'client' => $ticket->client,
+                    'category' => 'clientOperational',
+                    'notification' => 'Client Ticket Opened',
+                ];
+                Task::add('ClientNotificationJob', 'System', $data, ['ClientNotificationJob']);
+            }
+
+            // Notify department admins
+            if ($ticket->department) {
+                foreach ($ticket->department->admins as $admin) {
+                    $data = [
+                        'data' => ['ticket' => $ticket],
+                        'admin' => $admin,
+                        'category' => 'staffOperational',
+                        'notification' => 'New Ticket from Client',
+                    ];
+                    Task::add('AdminNotificationJob', 'System', $data, ['AdminNotificationJob']);
+                }
+            }
+        });
+
+        add_hook('TicketRepliedByStaff', 0, function ($vars) {
+            $ticket = $vars['ticket'];
+            $reply = $vars['reply'] ?? null;
+            $replyTo = $ticket->department?->email;
+            $replyToName = $ticket->department?->name;
+
+            if ($ticket->client) {
+                $data = [
+                    'data' => [
+                        'ticket' => $ticket,
+                        'reply' => $reply,
+                        'reply_to_email' => $replyTo,
+                        'reply_to_name' => $replyToName,
+                    ],
+                    'client' => $ticket->client,
+                    'category' => 'clientOperational',
+                    'notification' => 'Client Ticket Reply from Staff',
+                ];
+                Task::add('ClientNotificationJob', 'System', $data, ['ClientNotificationJob']);
+            }
+        });
+
+        add_hook('TicketRepliedByClient', 0, function ($vars) {
+            $ticket = $vars['ticket'];
+            $reply = $vars['reply'] ?? null;
+
+            if ($ticket->department) {
+                foreach ($ticket->department->admins as $admin) {
+                    $data = [
+                        'data' => ['ticket' => $ticket, 'reply' => $reply],
+                        'admin' => $admin,
+                        'category' => 'staffOperational',
+                        'notification' => 'Client Reply on Ticket',
+                    ];
+                    Task::add('AdminNotificationJob', 'System', $data, ['AdminNotificationJob']);
+                }
+            }
+        });
+
+        add_hook('TicketClosed', 0, function ($vars) {
+            $ticket = $vars['ticket'];
+            $replyTo = $ticket->department?->email;
+            $replyToName = $ticket->department?->name;
+
+            if ($ticket->client) {
+                $data = [
+                    'data' => [
+                        'ticket' => $ticket,
+                        'reply_to_email' => $replyTo,
+                        'reply_to_name' => $replyToName,
+                    ],
+                    'client' => $ticket->client,
+                    'category' => 'clientOperational',
+                    'notification' => 'Client Ticket Closed',
+                ];
+                Task::add('ClientNotificationJob', 'System', $data, ['ClientNotificationJob']);
+            }
+
+            // Notify department admins
+            if ($ticket->department) {
+                foreach ($ticket->department->admins as $admin) {
+                    $data = [
+                        'data' => ['ticket' => $ticket],
+                        'admin' => $admin,
+                        'category' => 'staffOperational',
+                        'notification' => 'Ticket Closed',
+                    ];
+                    Task::add('AdminNotificationJob', 'System', $data, ['AdminNotificationJob']);
+                }
+            }
+        });
+
+        add_hook('TicketReopened', 0, function ($vars) {
+            $ticket = $vars['ticket'];
+            $replyTo = $ticket->department?->email;
+            $replyToName = $ticket->department?->name;
+
+            if ($ticket->client) {
+                $data = [
+                    'data' => [
+                        'ticket' => $ticket,
+                        'reply_to_email' => $replyTo,
+                        'reply_to_name' => $replyToName,
+                    ],
+                    'client' => $ticket->client,
+                    'category' => 'clientOperational',
+                    'notification' => 'Client Ticket Reopened',
+                ];
+                Task::add('ClientNotificationJob', 'System', $data, ['ClientNotificationJob']);
+            }
+
+            // Notify department admins
+            if ($ticket->department) {
+                foreach ($ticket->department->admins as $admin) {
+                    $data = [
+                        'data' => ['ticket' => $ticket],
+                        'admin' => $admin,
+                        'category' => 'staffOperational',
+                        'notification' => 'Ticket Reopened',
+                    ];
+                    Task::add('AdminNotificationJob', 'System', $data, ['AdminNotificationJob']);
+                }
+            }
+        });
+
+        add_hook('TicketAssigned', 0, function ($vars) {
+            $ticket = $vars['ticket'];
+
+            if ($ticket->assignedAdmin) {
+                $data = [
+                    'data' => ['ticket' => $ticket],
+                    'admin' => $ticket->assignedAdmin,
+                    'category' => 'staffOperational',
+                    'notification' => 'Ticket Assigned to You',
+                ];
+                Task::add('AdminNotificationJob', 'System', $data, ['AdminNotificationJob']);
+            }
+        });
+
+        add_hook('TicketEscalated', 0, function ($vars) {
+            $ticket = $vars['ticket'];
+
+            if ($ticket->department) {
+                foreach ($ticket->department->admins as $admin) {
+                    $data = [
+                        'data' => ['ticket' => $ticket],
+                        'admin' => $admin,
+                        'category' => 'staffOperational',
+                        'notification' => 'Ticket Escalated',
+                    ];
+                    Task::add('AdminNotificationJob', 'System', $data, ['AdminNotificationJob']);
+                }
+            }
+        });
+
+        add_hook('TicketSlaBreached', 0, function ($vars) {
+            $ticket = $vars['ticket'];
+
+            if ($ticket->department) {
+                foreach ($ticket->department->admins as $admin) {
+                    $data = [
+                        'data' => ['ticket' => $ticket],
+                        'admin' => $admin,
+                        'category' => 'staffOperational',
+                        'notification' => 'Ticket SLA Breached',
+                    ];
+                    Task::add('AdminNotificationJob', 'System', $data, ['AdminNotificationJob']);
+                }
+            }
         });
 
     }

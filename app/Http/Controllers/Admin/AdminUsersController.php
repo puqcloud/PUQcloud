@@ -15,6 +15,21 @@
  * Do not remove this header.
  */
 
+/*
+ * WEB Routes:
+ *   GET  users                                                 -> users()                       [admin.web.users]
+ *
+ * API Routes:
+ *   GET    users                                               -> getUsers()                    [admin.api.users.get]
+ *   GET    user/{uuid}                                         -> getUser()                     [admin.api.user.get]
+ *   GET    user/{uuid}/clients                                 -> getUserClients()              [admin.api.user.clients.get]
+ *   POST   user                                                -> postUser()                    [admin.api.user.post]
+ *   PUT    user/{uuid}                                         -> putUser()                     [admin.api.user.put]
+ *   DELETE user/{uuid}                                         -> deleteUser()                  [admin.api.user.delete]
+ *   GET    users/select                                        -> getUsersSelect()              [admin.api.users.select.get]
+ *   GET    user/permissions/select                             -> getUserPermissionsSelect()    [admin.api.user.permissions.select.get]
+ */
+
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
@@ -25,6 +40,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use OpenApi\Attributes as OA;
 use Yajra\DataTables\DataTables;
 
 class AdminUsersController extends Controller
@@ -36,6 +52,25 @@ class AdminUsersController extends Controller
         return view_admin('users.users', compact('title'));
     }
 
+    #[OA\Get(
+        path: 'admin.api.users.get',
+        description: 'Returns a DataTable list of users.',
+        summary: 'Get users list',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Users'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Users list returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getUsers(Request $request): JsonResponse
     {
         $query = User::query();
@@ -80,6 +115,48 @@ class AdminUsersController extends Controller
         ], 200);
     }
 
+    #[OA\Post(
+        path: 'admin.api.user.post',
+        description: 'Creates a new user with specified details.',
+        summary: 'Create a new user',
+        security: [['apiKeyAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'application/json',
+                schema: new OA\Schema(
+                    required: ['email', 'password', 'firstname', 'lastname', 'language'],
+                    properties: [
+                        new OA\Property(property: 'email', type: 'string', format: 'email'),
+                        new OA\Property(property: 'password', type: 'string', format: 'password'),
+                        new OA\Property(property: 'firstname', type: 'string'),
+                        new OA\Property(property: 'lastname', type: 'string'),
+                        new OA\Property(property: 'language', type: 'string', example: 'en'),
+                        new OA\Property(property: 'phone_number', type: 'string', nullable: true),
+                        new OA\Property(property: 'country_code', type: 'string', nullable: true),
+                        new OA\Property(property: 'notes', type: 'string', nullable: true),
+                        new OA\Property(property: 'admin_notes', type: 'string', nullable: true),
+                        new OA\Property(property: 'two_factor', type: 'string', enum: ['yes', 'no'], nullable: true),
+                    ]
+                )
+            )
+        ),
+        tags: ['Users'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'User created successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string', example: 'success'),
+                        new OA\Property(property: 'message', type: 'string', example: 'Created successfully'),
+                        new OA\Property(property: 'data', type: 'array', items: new OA\Items(type: 'string')),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function postUser(Request $request): JsonResponse
     {
 
@@ -152,6 +229,56 @@ class AdminUsersController extends Controller
         ]);
     }
 
+    #[OA\Get(
+        path: 'admin.api.user.get',
+        description: 'Returns detailed information about a user, including language data.',
+        summary: 'Get user details by UUID',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Users'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'UUID of the user',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'User data returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(
+                            property: 'data',
+                            properties: [
+                                new OA\Property(property: 'uuid', type: 'string', format: 'uuid'),
+                                new OA\Property(property: 'email', type: 'string'),
+                                new OA\Property(property: 'firstname', type: 'string'),
+                                new OA\Property(property: 'lastname', type: 'string'),
+                                new OA\Property(property: 'language', type: 'string'),
+                                new OA\Property(property: 'phone_number', type: 'string', nullable: true),
+                                new OA\Property(property: 'status', type: 'string'),
+                                new OA\Property(
+                                    property: 'language_data',
+                                    properties: [
+                                        new OA\Property(property: 'id', type: 'string'),
+                                        new OA\Property(property: 'text', type: 'string'),
+                                    ],
+                                    type: 'object'
+                                ),
+                                new OA\Property(property: 'created_at', type: 'string', format: 'date-time'),
+                                new OA\Property(property: 'updated_at', type: 'string', format: 'date-time'),
+                            ],
+                            type: 'object'
+                        ),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getUser(Request $request, $uuid): JsonResponse
     {
         $user = User::find($uuid);
@@ -179,6 +306,34 @@ class AdminUsersController extends Controller
         ]);
     }
 
+    #[OA\Get(
+        path: 'admin.api.user.clients.get',
+        description: 'Returns user details with associated clients list.',
+        summary: 'Get user clients by UUID',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Users'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'UUID of the user',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'User clients data returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getUserClients(Request $request, $uuid): JsonResponse
     {
         $user = User::find($uuid);
@@ -212,6 +367,59 @@ class AdminUsersController extends Controller
         ]);
     }
 
+    #[OA\Put(
+        path: 'admin.api.user.put',
+        description: 'Updates an existing user details.',
+        summary: 'Update user by UUID',
+        security: [['apiKeyAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'application/json',
+                schema: new OA\Schema(
+                    required: ['email', 'firstname', 'lastname', 'language'],
+                    properties: [
+                        new OA\Property(property: 'email', type: 'string', format: 'email'),
+                        new OA\Property(property: 'password', type: 'string', format: 'password', nullable: true),
+                        new OA\Property(property: 'firstname', type: 'string'),
+                        new OA\Property(property: 'lastname', type: 'string'),
+                        new OA\Property(property: 'language', type: 'string'),
+                        new OA\Property(property: 'phone_number', type: 'string', nullable: true),
+                        new OA\Property(property: 'country_code', type: 'string', nullable: true),
+                        new OA\Property(property: 'notes', type: 'string', nullable: true),
+                        new OA\Property(property: 'admin_notes', type: 'string', nullable: true),
+                        new OA\Property(property: 'two_factor', type: 'string', enum: ['yes', 'no'], nullable: true),
+                        new OA\Property(property: 'email_verified', type: 'string', enum: ['yes', 'no'], nullable: true),
+                        new OA\Property(property: 'phone_verified', type: 'string', enum: ['yes', 'no'], nullable: true),
+                    ]
+                )
+            )
+        ),
+        tags: ['Users'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'UUID of the user to update',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'User updated successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string', example: 'success'),
+                        new OA\Property(property: 'message', type: 'string', example: 'Updated successfully'),
+                        new OA\Property(property: 'data', type: 'array', items: new OA\Items(type: 'string')),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function putUser(Request $request, $uuid): JsonResponse
     {
 
@@ -300,6 +508,41 @@ class AdminUsersController extends Controller
         ]);
     }
 
+    #[OA\Get(
+        path: 'admin.api.users.select.get',
+        description: 'Returns a paginated list of users for select2 dropdown.',
+        summary: 'Get users select list',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Users'],
+        parameters: [
+            new OA\Parameter(
+                name: 'q',
+                description: 'Search query',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'string')
+            ),
+            new OA\Parameter(
+                name: 'page',
+                description: 'Page number',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'integer')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Users select list returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getUsersSelect(Request $request): JsonResponse
     {
         $search = $request->input('q');
@@ -343,6 +586,34 @@ class AdminUsersController extends Controller
         ]);
     }
 
+    #[OA\Get(
+        path: 'admin.api.user.permissions.select.get',
+        description: 'Returns a list of user permissions for select2 dropdown.',
+        summary: 'Get user permissions select list',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Users'],
+        parameters: [
+            new OA\Parameter(
+                name: 'q',
+                description: 'Search query',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'string')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'User permissions select list returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getUserPermissionsSelect(Request $request): JsonResponse
     {
 
@@ -369,6 +640,35 @@ class AdminUsersController extends Controller
 
     }
 
+    #[OA\Delete(
+        path: 'admin.api.user.delete',
+        description: 'Deletes a user by UUID. Cannot delete if user is associated with clients.',
+        summary: 'Delete user by UUID',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Users'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'UUID of the user to delete',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'User deleted successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string', example: 'success'),
+                        new OA\Property(property: 'message', type: 'string', example: 'Deleted successfully'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function deleteUser(Request $request, $uuid): JsonResponse
     {
         $user = User::find($uuid);

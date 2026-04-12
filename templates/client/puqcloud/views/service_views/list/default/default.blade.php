@@ -168,34 +168,39 @@
                 {
                     data: 'price',
                     title: translate('Price'),
+                    orderable: false,
                     render: function (data, type, row) {
-                        if (!data || !data.amount) return '';
+                        // Same layout as puqVPNCP list price column: main price line in bold,
+                        // then a billing_mode badge + context line below (Invoice → paid until date,
+                        // Prepaid → hourly billing on/off).
+                        let html = `<div class="fw-bold">${row.price}</div>`;
 
-                        const amount_str = data.amount_str;
-                        const period = data.period ? data.period : '';
-
-                        let hourly_billing = '';
-                        if (data.hourly_billing && period === 'monthly') {
-                            hourly_billing = `
-            <span class="ms-2" title="${translate('Hourly billing')}">
-                <i class="fas fa-clock text-success"></i>
-            </span>`;
+                        if (row.billing_mode === 'invoice') {
+                            // Invoice mode: show the next paid-until date from billing_timestamp.
+                            const paidUntil = row.billing_timestamp || '-';
+                            html += `<div class="mt-1 small">
+                                <span class="badge bg-info text-dark">
+                                    <i class="fas fa-file-invoice-dollar me-1"></i>${translate('Invoice')}
+                                </span>
+                                <div class="text-muted mt-1">
+                                    <i class="fas fa-calendar-check me-1"></i>${translate('Paid until')}: <span class="fw-semibold">${paidUntil}</span>
+                                </div>
+                            </div>`;
+                        } else if (row.billing_mode === 'prepaid') {
+                            // Prepaid mode: badge + hourly-billing on/off indicator.
+                            const hourlyOn = row.hourly_billing === true || row.hourly_billing === 1 || row.hourly_billing === '1';
+                            const hourlyBadge = hourlyOn
+                                ? `<span class="badge bg-success ms-1"><i class="fas fa-clock me-1"></i>${translate('Hourly billing')}</span>`
+                                : `<span class="badge bg-secondary ms-1"><i class="fas fa-clock me-1"></i>${translate('Hourly billing off')}</span>`;
+                            html += `<div class="mt-1 small">
+                                <span class="badge bg-primary">
+                                    <i class="fas fa-wallet me-1"></i>${translate('Prepaid')}
+                                </span>
+                                ${hourlyBadge}
+                            </div>`;
                         }
 
-                        return `
-        <div class="widget-chart-content">
-            <div class="widget-chart-flex">
-                <div class="widget-numbers">
-                    <div class="widget-chart-flex">
-                        <div class="fsize-1 text-nowrap">
-                            <span>${amount_str}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <h6 class="widget-subheading mb-0 opacity-5 text-nowrap">${translate(period)} ${hourly_billing}</h6>
-        </div>
-    `;
+                        return html;
                     }
                 },
                 {

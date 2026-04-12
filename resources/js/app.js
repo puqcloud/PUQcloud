@@ -108,3 +108,27 @@ window.Chart = Chart;
 
 import flatpickr from "flatpickr";
 import "flatpickr/dist/flatpickr.min.css";
+
+// Swagger UI
+import 'swagger-ui-dist/swagger-ui.css';
+import SwaggerUIBundle from 'swagger-ui-dist/swagger-ui-bundle.js';
+import SwaggerUIStandalonePreset from 'swagger-ui-dist/swagger-ui-standalone-preset.js';
+
+window.initSwagger = function(swaggerJsonRoute, domId = '#swagger-ui') {
+    SwaggerUIBundle({
+        url: swaggerJsonRoute,
+        dom_id: domId,
+        presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
+        layout: 'BaseLayout'
+    });
+};
+
+// Import EasyMDE markdown editor
+import EasyMDE from 'easymde';
+window.EasyMDE = EasyMDE;
+
+// Import marked for markdown to HTML rendering
+import { marked } from 'marked';
+marked.setOptions({ breaks: true, gfm: true });
+window.marked = marked;
+

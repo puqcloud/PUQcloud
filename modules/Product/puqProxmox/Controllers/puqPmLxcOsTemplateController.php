@@ -25,6 +25,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Modules\Product\puqProxmox\Models\PuqPmLxcOsTemplate;
 use Modules\Product\puqProxmox\Models\PuqPmLxcPreset;
+use OpenApi\Attributes as OA;
 use Yajra\DataTables\DataTables;
 
 class puqPmLxcOsTemplateController extends Controller
@@ -37,6 +38,7 @@ class puqPmLxcOsTemplateController extends Controller
             compact('title'));
     }
 
+    #[OA\Get(path: 'admin.api.Product.puqProxmox.lxc_os_templates.get', description: 'Returns a list of LXC OS templates.', summary: 'Get LXC OS templates list', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], responses: [new OA\Response(response: 200, description: 'LXC OS templates list returned successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function getLxcOsTemplates(Request $request): JsonResponse
     {
         $query = PuqPmLxcOsTemplate::query()
@@ -70,6 +72,7 @@ class puqPmLxcOsTemplateController extends Controller
         ], 200);
     }
 
+    #[OA\Post(path: 'admin.api.Product.puqProxmox.lxc_os_template.post', description: 'Creates a new LXC OS template.', summary: 'Create LXC OS template', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(required: ['key', 'name', 'distribution', 'version', 'puq_pm_lxc_template_uuid'], properties: [new OA\Property(property: 'key', type: 'string'), new OA\Property(property: 'name', type: 'string'), new OA\Property(property: 'distribution', type: 'string'), new OA\Property(property: 'version', type: 'string'), new OA\Property(property: 'puq_pm_lxc_template_uuid', type: 'string', format: 'uuid')], type: 'object')), responses: [new OA\Response(response: 200, description: 'LXC OS template created successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string'), new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function postLxcOsTemplate(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
@@ -149,6 +152,7 @@ class puqPmLxcOsTemplateController extends Controller
         );
     }
 
+    #[OA\Get(path: 'admin.api.Product.puqProxmox.lxc_os_template.get', description: 'Returns details of a specific LXC OS template.', summary: 'Get LXC OS template details', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the LXC OS template', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], responses: [new OA\Response(response: 200, description: 'LXC OS template details returned successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function getLxcOsTemplate(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmLxcOsTemplate::find($uuid);
@@ -172,6 +176,7 @@ class puqPmLxcOsTemplateController extends Controller
         ]);
     }
 
+    #[OA\Put(path: 'admin.api.Product.puqProxmox.lxc_os_template.put', description: 'Updates a specific LXC OS template.', summary: 'Update LXC OS template', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the LXC OS template', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(type: 'object')), responses: [new OA\Response(response: 200, description: 'LXC OS template updated successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string'), new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function putLxcOsTemplate(Request $request, $uuid): JsonResponse
     {
         $validator = Validator::make($request->all(), [
@@ -229,6 +234,7 @@ class puqPmLxcOsTemplateController extends Controller
         ]);
     }
 
+    #[OA\Delete(path: 'admin.api.Product.puqProxmox.lxc_os_template.delete', description: 'Deletes a specific LXC OS template.', summary: 'Delete LXC OS template', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the LXC OS template', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], responses: [new OA\Response(response: 200, description: 'LXC OS template deleted successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string')], type: 'object'))])]
     public function deleteLxcOsTemplate(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmLxcOsTemplate::find($uuid);
@@ -258,6 +264,7 @@ class puqPmLxcOsTemplateController extends Controller
         ]);
     }
 
+    #[OA\Get(path: 'admin.api.Product.puqProxmox.lxc_os_templates.select.get', description: 'Returns LXC OS templates for select dropdown.', summary: 'Get LXC OS templates select', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], responses: [new OA\Response(response: 200, description: 'LXC OS templates select returned successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function getLxcOsTemplatesSelect(Request $request): JsonResponse
     {
         $search = $request->input('q');
@@ -343,6 +350,7 @@ class puqPmLxcOsTemplateController extends Controller
     }
 
 
+    #[OA\Get(path: 'admin.api.Product.puqProxmox.lxc_os_template.script.get', description: 'Returns a specific script for an LXC OS template.', summary: 'Get LXC OS template script', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the LXC OS template', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')), new OA\Parameter(name: 'type', description: 'Script type', in: 'path', required: true, schema: new OA\Schema(type: 'string'))], responses: [new OA\Response(response: 200, description: 'Script returned successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function getLxcOsTemplateScript(Request $request, $uuid, $type): JsonResponse
     {
         $model = PuqPmLxcOsTemplate::find($uuid);
@@ -361,6 +369,7 @@ class puqPmLxcOsTemplateController extends Controller
         ]);
     }
 
+    #[OA\Put(path: 'admin.api.Product.puqProxmox.lxc_os_template.script.put', description: 'Updates a specific script for an LXC OS template.', summary: 'Update LXC OS template script', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the LXC OS template', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')), new OA\Parameter(name: 'type', description: 'Script type', in: 'path', required: true, schema: new OA\Schema(type: 'string'))], requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(required: ['script'], properties: [new OA\Property(property: 'script', type: 'string')], type: 'object')), responses: [new OA\Response(response: 200, description: 'Script updated successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string'), new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function putLxcOsTemplateScript(Request $request, $uuid, $type): JsonResponse
     {
         $model = PuqPmLxcOsTemplate::find($uuid);

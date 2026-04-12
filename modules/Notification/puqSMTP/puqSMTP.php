@@ -126,6 +126,10 @@ class puqSMTP extends Notification
                     ->subject($data['subject'])
                     ->from($data['email'], $data['sender_name']);
 
+                if (! empty($data['reply_to_email'])) {
+                    $message->replyTo($data['reply_to_email'], $data['reply_to_name'] ?? '');
+                }
+
                 $message->html($data['layout_text']);
 
                 if (! empty($data['attachments']) && is_array($data['attachments'])) {

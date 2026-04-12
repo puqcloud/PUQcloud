@@ -52,7 +52,7 @@ class StripeClient
         string $referenceId,
         string $invoiceId,
         string $description,
-        string $amount,
+        int $amount, // minor units (cents/kopecks/grosze) — already multiplied by 100
         string $currency,
         string $return_url,
         string $cancel_url,
@@ -60,7 +60,7 @@ class StripeClient
         $data = [
             // 'payment_method_types[]' => 'card',
             'line_items[0][price_data][currency]' => $currency,
-            'line_items[0][price_data][unit_amount]' => intval($amount * 100),
+            'line_items[0][price_data][unit_amount]' => $amount,
             'line_items[0][price_data][product_data][name]' => $description,
             'line_items[0][quantity]' => 1,
             'mode' => 'payment',

@@ -52,6 +52,10 @@ class Client extends Model
             $model->uuid = Str::uuid();
         });
 
+        static::created(function ($model) {
+            app(\App\Services\HookService::class)->callHooks('ClientCreated', ['client' => $model]);
+        });
+
         static::retrieved(function ($client) {
             if (!ClientBalance::where('client_uuid', $client->uuid)->exists()) {
                 ClientBalance::createSafe([
@@ -193,6 +197,235 @@ class Client extends Model
     public function balance(): HasOne
     {
         return $this->hasOne(ClientBalance::class, 'client_uuid', 'uuid');
+    }
+
+    /**
+     * Check whether the client has enough available funds (balance + credit limit) to cover a given amount.
+     *
+     * This centralises the single correct formula so no controller re-implements it incorrectly:
+     * `$client->balance` is a HasOne relation to `ClientBalance`; the numeric amount lives on the row
+     * itself as `$client->balance->balance`. Accidentally doing `$client->balance + $client->credit_limit`
+     * (treating the relation as a number) causes a TypeError in PHP 8+.
+     *
+     * @param float $amount Amount the client must be able to cover.
+     */
+    public function hasSufficientBalance(float $amount): bool
+    {
+        $balanceAmount = (float) ($this->balance->balance ?? 0);
+        $creditLimit = (float) ($this->credit_limit ?? 0);
+
+        return ($balanceAmount + $creditLimit) >= $amount;
+    }
+
+    /**
+     * Total funds currently available to the client for spending (balance + credit limit).
+     * Intended for read-only display purposes; use hasSufficientBalance() for gating decisions.
+     */
+    public function getAvailableFunds(): float
+    {
+        $balanceAmount = (float) ($this->balance->balance ?? 0);
+        $creditLimit = (float) ($this->credit_limit ?? 0);
+
+        return $balanceAmount + $creditLimit;
+    }
+
+    /**
+     * Calculate a complete order summary for a pre-order (no Service exists yet).
+     *
+     * Centralises the math that every module's `controller_CalculateSummary` used to duplicate:
+     * option iteration, setup fee aggregation (product + all options), tax application for
+     * invoice mode, and formatting. Modules just call this then (optionally) add their own
+     * extra fields — e.g. puqVPNCP adds `product_group` name.
+     *
+     * Returns a flat array shaped to drop straight into a JSON response:
+     *   [
+     *     'product_name'     => string,
+     *     'price'            => string,  // formatted base price of the product
+     *     'period'           => string,  // localised label e.g. 'Monthly'
+     *     'billing_mode'     => string,  // echoed back
+     *     'options'          => [[{'uuid','group_label','label','base','base_str','setup','setup_str','price'}], ...],
+     *     'setup_fee'        => string,  // formatted TOTAL setup (product + sum of option setups)
+     *     'setup_fee_numeric'=> float,
+     *     'subtotal'         => float,   // base product + sum of option bases (NET)
+     *     'subtotal_str'     => string,
+     *     'taxes'            => [[{'name','rate','amount','amount_str'}], ...]  (empty for prepaid)
+     *     'tax_total'        => float,
+     *     'tax_total_str'    => string,
+     *     'total'            => float,   // subtotal + tax for invoice; = subtotal for prepaid
+     *     'total_str'        => string,
+     *   ]
+     *
+     * Sort order of options follows the product's `productOptionGroups` pivot order — same
+     * visual order the admin set up in the group edit screen.
+     *
+     * Known quirks of the legacy code that are FIXED here:
+     * - Old code used `$option_price->setup_fee` which was a non-existent column name
+     *   ("setup_fee" vs real "setup") — setup fees from options were silently lost.
+     *   This helper uses the correct `->setup` field.
+     *
+     * @param  Product  $product       Selected product.
+     * @param  Price    $price         Selected price row (determines currency + period).
+     * @param  array    $optionUuids   Array of selected ProductOption UUIDs to include.
+     * @param  string   $billingMode   'prepaid' or 'invoice' — drives whether taxes are applied.
+     */
+    public function calculateOrderSummary(
+        Product $product,
+        Price $price,
+        array $optionUuids = [],
+        string $billingMode = 'prepaid'
+    ): array {
+        $currency = $price->currency;
+
+        // Resolve display locale: prefer the authenticated user, fall back to the client row.
+        $locale = null;
+        try {
+            $user = app('user');
+            $locale = $user?->language ?? null;
+        } catch (\Throwable $e) {
+            // Not bound — continue with client locale.
+        }
+        if (! $locale) {
+            $locale = $this->language ?? null;
+        }
+        if ($locale) {
+            $product->setLocale($locale);
+        }
+
+        // Currency formatter closure — local so every string uses the same prefix/suffix layout.
+        $prefix = $currency->prefix ?? '';
+        $suffix = $currency->suffix ?? '';
+        $fmt = static function ($amount) use ($prefix, $suffix) {
+            return $prefix.' '.number_format((float) $amount, 2).' '.$suffix;
+        };
+
+        // Sort options by the product's option-group pivot order so the summary matches
+        // the order of groups in the admin edit screen.
+        $groupOrder = $product->productOptionGroups()->orderBy('order')->pluck('uuid')->toArray();
+        $options = ProductOption::whereIn('uuid', $optionUuids)
+            ->get()
+            ->sortBy(function ($o) use ($groupOrder) {
+                return array_search($o->product_option_group_uuid, $groupOrder);
+            })
+            ->values();
+
+        $subtotal = (float) $price->base;
+        $setupTotal = (float) $price->setup;
+        $optionsOutput = [];
+
+        foreach ($options as $option) {
+            if ($locale) {
+                $option->setLocale($locale);
+            }
+
+            // Match the option's price row by the SAME period + currency as the product price.
+            $optionPrice = $option->prices()
+                ->where('period', $price->period)
+                ->where('currency_uuid', $price->currency_uuid)
+                ->first();
+
+            $base = 0.0;
+            $setup = 0.0;
+            if ($optionPrice) {
+                $base = (float) ($optionPrice->base ?? 0);
+                // Real column is `setup`, not `setup_fee` — old bug silently dropped all option setups.
+                $setup = (float) ($optionPrice->setup ?? 0);
+                $subtotal += $base;
+                $setupTotal += $setup;
+            }
+
+            $optionsOutput[] = [
+                'uuid' => $option->uuid,
+                'group_label' => $option->productOptionGroup?->name,
+                'label' => $option->name,
+                'base' => $base,
+                'base_str' => $fmt($base),
+                'setup' => $setup,
+                'setup_str' => $fmt($setup),
+                // `price` kept as an alias for legacy blade code that reads `summary.options[i].price`.
+                'price' => $fmt($base),
+            ];
+        }
+
+        // Taxes apply only to invoice-mode services — prepaid amounts are already net
+        // (tax was taken at balance top-up) so taxing them again would double-charge.
+        $taxLines = [];
+        $taxTotal = 0.0;
+        $taxTotalStr = $fmt(0);
+        $finalTotal = round($subtotal, 2);
+
+        if ($billingMode === 'invoice') {
+            $tax = $this->calculateTaxLines($subtotal, $currency);
+            $taxLines = $tax['lines'];
+            $taxTotal = $tax['tax_total'];
+            $taxTotalStr = $tax['tax_total_str'];
+            $finalTotal = $tax['gross_total'];
+        }
+
+        return [
+            'product_name' => $product->name,
+            'price' => $fmt($price->base),
+            'period' => __('main.'.$price->period),
+            'billing_mode' => $billingMode,
+            'options' => $optionsOutput,
+            'setup_fee' => $fmt($setupTotal),
+            'setup_fee_numeric' => round($setupTotal, 2),
+            'subtotal' => round($subtotal, 2),
+            'subtotal_str' => $fmt($subtotal),
+            'taxes' => $taxLines,
+            'tax_total' => $taxTotal,
+            'tax_total_str' => $taxTotalStr,
+            'total' => $finalTotal,
+            'total_str' => $fmt($finalTotal),
+        ];
+    }
+
+    /**
+     * Build ready-to-render tax lines for an arbitrary subtotal using this client's tax rules.
+     *
+     * Generic variant usable from any context — including the order flow where no Service exists
+     * yet. Service::calculateTaxLines() delegates to this so there is exactly one implementation.
+     *
+     * Returns:
+     *   [
+     *     'lines'           => [['name', 'rate', 'amount', 'amount_str'], ...],
+     *     'tax_total'       => float,
+     *     'tax_total_str'   => string (formatted in the given currency),
+     *     'gross_total'     => float,           // subtotal + tax_total
+     *     'gross_total_str' => string,
+     *   ]
+     *
+     * @param  float           $subtotal   Net amount the tax is calculated on.
+     * @param  Currency|null   $currency   Currency used to format the *_str fields.
+     *                                     Defaults to the client's own currency.
+     */
+    public function calculateTaxLines(float $subtotal, ?Currency $currency = null): array
+    {
+        $currency ??= $this->currency;
+        $taxes = $this->getTaxes();
+
+        $taxTotal = 0.0;
+        $lines = [];
+
+        foreach ($taxes as $tax) {
+            $taxAmount = round($subtotal * ((float) $tax['rate'] / 100), 2);
+            $taxTotal += $taxAmount;
+            $lines[] = [
+                'name' => $tax['name'],
+                'rate' => (float) $tax['rate'],
+                'amount' => $taxAmount,
+                'amount_str' => formatCurrency($taxAmount, $currency),
+            ];
+        }
+
+        $grossTotal = round($subtotal + $taxTotal, 2);
+
+        return [
+            'lines' => $lines,
+            'tax_total' => $taxTotal,
+            'tax_total_str' => formatCurrency($taxTotal, $currency),
+            'gross_total' => $grossTotal,
+            'gross_total_str' => formatCurrency($grossTotal, $currency),
+        ];
     }
 
     public function ViesVatNumberValidation(): void
@@ -357,7 +590,7 @@ class Client extends Model
         return $taxes;
     }
 
-    public function getHomeCompany(): HomeCompany
+    public function getHomeCompany(): ?HomeCompany
     {
         $tax_rule = $this->getTaxRule();
 
@@ -420,6 +653,35 @@ class Client extends Model
         return $invoiceUuid;
     }
 
+    public function createStandaloneInvoice(): string
+    {
+        return DB::transaction(function () {
+            $taxes = $this->getTaxes();
+            $home_company = $this->getHomeCompany();
+
+            $invoice = new Invoice;
+            $invoice->type = 'proforma';
+            $invoice->status = 'draft';
+            $invoice->billing_purpose = 'standalone';
+            $invoice->client_uuid = $this->uuid;
+            $invoice->home_company_uuid = $home_company->uuid;
+
+            $index = 1;
+            foreach ($taxes as $tax) {
+                if ($index > 3) {
+                    continue;
+                }
+                $invoice->{"tax_$index"} = $tax['rate'];
+                $invoice->{"tax_{$index}_name"} = $tax['name'];
+                $index++;
+            }
+
+            $invoice->save();
+
+            return $invoice->uuid;
+        });
+    }
+
     public function getNotificationRule($category, $notification): ?NotificationRule
     {
         $home_company = $this->getHomeCompany();
@@ -467,6 +729,7 @@ class Client extends Model
     protected function calculateRecommendedAddFundsAmount(): float
     {
         $services = $this->services()
+            ->where('billing_mode', '!=', 'invoice')
             ->whereIn('status', ['active', 'suspended', 'pending'])
             ->where('termination_request', false)
             ->get();

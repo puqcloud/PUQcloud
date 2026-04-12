@@ -114,7 +114,7 @@
                         var btn = '';
 
                         if (row.urls.edit) {
-                            btn = btn + renderEditButton(row.urls.edit);
+                            btn = btn + renderEditLink(row.urls.edit);
                         }
                         if (row.urls.delete) {
                             btn = btn + renderDeleteButton(row.urls.delete);
@@ -185,11 +185,6 @@
 
                 $modalBody.html(formHtml);
                 $('#universalModal').modal('show');
-            });
-
-            $dataTable.on('click', 'button.edit-btn', function (e) {
-                e.preventDefault();
-                window.location.href = $(this).data('model-url');
             });
 
             $dataTable.on('click', 'button.delete-btn', function (e) {

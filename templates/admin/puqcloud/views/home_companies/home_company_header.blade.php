@@ -5,7 +5,7 @@
                 <div class="page-title-head center-elem m-0">
                                             <span class="d-inline-block pe-2">
                                                 <i class="fa fa-cogs"></i>
-                                            </span>{{ __('main.Product') }}
+                                            </span>{{ __('main.Home Company') }}
                     <span data-key="home_company" class="d-inline-block"></span>
                 </div>
                 <div class="page-title-subheading opacity-10">

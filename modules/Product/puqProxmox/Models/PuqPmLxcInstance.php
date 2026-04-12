@@ -441,6 +441,23 @@ class PuqPmLxcInstance extends Model
             return $crete_task;
         }
 
+        $create_exitstatus = $crete_task['data']['exitstatus'] ?? '';
+        if (str_starts_with($create_exitstatus, 'WARNINGS')) {
+            logModule(
+                'Product',
+                'puqProxmox',
+                "LXC vzcreate finished with warnings ({$create_exitstatus}) for vmid {$this->vmid}",
+                'warning',
+                [
+                    'upid' => $this->creating_upid,
+                    'vmid' => $this->vmid,
+                    'node' => $data['node'] ?? null,
+                    'lxc_instance_uuid' => $this->uuid,
+                ],
+                $crete_task['data']
+            );
+        }
+
         if (!empty($features)) {
 
             $data_config['vmid'] = $this->vmid;
@@ -2425,6 +2442,9 @@ class PuqPmLxcInstance extends Model
 
         foreach ($puq_pm_script_logs as $puq_pm_script_log) {
             $puq_pm_script = $puq_pm_script_log->puqPmScript;
+            if (! $puq_pm_script) {
+                continue;
+            }
             $puq_pm_script_log_tmp = [
                 'uuid' => $puq_pm_script_log->uuid,
                 'status' => $puq_pm_script_log->status,
@@ -2437,8 +2457,8 @@ class PuqPmLxcInstance extends Model
                 'puq_pm_script_type' => $puq_pm_script->type,
                 'puq_pm_script_name' => $puq_pm_script->name,
                 'puq_pm_script_logs' => $puq_pm_script_log_tmp,
-                'related_model_name' => $relatedModel->name,
-                'related_model_class' => class_basename($relatedModel),
+                'related_model_name' => $relatedModel->name ?? 'n/a',
+                'related_model_class' => $relatedModel ? class_basename($relatedModel) : 'n/a',
 
             ];
         }

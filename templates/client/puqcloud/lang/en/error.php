@@ -70,10 +70,28 @@ return [
     'The selected product was not found' => 'The selected product was not found',
     'The selected product price was not found' => 'The selected product price was not found',
     'Unexpected internal error' => 'Unexpected internal error',
-    '' => '',
-    '' => '',
-    '' => '',
-    '' => '',
-    '' => '',
+    'Invalid billing mode' => 'Invalid billing mode',
+    'The selected Location is not available' => 'The selected Location is not available',
 
+    // Support Tickets
+    'Failed to load ticket' => 'Failed to load ticket',
+    'The selected department is invalid' => 'The selected department is invalid',
+    'The selected service is invalid' => 'The selected service is invalid',
+    'Closed tickets cannot be reopened' => 'Closed tickets cannot be reopened',
+    'File extension not allowed' => 'File extension not allowed',
+    'File size exceeds maximum allowed' => 'File size exceeds maximum allowed',
+    'Maximum number of files reached' => 'Maximum number of files reached',
+    'File not found' => 'File not found',
+    'Ticket is already closed' => 'Ticket is already closed',
+    'Ticket is not closed' => 'Ticket is not closed',
+    'Reopening is not allowed for this department' => 'Reopening is not allowed for this department',
+
+    // Upgrade/Downgrade
+    'Service is not active' => 'Service is not active',
+    'Failed to generate invoice' => 'Failed to generate invoice',
+    'Insufficient funds' => 'Insufficient funds',
+    'Operation not allowed while service is being provisioned' => 'Operation not allowed while service is being provisioned',
+    'This operation is only available for invoice billing mode' => 'This operation is only available for invoice billing mode',
+    'Target day must be between 1 and 28' => 'Target day must be between 1 and 28',
+    'Transaction already exists' => 'Transaction already exists',
 ];

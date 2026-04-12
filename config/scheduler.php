@@ -82,6 +82,24 @@ return [
         'disable' => false,
     ],
     [
+        'artisan' => 'Finance:GenerateServiceInvoices',
+        'group' => 'Finance',
+        'cron' => '* * * * *',
+        'disable' => false,
+    ],
+    [
+        'artisan' => 'Finance:InvoiceReminders',
+        'group' => 'Finance',
+        'cron' => '* * * * *',
+        'disable' => false,
+    ],
+    [
+        'artisan' => 'Finance:CleanupEmptyInvoices',
+        'group' => 'Finance',
+        'cron' => '0 * * * *',
+        'disable' => false,
+    ],
+    [
         'artisan' => 'SslManager:ProcessPending',
         'group' => 'SSL Manager',
         'cron' => '* * * * *',
@@ -97,6 +115,24 @@ return [
         'artisan' => 'SslManager:CheckExpiration',
         'group' => 'SSL Manager',
         'cron' => '* * * * *',
+        'disable' => false,
+    ],
+    [
+        'artisan' => 'Tickets:ImportEmails',
+        'group' => 'Tickets',
+        'cron' => '* * * * *',
+        'disable' => false,
+    ],
+    [
+        'artisan' => 'Tickets:AutoClose',
+        'group' => 'Tickets',
+        'cron' => '0 * * * *',
+        'disable' => false,
+    ],
+    [
+        'artisan' => 'Tickets:SlaReminder',
+        'group' => 'Tickets',
+        'cron' => '*/15 * * * *',
         'disable' => false,
     ],
 ];

@@ -97,18 +97,9 @@
 
             var $dataTable = initializeDataTable($tableId, ajaxUrl, columnsConfig);
 
-            $tableId.on('click', 'button.delete-btn', function (e) {
+            $dataTable.on('click', 'button.delete-btn', function (e) {
                 e.preventDefault();
-                var modelUrl = $(this).data('model-url');
-
-                if (confirm(translate('Are you sure you want to delete this record?'))) {
-                    PUQajax(modelUrl, null, 3000, $(this), 'DELETE')
-                        .then(function (response) {
-                            if (response.status === "success") {
-                                $dataTable.ajax.reload(null, false);
-                            }
-                        });
-                }
+                handleDelete($dataTable, this);
             });
 
             $('#universalModal').on('show.bs.modal', function (event) {

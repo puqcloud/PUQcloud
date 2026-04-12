@@ -72,7 +72,7 @@ class puqPrzelewy24 extends Payment
     public function getClientAreaHtml(array $data = []): string
     {
         $invoice = $data['invoice'];
-        $amount = $invoice->getDueAmountAttribute();
+        $amountCents = $invoice->due_amount_cents;
         $currency = $invoice->client->currency->code;
 
         $p24 = new Przelewy24Client($this->module_data);
@@ -80,7 +80,7 @@ class puqPrzelewy24 extends Payment
         $response = $p24->registerTransaction([
             'sessionId' => $invoice->uuid,
             'description' => 'Invoice Proforma #'.$invoice->number,
-            'amount' => (int) ($amount * 100),
+            'amount' => $amountCents,
             'currency' => $currency,
             'email' => $invoice->client->owner()->email,
             'urlReturn' => route('client.web.panel.module.web', [
@@ -191,11 +191,11 @@ class puqPrzelewy24 extends Payment
         }
 
         $currency = $invoice->client->currency->code;
-        $amount = $invoice->getDueAmountAttribute();
+        $amountCents = $invoice->due_amount_cents;
 
         $result = $p24->verifyTransaction([
             'sessionId' => $invoice->uuid,
-            'amount' => (int) ($amount * 100),
+            'amount' => $amountCents,
             'currency' => $currency,
             'orderId' => $request->get('orderId'),
         ]);

@@ -37,11 +37,11 @@ class AllAdminNotificationJob implements ShouldQueue
 
     public $maxExceptions = 2;
 
-    public $data = [];
+    public array $data = [];
 
-    public $tags = [];
+    public array $tags = [];
 
-    public function __construct($data, $tags)
+    public function __construct(array $data, array $tags)
     {
         $this->data = $data;
         $this->tags = $tags;

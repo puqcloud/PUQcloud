@@ -190,7 +190,8 @@ class Verification extends Model
         }
 
         if ($this->type == 'totp') {
-            $tfa = new TwoFactorAuth(new EndroidQrCodeProvider, $host ?? 'PUQcloud');
+            $host = parse_url(config('app.url', ''), PHP_URL_HOST) ?: 'PUQcloud';
+            $tfa = new TwoFactorAuth(new EndroidQrCodeProvider, $host);
             $isValid = $tfa->verifyCode((string) $this->secret, $code);
             if ($isValid) {
                 $this->last_used_at = now();

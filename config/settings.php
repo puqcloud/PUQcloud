@@ -126,6 +126,82 @@ return [
             'description' => "Maximum allowed total balance on client's account (in default currency)",
             'class' => 'col-12 col-md-6 col-lg-4 col-xl-3',
         ],
+
+        'invoice_generation_mode' => [
+            'label' => 'Invoice Generation Mode',
+            'type' => 'select',
+            'validation' => 'required|in:per_service,aggregated',
+            'default' => 'per_service',
+            'description' => 'Per Service: one invoice per service. Aggregated: all services due in the same month grouped into one invoice per client',
+            'class' => 'col-12 col-md-6 col-lg-4 col-xl-3',
+            'options' => [
+                'per_service' => 'Per Service',
+                'aggregated' => 'Aggregated',
+            ],
+        ],
+
+        'continuous_invoice_generation' => [
+            'label' => 'Continuous Invoice Generation',
+            'type' => 'checkbox',
+            'validation' => '',
+            'default' => false,
+            'description' => 'If enabled, invoices will be generated for each cycle even if the previous invoice remains unpaid',
+            'class' => 'col-12 col-md-6 col-lg-4 col-xl-3',
+        ],
+
+        'invoice_generate_days_before' => [
+            'label' => 'Invoice Generation',
+            'type' => 'number',
+            'validation' => 'required|integer|min:1',
+            'default' => 14,
+            'description' => 'Number of days before the due payment date to generate invoices',
+            'class' => 'col-12 col-md-6 col-lg-4 col-xl-3',
+        ],
+
+        'invoice_due_days' => [
+            'label' => 'Invoice Due Days',
+            'type' => 'number',
+            'validation' => 'required|integer|min:1',
+            'default' => 7,
+            'description' => 'Number of days from the invoice issue date until payment is due',
+            'class' => 'col-12 col-md-6 col-lg-4 col-xl-3',
+        ],
+
+        'invoice_unpaid_reminder_days' => [
+            'label' => 'Invoice Unpaid Reminder',
+            'type' => 'number',
+            'validation' => 'required|integer|min:0',
+            'default' => 0,
+            'description' => 'Number of days before the invoice due date to send a payment reminder (0 to disable)',
+            'class' => 'col-12 col-md-6 col-lg-4 col-xl-3',
+        ],
+
+        'invoice_first_overdue_days' => [
+            'label' => 'First Overdue Reminder',
+            'type' => 'number',
+            'validation' => 'required|integer|min:0',
+            'default' => 0,
+            'description' => 'Number of days after the invoice due date to send the first overdue notice (0 to disable)',
+            'class' => 'col-12 col-md-6 col-lg-4 col-xl-3',
+        ],
+
+        'invoice_second_overdue_days' => [
+            'label' => 'Second Overdue Reminder',
+            'type' => 'number',
+            'validation' => 'required|integer|min:0',
+            'default' => 0,
+            'description' => 'Number of days after the invoice due date to send the second overdue notice (0 to disable)',
+            'class' => 'col-12 col-md-6 col-lg-4 col-xl-3',
+        ],
+
+        'invoice_third_overdue_days' => [
+            'label' => 'Third Overdue Reminder',
+            'type' => 'number',
+            'validation' => 'required|integer|min:0',
+            'default' => 0,
+            'description' => 'Number of days after the invoice due date to send the third (final) overdue notice (0 to disable)',
+            'class' => 'col-12 col-md-6 col-lg-4 col-xl-3',
+        ],
     ],
 
     'client' => [
@@ -135,6 +211,41 @@ return [
             'validation' => 'required|integer|min:1',
             'default' => 60,
             'description' => 'The number of minutes before the reset password link expires',
+            'class' => 'col-12 col-md-6 col-lg-4 col-xl-3',
+        ],
+    ],
+
+    'support' => [
+        'ticket_allowed_file_extensions' => [
+            'label' => 'Allowed File Extensions',
+            'type' => 'text',
+            'validation' => 'required|string',
+            'default' => 'jpg,jpeg,png,gif,pdf,doc,docx,xls,xlsx,txt,zip,rar',
+            'description' => 'Comma-separated list of allowed file extensions for ticket attachments',
+            'class' => 'col-12 col-md-6 col-lg-4 col-xl-3',
+        ],
+        'ticket_max_file_size_mb' => [
+            'label' => 'Max File Size (MB)',
+            'type' => 'number',
+            'validation' => 'required|integer|min:1|max:100',
+            'default' => 10,
+            'description' => 'Maximum file size in megabytes for ticket attachments',
+            'class' => 'col-12 col-md-6 col-lg-4 col-xl-3',
+        ],
+        'ticket_max_attachments_per_reply' => [
+            'label' => 'Max Attachments Per Reply',
+            'type' => 'number',
+            'validation' => 'required|integer|min:1|max:20',
+            'default' => 5,
+            'description' => 'Maximum number of file attachments per ticket reply',
+            'class' => 'col-12 col-md-6 col-lg-4 col-xl-3',
+        ],
+        'ticket_auto_close_hours' => [
+            'label' => 'Auto-Close Hours',
+            'type' => 'number',
+            'validation' => 'required|integer|min:0',
+            'default' => 0,
+            'description' => 'Hours after last reply to auto-close ticket (0 to disable)',
             'class' => 'col-12 col-md-6 col-lg-4 col-xl-3',
         ],
     ],

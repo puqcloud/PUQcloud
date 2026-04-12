@@ -5,6 +5,7 @@ return [
     'Logout out successfully' => 'Déconnexion réussie',
     'Updated successfully' => 'Mis à jour avec succès',
     'Deleted successfully' => 'Supprimé avec succès',
+    'Connection successful' => 'Connexion réussie',
     'Created successfully' => 'Créé avec succès',
     'Successfully' => 'Avec succès',
     'Association deleted successfully' => 'Association supprimée avec succès',
@@ -20,4 +21,7 @@ return [
     'Idle forcibly changed' => 'Inactivité changée de force',
     'Reload successfully' => 'Rechargement réussi',
     'The task has been added to the queue' => 'La tâche a été ajoutée à la file d\'attente',
+    'Notification sent successfully' => 'Notification envoyée avec succès',
+    'Bulk action completed on :count ticket(s)' => 'Action groupée terminée pour :count ticket(s)',
+    'Ticket reopened successfully' => 'Le ticket a été réouvert avec succès',
 ];

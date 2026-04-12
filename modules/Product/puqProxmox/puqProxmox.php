@@ -35,6 +35,7 @@ use Modules\Product\puqProxmox\Models\PuqPmLxcInstance;
 use Modules\Product\puqProxmox\Models\PuqPmLxcOsTemplate;
 use Modules\Product\puqProxmox\Models\PuqPmLxcPreset;
 use Modules\Product\puqProxmox\Models\PuqPmSshPublicKey;
+use OpenApi\Attributes as OA;
 
 class puqProxmox extends Product
 {
@@ -57,7 +58,7 @@ class puqProxmox extends Product
     {
         try {
 
-            if (!Schema::hasTable('puq_pm_cluster_groups')) {
+            if (! Schema::hasTable('puq_pm_cluster_groups')) {
                 Schema::create('puq_pm_cluster_groups', function (Blueprint $table) {
                     $table->uuid()->primary();
 
@@ -76,7 +77,7 @@ class puqProxmox extends Product
                 $groupExists = DB::table('puq_pm_cluster_groups')->where('name', 'Default')->exists();
                 $home_company = HomeCompany::query()->where('default', true)->first();
 
-                if (!$groupExists) {
+                if (! $groupExists) {
                     DB::table('puq_pm_cluster_groups')->insert([
                         'uuid' => (string) Str::uuid(),
                         'name' => 'Default',
@@ -90,7 +91,7 @@ class puqProxmox extends Product
                 }
             }
 
-            if (!Schema::hasTable('puq_pm_clusters')) {
+            if (! Schema::hasTable('puq_pm_clusters')) {
                 Schema::create('puq_pm_clusters', function (Blueprint $table) {
 
                     $table->uuid()->primary();
@@ -110,7 +111,7 @@ class puqProxmox extends Product
                 });
             }
 
-            if (!Schema::hasTable('puq_pm_access_servers')) {
+            if (! Schema::hasTable('puq_pm_access_servers')) {
                 Schema::create('puq_pm_access_servers', function (Blueprint $table) {
 
                     $table->uuid()->primary();
@@ -139,7 +140,7 @@ class puqProxmox extends Product
                 });
             }
 
-            if (!Schema::hasTable('puq_pm_ip_pools')) {
+            if (! Schema::hasTable('puq_pm_ip_pools')) {
                 Schema::create('puq_pm_ip_pools', function (Blueprint $table) {
 
                     $table->uuid()->primary();
@@ -156,7 +157,7 @@ class puqProxmox extends Product
                 });
             }
 
-            if (!Schema::hasTable('puq_pm_mac_pools')) {
+            if (! Schema::hasTable('puq_pm_mac_pools')) {
                 Schema::create('puq_pm_mac_pools', function (Blueprint $table) {
 
                     $table->uuid()->primary();
@@ -169,7 +170,7 @@ class puqProxmox extends Product
                 });
             }
 
-            if (!Schema::hasTable('puq_pm_nodes')) {
+            if (! Schema::hasTable('puq_pm_nodes')) {
                 Schema::create('puq_pm_nodes', function (Blueprint $table) {
 
                     $table->uuid()->primary();
@@ -191,7 +192,7 @@ class puqProxmox extends Product
                 });
             }
 
-            if (!Schema::hasTable('puq_pm_tags')) {
+            if (! Schema::hasTable('puq_pm_tags')) {
                 Schema::create('puq_pm_tags', function (Blueprint $table) {
 
                     $table->uuid()->primary();
@@ -201,7 +202,7 @@ class puqProxmox extends Product
                 });
             }
 
-            if (!Schema::hasTable('puq_pm_node_x_tag')) {
+            if (! Schema::hasTable('puq_pm_node_x_tag')) {
                 Schema::create('puq_pm_node_x_tag', function (Blueprint $table) {
 
                     $table->uuid('puq_pm_tag_uuid');
@@ -214,7 +215,7 @@ class puqProxmox extends Product
                 });
             }
 
-            if (!Schema::hasTable('puq_pm_storages')) {
+            if (! Schema::hasTable('puq_pm_storages')) {
                 Schema::create('puq_pm_storages', function (Blueprint $table) {
 
                     $table->uuid()->primary();
@@ -238,7 +239,7 @@ class puqProxmox extends Product
                 });
             }
 
-            if (!Schema::hasTable('puq_pm_storage_x_tag')) {
+            if (! Schema::hasTable('puq_pm_storage_x_tag')) {
                 Schema::create('puq_pm_storage_x_tag', function (Blueprint $table) {
 
                     $table->uuid('puq_pm_tag_uuid');
@@ -251,7 +252,7 @@ class puqProxmox extends Product
                 });
             }
 
-            if (!Schema::hasTable('puq_pm_public_networks')) {
+            if (! Schema::hasTable('puq_pm_public_networks')) {
                 Schema::create('puq_pm_public_networks', function (Blueprint $table) {
 
                     $table->uuid()->primary();
@@ -274,7 +275,7 @@ class puqProxmox extends Product
                 });
             }
 
-            if (!Schema::hasTable('puq_pm_public_network_x_tag')) {
+            if (! Schema::hasTable('puq_pm_public_network_x_tag')) {
                 Schema::create('puq_pm_public_network_x_tag', function (Blueprint $table) {
 
                     $table->uuid('puq_pm_tag_uuid');
@@ -287,7 +288,7 @@ class puqProxmox extends Product
                 });
             }
 
-            if (!Schema::hasTable('puq_pm_private_networks')) {
+            if (! Schema::hasTable('puq_pm_private_networks')) {
                 Schema::create('puq_pm_private_networks', function (Blueprint $table) {
 
                     $table->uuid()->primary();
@@ -307,7 +308,7 @@ class puqProxmox extends Product
                 });
             }
 
-            if (!Schema::hasTable('puq_pm_private_network_x_tag')) {
+            if (! Schema::hasTable('puq_pm_private_network_x_tag')) {
                 Schema::create('puq_pm_private_network_x_tag', function (Blueprint $table) {
 
                     $table->uuid('puq_pm_tag_uuid');
@@ -320,7 +321,7 @@ class puqProxmox extends Product
                 });
             }
 
-            if (!Schema::hasTable('puq_pm_dns_zones')) {
+            if (! Schema::hasTable('puq_pm_dns_zones')) {
                 Schema::create('puq_pm_dns_zones', function (Blueprint $table) {
 
                     $table->uuid()->primary();
@@ -332,7 +333,7 @@ class puqProxmox extends Product
                 });
             }
 
-            if (!Schema::hasTable('puq_pm_lxc_presets')) {
+            if (! Schema::hasTable('puq_pm_lxc_presets')) {
                 Schema::create('puq_pm_lxc_presets', function (Blueprint $table) {
 
                     $table->uuid()->primary();
@@ -434,7 +435,7 @@ class puqProxmox extends Product
                 });
             }
 
-            if (!Schema::hasTable('puq_pm_lxc_preset_cluster_groups')) {
+            if (! Schema::hasTable('puq_pm_lxc_preset_cluster_groups')) {
                 Schema::create('puq_pm_lxc_preset_cluster_groups', function (Blueprint $table) {
 
                     $table->uuid()->primary();
@@ -451,7 +452,7 @@ class puqProxmox extends Product
                 });
             }
 
-            if (!Schema::hasTable('puq_pm_lxc_preset_cluster_group_x_tag')) {
+            if (! Schema::hasTable('puq_pm_lxc_preset_cluster_group_x_tag')) {
                 Schema::create('puq_pm_lxc_preset_cluster_group_x_tag', function (Blueprint $table) {
 
                     $table->uuid('puq_pm_tag_uuid');
@@ -469,7 +470,7 @@ class puqProxmox extends Product
                 });
             }
 
-            if (!Schema::hasTable('puq_pm_lxc_templates')) {
+            if (! Schema::hasTable('puq_pm_lxc_templates')) {
                 Schema::create('puq_pm_lxc_templates', function (Blueprint $table) {
 
                     $table->uuid()->primary();
@@ -481,7 +482,7 @@ class puqProxmox extends Product
                 });
             }
 
-            if (!Schema::hasTable('puq_pm_lxc_os_templates')) {
+            if (! Schema::hasTable('puq_pm_lxc_os_templates')) {
                 Schema::create('puq_pm_lxc_os_templates', function (Blueprint $table) {
 
                     $table->uuid()->primary();
@@ -498,7 +499,7 @@ class puqProxmox extends Product
                 });
             }
 
-            if (!Schema::hasTable('puq_pm_lxc_preset_x_lxc_os_templates')) {
+            if (! Schema::hasTable('puq_pm_lxc_preset_x_lxc_os_templates')) {
                 Schema::create('puq_pm_lxc_preset_x_lxc_os_templates', function (Blueprint $table) {
 
                     $table->uuid('puq_pm_lxc_preset_uuid');
@@ -513,7 +514,7 @@ class puqProxmox extends Product
                 });
             }
 
-            if (!Schema::hasTable('puq_pm_lxc_instances')) {
+            if (! Schema::hasTable('puq_pm_lxc_instances')) {
                 Schema::create('puq_pm_lxc_instances', function (Blueprint $table) {
 
                     $table->uuid()->primary();
@@ -580,7 +581,7 @@ class puqProxmox extends Product
                 });
             }
 
-            if (!Schema::hasTable('puq_pm_lxc_instance_nets')) {
+            if (! Schema::hasTable('puq_pm_lxc_instance_nets')) {
                 Schema::create('puq_pm_lxc_instance_nets', function (Blueprint $table) {
 
                     $table->uuid()->primary();
@@ -612,7 +613,7 @@ class puqProxmox extends Product
                 });
             }
 
-            if (!Schema::hasTable('puq_pm_ssh_public_keys')) {
+            if (! Schema::hasTable('puq_pm_ssh_public_keys')) {
                 Schema::create('puq_pm_ssh_public_keys', function (Blueprint $table) {
 
                     $table->uuid()->primary();
@@ -626,7 +627,7 @@ class puqProxmox extends Product
                 });
             }
 
-            if (!Schema::hasTable('puq_pm_client_private_networks')) {
+            if (! Schema::hasTable('puq_pm_client_private_networks')) {
                 Schema::create('puq_pm_client_private_networks', function (Blueprint $table) {
 
                     $table->uuid()->primary();
@@ -650,7 +651,7 @@ class puqProxmox extends Product
             // Fill in the settings ---------------------------------------------------------------------
             SettingService::set('Product.puqProxmox.global_private_network', '10.0.100.0/24');
 
-            if (!Schema::hasTable('puq_pm_scripts')) {
+            if (! Schema::hasTable('puq_pm_scripts')) {
                 Schema::create('puq_pm_scripts', function (Blueprint $table) {
 
                     $table->uuid()->primary();
@@ -666,7 +667,7 @@ class puqProxmox extends Product
                 });
             }
 
-            if (!Schema::hasTable('puq_pm_script_logs')) {
+            if (! Schema::hasTable('puq_pm_script_logs')) {
                 Schema::create('puq_pm_script_logs', function (Blueprint $table) {
 
                     $table->uuid()->primary();
@@ -689,7 +690,7 @@ class puqProxmox extends Product
             }
             // APP --------------------------------------------------------------------------------------
 
-            if (!Schema::hasTable('puq_pm_load_balancers')) {
+            if (! Schema::hasTable('puq_pm_load_balancers')) {
                 Schema::create('puq_pm_load_balancers', function (Blueprint $table) {
 
                     $table->uuid()->primary();
@@ -709,7 +710,7 @@ class puqProxmox extends Product
                 });
             }
 
-            if (!Schema::hasTable('puq_pm_web_proxies')) {
+            if (! Schema::hasTable('puq_pm_web_proxies')) {
                 Schema::create('puq_pm_web_proxies', function (Blueprint $table) {
 
                     $table->uuid()->primary();
@@ -729,7 +730,7 @@ class puqProxmox extends Product
                 });
             }
 
-            if (!Schema::hasTable('puq_pm_app_presets')) {
+            if (! Schema::hasTable('puq_pm_app_presets')) {
                 Schema::create('puq_pm_app_presets', function (Blueprint $table) {
 
                     $table->uuid()->primary();
@@ -755,7 +756,7 @@ class puqProxmox extends Product
                 });
             }
 
-            if (!Schema::hasTable('puq_pm_app_endpoints')) {
+            if (! Schema::hasTable('puq_pm_app_endpoints')) {
                 Schema::create('puq_pm_app_endpoints', function (Blueprint $table) {
 
                     $table->uuid()->primary();
@@ -774,7 +775,7 @@ class puqProxmox extends Product
                 });
             }
 
-            if (!Schema::hasTable('puq_pm_app_endpoint_locations')) {
+            if (! Schema::hasTable('puq_pm_app_endpoint_locations')) {
                 Schema::create('puq_pm_app_endpoint_locations', function (Blueprint $table) {
 
                     $table->uuid()->primary();
@@ -795,7 +796,7 @@ class puqProxmox extends Product
                 });
             }
 
-            if (!Schema::hasTable('puq_pm_app_instances')) {
+            if (! Schema::hasTable('puq_pm_app_instances')) {
                 Schema::create('puq_pm_app_instances', function (Blueprint $table) {
 
                     $table->uuid()->primary();
@@ -830,32 +831,31 @@ class puqProxmox extends Product
 
             // Updates ---------------------------------------------------------------------------------------
             Schema::table('puq_pm_lxc_instances', function (Blueprint $table) {
-                if (!Schema::hasColumn('puq_pm_lxc_instances', 'deploy_status')) {
+                if (! Schema::hasColumn('puq_pm_lxc_instances', 'deploy_status')) {
                     $table->string('deploy_status')->nullable();
                 }
-                if (!Schema::hasColumn('puq_pm_lxc_instances', 'deploy_progress')) {
+                if (! Schema::hasColumn('puq_pm_lxc_instances', 'deploy_progress')) {
                     $table->integer('deploy_progress')->nullable();
                 }
-                if (!Schema::hasColumn('puq_pm_lxc_instances', 'deploy_started_at')) {
+                if (! Schema::hasColumn('puq_pm_lxc_instances', 'deploy_started_at')) {
                     $table->dateTime('deploy_started_at')->nullable();
                 }
-                if (!Schema::hasColumn('puq_pm_lxc_instances', 'deploy_finished_at')) {
+                if (! Schema::hasColumn('puq_pm_lxc_instances', 'deploy_finished_at')) {
                     $table->dateTime('deploy_finished_at')->nullable();
                 }
-                if (!Schema::hasColumn('puq_pm_lxc_instances', 'deploy_logs')) {
+                if (! Schema::hasColumn('puq_pm_lxc_instances', 'deploy_logs')) {
                     $table->longText('deploy_logs')->nullable();
                 }
-                if (!Schema::hasColumn('puq_pm_lxc_instances', 'deploy_current_step')) {
+                if (! Schema::hasColumn('puq_pm_lxc_instances', 'deploy_current_step')) {
                     $table->string('deploy_current_step')->nullable();
                 }
-                if (!Schema::hasColumn('puq_pm_lxc_instances', 'deploy_error')) {
+                if (! Schema::hasColumn('puq_pm_lxc_instances', 'deploy_error')) {
                     $table->longText('deploy_error')->nullable();
                 }
             });
 
-
             Schema::table('puq_pm_app_instances', function (Blueprint $table) {
-                if (!Schema::hasColumn('puq_pm_app_instances', 'deploy_started_at')) {
+                if (! Schema::hasColumn('puq_pm_app_instances', 'deploy_started_at')) {
                     $table->dateTime('deploy_started_at')->nullable();
                 }
                 if (Schema::hasColumn('puq_pm_app_instances', 'deploy_error')) {
@@ -877,7 +877,7 @@ class puqProxmox extends Product
                         $table->dropColumn('env');
                     }
 
-                    if (!Schema::hasColumn($tableName, 'env_variables')) {
+                    if (! Schema::hasColumn($tableName, 'env_variables')) {
                         $table->json('env_variables')->nullable();
                     }
 
@@ -886,11 +886,11 @@ class puqProxmox extends Product
 
             Schema::table('puq_pm_lxc_presets', function (Blueprint $table) {
 
-                if (!Schema::hasColumn('puq_pm_lxc_presets', 'puq_pm_cluster_group_env_variables')) {
+                if (! Schema::hasColumn('puq_pm_lxc_presets', 'puq_pm_cluster_group_env_variables')) {
                     $table->boolean('puq_pm_cluster_group_env_variables')->default(false);
                 }
 
-                if (!Schema::hasColumn('puq_pm_lxc_presets', 'puq_pm_cluster_env_variables')) {
+                if (! Schema::hasColumn('puq_pm_lxc_presets', 'puq_pm_cluster_env_variables')) {
                     $table->boolean('puq_pm_cluster_env_variables')->default(false);
                 }
 
@@ -1000,7 +1000,7 @@ class puqProxmox extends Product
         if ($type == 'lxc') {
             $puq_pm_lxc_preset_data = [];
 
-            if (!empty($this->product_data['puq_pm_lxc_preset_uuid'])) {
+            if (! empty($this->product_data['puq_pm_lxc_preset_uuid'])) {
                 $puq_pm_lxc_preset = PuqPmLxcPreset::find($this->product_data['puq_pm_lxc_preset_uuid']);
                 if ($puq_pm_lxc_preset) {
                     $puq_pm_lxc_preset_data = [
@@ -1060,7 +1060,7 @@ class puqProxmox extends Product
         if ($type == 'app') {
             $puq_pm_app_preset_data = [];
 
-            if (!empty($this->product_data['puq_pm_app_preset_uuid'])) {
+            if (! empty($this->product_data['puq_pm_app_preset_uuid'])) {
                 $puq_pm_app_preset = PuqPmAppPreset::find($this->product_data['puq_pm_app_preset_uuid']);
                 if ($puq_pm_app_preset) {
                     $puq_pm_app_preset_data = [
@@ -1179,7 +1179,7 @@ class puqProxmox extends Product
 
     public function saveProductData(array $data = []): array
     {
-        if (!empty($data['type_new']) && $data['type_new'] == $data['type']) {
+        if (! empty($data['type_new']) && $data['type_new'] == $data['type']) {
 
             return [
                 'status' => 'success',
@@ -1281,7 +1281,7 @@ class puqProxmox extends Product
                     $service->client_uuid)->get();
             }
 
-            if (!$lxc_instance) {
+            if (! $lxc_instance) {
                 return $this->view('admin_area.service.lxc_instance_not_found', []);
             }
 
@@ -1300,7 +1300,7 @@ class puqProxmox extends Product
             $data['backup_storage_name'] = $this->service_data['backup_storage_name'] ?? '';
 
             $data['backup_storages'] = [];
-            if (!empty($lxc_instance->vmid)) {
+            if (! empty($lxc_instance->vmid)) {
                 $data['backup_storages'] = $lxc_instance->getAvailableBackupStorages() ?? []; // ?????????????????????????? optional list all storages
             }
 
@@ -1314,7 +1314,7 @@ class puqProxmox extends Product
                     $service->client_uuid)->get();
             }
 
-            if (!$lxc_instance) {
+            if (! $lxc_instance) {
                 return $this->view('admin_area.service.lxc_instance_not_found', []);
             }
 
@@ -1329,7 +1329,7 @@ class puqProxmox extends Product
             $data['backup_storage_name'] = $this->service_data['backup_storage_name'] ?? '';
 
             $data['backup_storages'] = [];
-            if (!empty($lxc_instance->vmid)) {
+            if (! empty($lxc_instance->vmid)) {
                 $data['backup_storages'] = $lxc_instance->getAvailableBackupStorages() ?? []; // ?????????????????????????? optional list all storages
             }
 
@@ -1359,7 +1359,7 @@ class puqProxmox extends Product
         if ($type == 'lxc') {
 
             $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
-            if (!$lxc_instance) {
+            if (! $lxc_instance) {
                 return [
                     'status' => 'success',
                     'data' => $this->getServiceData($data),
@@ -1519,7 +1519,7 @@ class puqProxmox extends Product
             // ---------------------------------------------------------
             $steps[] = ['step' => 'Check LXC exists', 'status' => 'processing'];
 
-            if (!empty($lxc_instance) && !empty($lxc_instance->vmid)) {
+            if (! empty($lxc_instance) && ! empty($lxc_instance->vmid)) {
 
                 $steps[] = [
                     'step' => 'Check LXC exists',
@@ -1573,8 +1573,7 @@ class puqProxmox extends Product
             // ---------------------------------------------------------
             // Helper to run steps
             // ---------------------------------------------------------
-            $runStep = function ($stepName, $callback, $progressStep)
-            use ($lxc_instance, &$steps) {
+            $runStep = function ($stepName, $callback, $progressStep) use ($lxc_instance, &$steps) {
 
                 $steps[] = ['step' => $stepName, 'status' => 'processing'];
                 $lxc_instance->setDeployStep($stepName);
@@ -1618,7 +1617,7 @@ class puqProxmox extends Product
             // ---------------------------------------------------------
             // STEP 5: Create LXC
             // ---------------------------------------------------------
-            $create_lxc = $runStep('Create LXC', fn() => $lxc_instance->createLxc(), 30);
+            $create_lxc = $runStep('Create LXC', fn () => $lxc_instance->createLxc(), 30);
             if ($create_lxc['status'] === 'error') {
                 return $create_lxc;
             }
@@ -1644,7 +1643,7 @@ class puqProxmox extends Product
             // STEP 7: Post Install
             // ---------------------------------------------------------
             $post_install = $runStep('Post Install Script',
-                fn() => $lxc_instance->postInstallLxc(),
+                fn () => $lxc_instance->postInstallLxc(),
                 60
             );
             if ($post_install['status'] === 'error') {
@@ -1669,7 +1668,7 @@ class puqProxmox extends Product
             // STEP 9: Get LXC Status
             // ---------------------------------------------------------
             $status = $runStep('Get LXC Status',
-                fn() => ['status' => 'success', 'data' => $lxc_instance->getStatus()],
+                fn () => ['status' => 'success', 'data' => $lxc_instance->getStatus()],
                 80
             );
 
@@ -1681,7 +1680,7 @@ class puqProxmox extends Product
             // STEP 10: Firewall
             // ---------------------------------------------------------
             $firewall = $runStep('Set Firewall Options',
-                fn() => $lxc_instance->setFirewallOptions(),
+                fn () => $lxc_instance->setFirewallOptions(),
                 100
             );
             if ($firewall['status'] === 'error') {
@@ -1749,7 +1748,7 @@ class puqProxmox extends Product
                 ->where('service_uuid', $service->uuid)
                 ->first();
 
-            if (!empty($lxc_instance)) {
+            if (! empty($lxc_instance)) {
                 $steps[] = [
                     'step' => 'Check LXC exists',
                     'status' => 'error',
@@ -1835,7 +1834,7 @@ class puqProxmox extends Product
                     $steps[] = ['step' => $stepName, 'status' => 'error', 'errors' => $result['errors']];
                     $app_instance->setDeployError(implode('; ', $result['errors'] ?? []));
                     $app_instance->appendDeployLog("Finish step: $stepName - error: ".implode('; ',
-                            $result['errors'] ?? []));
+                        $result['errors'] ?? []));
                     $app_instance->setDeployStatus('failed');
                     $app_instance->setDeployFinished();
                 } else {
@@ -1850,7 +1849,7 @@ class puqProxmox extends Product
             // ---------------------------------------------------------
             // STEP 4: SSL Certificates
             // ---------------------------------------------------------
-            $ssl_certificates = $runStep('Create SSL Certificates', fn() => $app_instance->createSslCertificates(), 10);
+            $ssl_certificates = $runStep('Create SSL Certificates', fn () => $app_instance->createSslCertificates(), 10);
             if ($ssl_certificates['status'] === 'error') {
                 return $ssl_certificates;
             }
@@ -1858,7 +1857,7 @@ class puqProxmox extends Product
             // ---------------------------------------------------------
             // STEP 5: DNS Records
             // ---------------------------------------------------------
-            $dns_records = $runStep('Create DNS Records', fn() => $app_instance->createDnsRecords(), 20);
+            $dns_records = $runStep('Create DNS Records', fn () => $app_instance->createDnsRecords(), 20);
             if ($dns_records['status'] === 'error') {
                 return $dns_records;
             }
@@ -1867,7 +1866,7 @@ class puqProxmox extends Product
             // STEP 6: Create LXC
             // ---------------------------------------------------------
             $note = 'app_instance_uuid: '.$app_instance->uuid;
-            $create_lxc = $runStep('Create LXC', fn() => $lxc_instance->createLxc($note), 30);
+            $create_lxc = $runStep('Create LXC', fn () => $lxc_instance->createLxc($note), 30);
             if ($create_lxc['status'] === 'error') {
                 return $create_lxc;
             }
@@ -1893,7 +1892,7 @@ class puqProxmox extends Product
             // ---------------------------------------------------------
             // STEP 8: Post Install
             // ---------------------------------------------------------
-            $post_install = $runStep('Post Install Script', fn() => $lxc_instance->postInstallLxc(), 50);
+            $post_install = $runStep('Post Install Script', fn () => $lxc_instance->postInstallLxc(), 50);
             if ($post_install['status'] === 'error') {
                 return $post_install;
             }
@@ -1901,7 +1900,7 @@ class puqProxmox extends Product
             // ---------------------------------------------------------
             // STEP 9: Firewall
             // ---------------------------------------------------------
-            $firewall = $runStep('Set Firewall Options', fn() => $lxc_instance->setFirewallOptions(), 60);
+            $firewall = $runStep('Set Firewall Options', fn () => $lxc_instance->setFirewallOptions(), 60);
             if ($firewall['status'] === 'error') {
                 return $firewall;
             }
@@ -1909,7 +1908,7 @@ class puqProxmox extends Product
             // ---------------------------------------------------------
             // STEP 10: Docker Composer
             // ---------------------------------------------------------
-            $docker_composer = $runStep('Put Docker Composer', fn() => $app_instance->putDockerComposer(), 70);
+            $docker_composer = $runStep('Put Docker Composer', fn () => $app_instance->putDockerComposer(), 70);
             if ($docker_composer['status'] === 'error') {
                 return $docker_composer;
             }
@@ -1917,7 +1916,7 @@ class puqProxmox extends Product
             // ---------------------------------------------------------
             // STEP 11: Environment Variables
             // ---------------------------------------------------------
-            $env_vars = $runStep('Put Environment Variables', fn() => $app_instance->putEnvironmentVariables(), 80);
+            $env_vars = $runStep('Put Environment Variables', fn () => $app_instance->putEnvironmentVariables(), 80);
             if ($env_vars['status'] === 'error') {
                 return $env_vars;
             }
@@ -1925,7 +1924,7 @@ class puqProxmox extends Product
             // ---------------------------------------------------------
             // STEP 12: Install Script
             // ---------------------------------------------------------
-            $install_script = $runStep('Run Install Script', fn() => $app_instance->runInstallScript(), 90);
+            $install_script = $runStep('Run Install Script', fn () => $app_instance->runInstallScript(), 90);
             if ($install_script['status'] === 'error') {
                 return $install_script;
             }
@@ -1933,7 +1932,7 @@ class puqProxmox extends Product
             // ---------------------------------------------------------
             // STEP 13: WEB Proxy Deploy
             // ---------------------------------------------------------
-            $web_proxy = $runStep('WEB Proxy Deploy', fn() => $app_instance->webProxyDeploy(), 100);
+            $web_proxy = $runStep('WEB Proxy Deploy', fn () => $app_instance->webProxyDeploy(), 100);
             if ($web_proxy['status'] === 'error') {
                 return $web_proxy;
             }
@@ -2005,12 +2004,12 @@ class puqProxmox extends Product
                 ->where('service_uuid', $service->uuid)
                 ->first();
 
-            if (!empty($lxc_instance) and !empty($lxc_instance->vmid)) {
+            if (! empty($lxc_instance) and ! empty($lxc_instance->vmid)) {
                 $lxc_instance->deleteAllBackups();
                 $lxc_instance->deleteLxc();
             }
 
-            if (!empty($lxc_instance)) {
+            if (! empty($lxc_instance)) {
                 $lxc_instance->deleteDNS();
                 $lxc_instance->puqPmLxcInstanceNets()->delete();
                 $lxc_instance->delete();
@@ -2039,12 +2038,12 @@ class puqProxmox extends Product
                 ->where('service_uuid', $service->uuid)
                 ->first();
 
-            if (!empty($lxc_instance) and !empty($lxc_instance->vmid)) {
+            if (! empty($lxc_instance) and ! empty($lxc_instance->vmid)) {
                 $lxc_instance->deleteAllBackups();
                 $lxc_instance->deleteLxc();
             }
 
-            if (!empty($lxc_instance)) {
+            if (! empty($lxc_instance)) {
 
                 $app_instances = PuqPmAppInstance::query()->where('puq_pm_lxc_instance_uuid',
                     $lxc_instance->uuid)->get();
@@ -2419,12 +2418,12 @@ class puqProxmox extends Product
                 ->where('service_uuid', $service->uuid)
                 ->first();
 
-            if (!empty($lxc_instance) and !empty($lxc_instance->vmid)) {
+            if (! empty($lxc_instance) and ! empty($lxc_instance->vmid)) {
                 $lxc_instance->deleteAllBackups();
                 $lxc_instance->deleteLxc();
             }
 
-            if (!empty($lxc_instance)) {
+            if (! empty($lxc_instance)) {
                 $lxc_instance->deleteDNS();
                 $lxc_instance->puqPmLxcInstanceNets()->delete();
                 $lxc_instance->delete();
@@ -2458,12 +2457,12 @@ class puqProxmox extends Product
                 ->where('service_uuid', $service->uuid)
                 ->first();
 
-            if (!empty($lxc_instance) and !empty($lxc_instance->vmid)) {
+            if (! empty($lxc_instance) and ! empty($lxc_instance->vmid)) {
                 $lxc_instance->deleteAllBackups();
                 $lxc_instance->deleteLxc();
             }
 
-            if (!empty($lxc_instance)) {
+            if (! empty($lxc_instance)) {
 
                 $app_instances = PuqPmAppInstance::query()->where('puq_pm_lxc_instance_uuid',
                     $lxc_instance->uuid)->get();
@@ -2542,7 +2541,7 @@ class puqProxmox extends Product
 
         $lxc_instance = PuqPmLxcInstance::query()->where('service_uuid', $service->uuid)->first();
 
-        if (!$lxc_instance) {
+        if (! $lxc_instance) {
             return ['status' => 'error', 'errors' => ['LXC is not ready']];
         }
 
@@ -2691,6 +2690,12 @@ class puqProxmox extends Product
                 'permission' => 'configuration',
             ],
             [
+                'title' => 'Product Options',
+                'link' => 'product_options',
+                'active_links' => ['product_options'],
+                'permission' => 'configuration',
+            ],
+            [
                 'title' => 'Settings',
                 'link' => 'settings',
                 'active_links' => ['settings'],
@@ -2704,12 +2709,12 @@ class puqProxmox extends Product
                 'permission' => 'configuration',
             ],
 
-//            [
-//                'title' => 'APP Instances',
-//                'link' => 'app_instances',
-//                'active_links' => ['app_instances'],
-//                'permission' => 'configuration',
-//            ],
+            //            [
+            //                'title' => 'APP Instances',
+            //                'link' => 'app_instances',
+            //                'active_links' => ['app_instances'],
+            //                'permission' => 'configuration',
+            //            ],
 
         ];
     }
@@ -2897,6 +2902,15 @@ class puqProxmox extends Product
                 'controller' => 'puqPmClientPrivateNetworkController@clientPrivateNetworks',
             ],
 
+            // Product Options
+            [
+                'method' => 'get',
+                'uri' => 'product_options',
+                'permission' => 'configuration',
+                'name' => 'product_options',
+                'controller' => 'puqPmProductOptionsController@productOptions',
+            ],
+
             // Settings
             [
                 'method' => 'get',
@@ -2914,13 +2928,13 @@ class puqProxmox extends Product
                 'name' => 'lxc_instances',
                 'controller' => 'puqPmController@lxcInstances',
             ],
-//            [
-//                'method' => 'get',
-//                'uri' => 'app_instances',
-//                'permission' => 'configuration',
-//                'name' => 'app_instances',
-//                'controller' => 'puqPmController@appInstances',
-//            ],
+            //            [
+            //                'method' => 'get',
+            //                'uri' => 'app_instances',
+            //                'permission' => 'configuration',
+            //                'name' => 'app_instances',
+            //                'controller' => 'puqPmController@appInstances',
+            //            ],
 
         ];
     }
@@ -3864,7 +3878,6 @@ class puqProxmox extends Product
                 'controller' => 'puqPmAppPresetController@putAppPresetCustomPage',
             ],
 
-
             [
                 'method' => 'get',
                 'uri' => 'app_preset/{uuid}/app_endpoints',
@@ -4067,6 +4080,22 @@ class puqProxmox extends Product
                 'controller' => 'puqPmController@getCertificateAuthoritiesSelect',
             ],
 
+            // Product Options
+            [
+                'method' => 'get',
+                'uri' => 'product_options',
+                'permission' => 'configuration',
+                'name' => 'product_options.get',
+                'controller' => 'puqPmProductOptionsController@getProductOptions',
+            ],
+            [
+                'method' => 'post',
+                'uri' => 'product_options/create_missing',
+                'permission' => 'configuration',
+                'name' => 'product_options.create_missing.post',
+                'controller' => 'puqPmProductOptionsController@postCreateMissing',
+            ],
+
             // Other
             [
                 'method' => 'get',
@@ -4075,7 +4104,6 @@ class puqProxmox extends Product
                 'name' => 'lxc_instances.get',
                 'controller' => 'puqPmController@getLxcInstances',
             ],
-
 
         ];
     }
@@ -4298,6 +4326,57 @@ class puqProxmox extends Product
     }
 
     // LXC Deploy ------------------------------------------------------------------------------------------
+    #[OA\Get(
+        path: 'client.api.cloud.service.module.get.getLxcDeployStatus',
+        description: 'Returns LXC container deployment status and progress. If LXC instance is not found or invalid, returns success with empty data.',
+        summary: 'Get LXC container deployment status',
+        security: [['apiKeyAuth' => []]],
+        tags: ['LXC'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'Service UUID',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid'),
+                example: '550e8400-e29b-41d4-a716-446655440000'
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Deployment status returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(
+                            property: 'status',
+                            type: 'string',
+                            example: 'success'
+                        ),
+                        new OA\Property(
+                            property: 'data',
+                            properties: [
+                                new OA\Property(
+                                    property: 'status',
+                                    type: 'string',
+                                    enum: ['pending', 'in_progress', 'completed', 'failed'],
+                                    example: 'pending'
+                                ),
+                                new OA\Property(
+                                    property: 'progress',
+                                    description: 'Deployment progress percentage (0-100)',
+                                    type: 'integer',
+                                    example: 0
+                                ),
+                            ],
+                            type: 'object'
+                        ),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function controllerClient_getLxcDeployStatus(Request $request): JsonResponse
     {
         // -----------------------------------------------------------------------------
@@ -4340,6 +4419,18 @@ class puqProxmox extends Product
         return $data;
     }
 
+    #[OA\Get(
+        path: 'client.api.cloud.service.module.get.getLxcInfo',
+        description: 'Returns general information about the LXC container including OS, hostname, and resource allocation.',
+        summary: 'Get LXC container info',
+        security: [['apiKeyAuth' => []]],
+        tags: ['LXC'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'Service UUID', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [new OA\Response(response: 200, description: 'LXC info returned successfully')]
+    )]
     public function controllerClient_getLxcInfo(Request $request): JsonResponse
     {
         // -----------------------------------------------------------------------------
@@ -4363,6 +4454,18 @@ class puqProxmox extends Product
         ]);
     }
 
+    #[OA\Get(
+        path: 'client.api.cloud.service.module.get.getLxcLocation',
+        description: 'Returns the physical location and node information of the LXC container.',
+        summary: 'Get LXC container location',
+        security: [['apiKeyAuth' => []]],
+        tags: ['LXC'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'Service UUID', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [new OA\Response(response: 200, description: 'LXC location returned successfully')]
+    )]
     public function controllerClient_getLxcLocation(Request $request): JsonResponse
     {
         // -----------------------------------------------------------------------------
@@ -4386,6 +4489,18 @@ class puqProxmox extends Product
         ]);
     }
 
+    #[OA\Get(
+        path: 'client.api.cloud.service.module.get.getLxcStatus',
+        description: 'Returns the current runtime status of the LXC container (running, stopped, etc.).',
+        summary: 'Get LXC container status',
+        security: [['apiKeyAuth' => []]],
+        tags: ['LXC'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'Service UUID', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [new OA\Response(response: 200, description: 'LXC status returned successfully')]
+    )]
     public function controllerClient_getLxcStatus(Request $request): JsonResponse
     {
         // -----------------------------------------------------------------------------
@@ -4410,6 +4525,18 @@ class puqProxmox extends Product
         ]);
     }
 
+    #[OA\Get(
+        path: 'client.api.cloud.service.module.get.getLxcStart',
+        description: 'Starts the LXC container. Container must be in stopped state. Also applies firewall options after start.',
+        summary: 'Start LXC container',
+        security: [['apiKeyAuth' => []]],
+        tags: ['LXC'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'Service UUID', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [new OA\Response(response: 200, description: 'LXC started successfully')]
+    )]
     public function controllerClient_getLxcStart(Request $request): JsonResponse
     {
         // -----------------------------------------------------------------------------
@@ -4457,6 +4584,18 @@ class puqProxmox extends Product
         ]);
     }
 
+    #[OA\Get(
+        path: 'client.api.cloud.service.module.get.getLxcStop',
+        description: 'Stops the LXC container. Container must be in running state.',
+        summary: 'Stop LXC container',
+        security: [['apiKeyAuth' => []]],
+        tags: ['LXC'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'Service UUID', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [new OA\Response(response: 200, description: 'LXC stopped successfully')]
+    )]
     public function controllerClient_getLxcStop(Request $request): JsonResponse
     {
         // -----------------------------------------------------------------------------
@@ -4495,6 +4634,18 @@ class puqProxmox extends Product
         ]);
     }
 
+    #[OA\Get(
+        path: 'client.api.cloud.service.module.get.getLxcConsole',
+        description: 'Opens a VNC/terminal console session for the LXC container. Container must be running.',
+        summary: 'Get LXC console access',
+        security: [['apiKeyAuth' => []]],
+        tags: ['LXC'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'Service UUID', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [new OA\Response(response: 200, description: 'Console session data returned successfully')]
+    )]
     public function controllerClient_getLxcConsole(Request $request): JsonResponse
     {
         // -----------------------------------------------------------------------------
@@ -4533,6 +4684,18 @@ class puqProxmox extends Product
         ]);
     }
 
+    #[OA\Get(
+        path: 'client.api.cloud.service.module.get.getUsernamePassword',
+        description: 'Returns the root password and user credentials for the LXC container. Credentials are shown only once after provisioning.',
+        summary: 'Get LXC credentials (one-time)',
+        security: [['apiKeyAuth' => []]],
+        tags: ['LXC'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'Service UUID', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [new OA\Response(response: 200, description: 'Credentials returned successfully')]
+    )]
     public function controllerClient_getUsernamePassword(Request $request): JsonResponse
     {
         // -----------------------------------------------------------------------------
@@ -4548,7 +4711,7 @@ class puqProxmox extends Product
         $lxc_instance = $service_lxc['data']['lxc_instance'];
         // -----------------------------------------------------------------------------
 
-        if (!empty($this->service_data['show_password_once'])) {
+        if (! empty($this->service_data['show_password_once'])) {
             $data = [
                 'root_password' => $this->service_data['root_password'] ?? '',
                 'username' => $this->service_data['username'] ?? '',
@@ -4565,6 +4728,18 @@ class puqProxmox extends Product
         ]);
     }
 
+    #[OA\Get(
+        path: 'client.api.cloud.service.module.get.getLxcResetPasswords',
+        description: 'Resets root and user passwords for the LXC container. Container must be running.',
+        summary: 'Reset LXC passwords',
+        security: [['apiKeyAuth' => []]],
+        tags: ['LXC'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'Service UUID', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [new OA\Response(response: 200, description: 'Passwords reset successfully')]
+    )]
     public function controllerClient_getLxcResetPasswords(Request $request): JsonResponse
     {
         // -----------------------------------------------------------------------------
@@ -4615,6 +4790,20 @@ class puqProxmox extends Product
         return $data;
     }
 
+    #[OA\Get(
+        path: 'client.api.cloud.service.module.get.getLxcRrdData',
+        description: 'Returns RRD performance data (CPU, memory, network, disk) for the LXC container. Supports timeframe parameter (hour, day, week, month, year).',
+        summary: 'Get LXC performance graphs data',
+        security: [['apiKeyAuth' => []]],
+        tags: ['LXC'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'Service UUID', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+            new OA\Parameter(name: 'timeframe', description: 'Time range for graph data', in: 'query', required: false,
+                schema: new OA\Schema(type: 'string', enum: ['hour', 'day', 'week', 'month', 'year'], default: 'hour')),
+        ],
+        responses: [new OA\Response(response: 200, description: 'RRD data returned successfully')]
+    )]
     public function controllerClient_getLxcRrdData(Request $request): JsonResponse
     {
         // -----------------------------------------------------------------------------
@@ -4652,6 +4841,18 @@ class puqProxmox extends Product
         return $data;
     }
 
+    #[OA\Get(
+        path: 'client.api.cloud.service.module.get.getLxcBackupSchedule',
+        description: 'Returns the current automated backup schedule for the LXC container, including enabled days and times.',
+        summary: 'Get LXC backup schedule',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Backup'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'Service UUID', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [new OA\Response(response: 200, description: 'Backup schedule returned successfully')]
+    )]
     public function controllerClient_getLxcBackupSchedule(Request $request): JsonResponse
     {
         // -----------------------------------------------------------------------------
@@ -4675,6 +4876,18 @@ class puqProxmox extends Product
         ], 200);
     }
 
+    #[OA\Post(
+        path: 'client.api.cloud.service.module.post.postLxcBackupSchedule',
+        description: 'Updates the automated backup schedule for the LXC container. Accepts per-day enable/disable and time settings.',
+        summary: 'Update LXC backup schedule',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Backup'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'Service UUID', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [new OA\Response(response: 200, description: 'Backup schedule updated successfully')]
+    )]
     public function controllerClient_postLxcBackupSchedule(Request $request): JsonResponse
     {
         // -----------------------------------------------------------------------------
@@ -4695,7 +4908,7 @@ class puqProxmox extends Product
 
         foreach ($days as $day) {
             $time = $request->input("{$day}_time", '00:00');
-            if (!preg_match('/^(2[0-3]|[01]?[0-9]):([0-5][0-9])$/', $time)) {
+            if (! preg_match('/^(2[0-3]|[01]?[0-9]):([0-5][0-9])$/', $time)) {
                 $time = '00:00';
             }
 
@@ -4714,6 +4927,18 @@ class puqProxmox extends Product
         ], 200);
     }
 
+    #[OA\Get(
+        path: 'client.api.cloud.service.module.get.getLxcBackups',
+        description: 'Returns a list of all backups for the LXC container, sorted by creation date descending. Includes note, date, size, and action URLs.',
+        summary: 'List LXC backups',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Backup'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'Service UUID', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [new OA\Response(response: 200, description: 'Backup list returned successfully')]
+    )]
     public function controllerClient_getLxcBackups(Request $request): JsonResponse
     {
         // -----------------------------------------------------------------------------
@@ -4760,6 +4985,18 @@ class puqProxmox extends Product
         ], 200);
     }
 
+    #[OA\Post(
+        path: 'client.api.cloud.service.module.post.postLxcBackupDelete',
+        description: 'Deletes a specific backup of the LXC container identified by date and size.',
+        summary: 'Delete LXC backup',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Backup'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'Service UUID', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [new OA\Response(response: 200, description: 'Backup deleted successfully')]
+    )]
     public function controllerClient_postLxcBackupDelete(Request $request): JsonResponse
     {
         // -----------------------------------------------------------------------------
@@ -4790,6 +5027,18 @@ class puqProxmox extends Product
         ], 200);
     }
 
+    #[OA\Get(
+        path: 'client.api.cloud.service.module.get.getLxcBackupsInfo',
+        description: 'Returns backup usage information: maximum allowed backups, currently used backup count, and container status.',
+        summary: 'Get LXC backup usage info',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Backup'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'Service UUID', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [new OA\Response(response: 200, description: 'Backup info returned successfully')]
+    )]
     public function controllerClient_getLxcBackupsInfo(Request $request): JsonResponse
     {
         // -----------------------------------------------------------------------------
@@ -4820,6 +5069,18 @@ class puqProxmox extends Product
         ], 200);
     }
 
+    #[OA\Post(
+        path: 'client.api.cloud.service.module.post.postLxcBackupNow',
+        description: 'Creates an immediate backup of the LXC container. Requires a note (alphanumeric, max 250 chars). Container must be running or stopped, and backup limit must not be reached.',
+        summary: 'Create LXC backup now',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Backup'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'Service UUID', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [new OA\Response(response: 200, description: 'Backup created successfully')]
+    )]
     public function controllerClient_postLxcBackupNow(Request $request): JsonResponse
     {
         // -----------------------------------------------------------------------------
@@ -4881,6 +5142,18 @@ class puqProxmox extends Product
         ], 200);
     }
 
+    #[OA\Post(
+        path: 'client.api.cloud.service.module.post.postLxcBackupRestore',
+        description: 'Restores the LXC container from a specific backup identified by date and size. Container must be stopped.',
+        summary: 'Restore LXC from backup',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Backup'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'Service UUID', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [new OA\Response(response: 200, description: 'Backup restored successfully')]
+    )]
     public function controllerClient_postLxcBackupRestore(Request $request): JsonResponse
     {
         // -----------------------------------------------------------------------------
@@ -4933,6 +5206,18 @@ class puqProxmox extends Product
         return $data;
     }
 
+    #[OA\Get(
+        path: 'client.api.cloud.service.module.get.getPublicNetworks',
+        description: 'Returns the public network configuration (IPv4/IPv6 addresses, rDNS) assigned to the LXC container.',
+        summary: 'Get public networks',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Networks'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'Service UUID', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [new OA\Response(response: 200, description: 'Public networks returned successfully')]
+    )]
     public function controllerClient_getPublicNetworks(Request $request): JsonResponse
     {
         // -----------------------------------------------------------------------------
@@ -4956,6 +5241,18 @@ class puqProxmox extends Product
         ], 200);
     }
 
+    #[OA\Get(
+        path: 'client.api.cloud.service.module.get.getPrivateNetworks',
+        description: 'Returns the private network configuration assigned to the LXC container.',
+        summary: 'Get private networks',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Networks'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'Service UUID', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [new OA\Response(response: 200, description: 'Private networks returned successfully')]
+    )]
     public function controllerClient_getPrivateNetworks(Request $request): JsonResponse
     {
         // -----------------------------------------------------------------------------
@@ -4979,6 +5276,18 @@ class puqProxmox extends Product
         ], 200);
     }
 
+    #[OA\Post(
+        path: 'client.api.cloud.service.module.post.postLxcPublicNetworks',
+        description: 'Updates reverse DNS (rDNS) records for IPv4 and IPv6 addresses of the LXC container.',
+        summary: 'Update public network rDNS',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Networks'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'Service UUID', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [new OA\Response(response: 200, description: 'rDNS updated successfully')]
+    )]
     public function controllerClient_postLxcPublicNetworks(Request $request): JsonResponse
     {
         // -----------------------------------------------------------------------------
@@ -5043,6 +5352,18 @@ class puqProxmox extends Product
         return $data;
     }
 
+    #[OA\Get(
+        path: 'client.api.cloud.service.module.get.getLxcFirewallPolicies',
+        description: 'Returns the current firewall policies (incoming and outgoing default actions) for the LXC container.',
+        summary: 'Get firewall policies',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Firewall'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'Service UUID', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [new OA\Response(response: 200, description: 'Firewall policies returned successfully')]
+    )]
     public function controllerClient_getLxcFirewallPolicies(Request $request): JsonResponse
     {
         // -----------------------------------------------------------------------------
@@ -5066,6 +5387,18 @@ class puqProxmox extends Product
         ], 200);
     }
 
+    #[OA\Post(
+        path: 'client.api.cloud.service.module.post.postLxcFirewallPolicies',
+        description: 'Updates the default firewall policies (ACCEPT, REJECT, or DROP) for incoming and outgoing traffic on the LXC container.',
+        summary: 'Update firewall policies',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Firewall'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'Service UUID', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [new OA\Response(response: 200, description: 'Firewall policies updated successfully')]
+    )]
     public function controllerClient_postLxcFirewallPolicies(Request $request): JsonResponse
     {
         // -----------------------------------------------------------------------------
@@ -5113,6 +5446,18 @@ class puqProxmox extends Product
         ], 200);
     }
 
+    #[OA\Get(
+        path: 'client.api.cloud.service.module.get.getLxcFirewallRules',
+        description: 'Returns all firewall rules for the LXC container, sorted by position. Each rule includes action, type, protocol, source/destination, ports, and comment.',
+        summary: 'List firewall rules',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Firewall'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'Service UUID', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [new OA\Response(response: 200, description: 'Firewall rules returned successfully')]
+    )]
     public function controllerClient_getLxcFirewallRules(Request $request): JsonResponse
     {
         // -----------------------------------------------------------------------------
@@ -5164,6 +5509,18 @@ class puqProxmox extends Product
         ], 200);
     }
 
+    #[OA\Post(
+        path: 'client.api.cloud.service.module.post.postLxcFirewallRuleUpdateOrder',
+        description: 'Reorders a firewall rule by moving it from one position to another.',
+        summary: 'Reorder firewall rule',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Firewall'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'Service UUID', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [new OA\Response(response: 200, description: 'Firewall rule reordered successfully')]
+    )]
     public function controllerClient_postLxcFirewallRuleUpdateOrder(Request $request): JsonResponse
     {
         // -----------------------------------------------------------------------------
@@ -5198,6 +5555,18 @@ class puqProxmox extends Product
         ], 200);
     }
 
+    #[OA\Post(
+        path: 'client.api.cloud.service.module.post.postLxcFirewallRuleDelete',
+        description: 'Deletes a firewall rule at the specified position.',
+        summary: 'Delete firewall rule',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Firewall'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'Service UUID', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [new OA\Response(response: 200, description: 'Firewall rule deleted successfully')]
+    )]
     public function controllerClient_postLxcFirewallRuleDelete(Request $request): JsonResponse
     {
         // -----------------------------------------------------------------------------
@@ -5231,6 +5600,18 @@ class puqProxmox extends Product
         ], 200);
     }
 
+    #[OA\Post(
+        path: 'client.api.cloud.service.module.post.postLxcFirewallRuleCreate',
+        description: 'Creates a new firewall rule for the LXC container. Supports action (ACCEPT/REJECT/DROP), direction (in/out), protocol, source/destination IPs, ports, and comment.',
+        summary: 'Create firewall rule',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Firewall'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'Service UUID', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [new OA\Response(response: 200, description: 'Firewall rule created successfully')]
+    )]
     public function controllerClient_postLxcFirewallRuleCreate(Request $request): JsonResponse
     {
         // -----------------------------------------------------------------------------
@@ -5254,10 +5635,10 @@ class puqProxmox extends Product
 
             'source' => [
                 'nullable', 'string', function ($attribute, $value, $fail) {
-                    if (!filter_var($value,
-                            FILTER_VALIDATE_IP) && !preg_match('/^([0-9]{1,3}\.){3}[0-9]{1,3}\/([0-9]|[1-2][0-9]|3[0-2])$/',
-                            $value) && !preg_match('/^([0-9a-fA-F:]+)\/([0-9]|[1-9][0-9]|1[0-1][0-9]|12[0-8])$/',
-                            $value)) {
+                    if (! filter_var($value,
+                        FILTER_VALIDATE_IP) && ! preg_match('/^([0-9]{1,3}\.){3}[0-9]{1,3}\/([0-9]|[1-2][0-9]|3[0-2])$/',
+                            $value) && ! preg_match('/^([0-9a-fA-F:]+)\/([0-9]|[1-9][0-9]|1[0-1][0-9]|12[0-8])$/',
+                                $value)) {
                         $fail(__('Product.puqProxmox.Source must be valid IPv4/IPv6 or CIDR subnet'));
                     }
                 },
@@ -5265,10 +5646,10 @@ class puqProxmox extends Product
 
             'dest' => [
                 'nullable', 'string', function ($attribute, $value, $fail) {
-                    if (!filter_var($value,
-                            FILTER_VALIDATE_IP) && !preg_match('/^([0-9]{1,3}\.){3}[0-9]{1,3}\/([0-9]|[1-2][0-9]|3[0-2])$/',
-                            $value) && !preg_match('/^([0-9a-fA-F:]+)\/([0-9]|[1-9][0-9]|1[0-1][0-9]|12[0-8])$/',
-                            $value)) {
+                    if (! filter_var($value,
+                        FILTER_VALIDATE_IP) && ! preg_match('/^([0-9]{1,3}\.){3}[0-9]{1,3}\/([0-9]|[1-2][0-9]|3[0-2])$/',
+                            $value) && ! preg_match('/^([0-9a-fA-F:]+)\/([0-9]|[1-9][0-9]|1[0-1][0-9]|12[0-8])$/',
+                                $value)) {
                         $fail(__('Product.puqProxmox.Destination must be valid IPv4/IPv6 or CIDR subnet'));
                     }
                 },
@@ -5355,6 +5736,18 @@ class puqProxmox extends Product
         return $data;
     }
 
+    #[OA\Get(
+        path: 'client.api.cloud.service.module.get.getLxcRebuildInfo',
+        description: 'Returns available OS images for rebuilding the LXC container, including distributions, versions, pricing, and current container status.',
+        summary: 'Get LXC rebuild options',
+        security: [['apiKeyAuth' => []]],
+        tags: ['LXC'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'Service UUID', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [new OA\Response(response: 200, description: 'Rebuild info returned successfully')]
+    )]
     public function controllerClient_getLxcRebuildInfo(Request $request): JsonResponse
     {
         // -----------------------------------------------------------------------------
@@ -5382,7 +5775,7 @@ class puqProxmox extends Product
         $product_option_group_uuid = [];
 
         $uuid = data_get($product, 'module.module.product_data.os_product_option_group_uuid');
-        if ($uuid && !in_array($uuid, $product_option_group_uuid)) {
+        if ($uuid && ! in_array($uuid, $product_option_group_uuid)) {
             $product_option_group_uuid[] = $uuid;
         }
 
@@ -5440,6 +5833,18 @@ class puqProxmox extends Product
         ], 200);
     }
 
+    #[OA\Post(
+        path: 'client.api.cloud.service.module.post.postLxcRebuildNow',
+        description: 'Rebuilds (reinstalls) the LXC container with a new OS image. Container must be stopped. Requires protect word "REINSTALL" and os_product_option_uuid.',
+        summary: 'Rebuild LXC container',
+        security: [['apiKeyAuth' => []]],
+        tags: ['LXC'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'Service UUID', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [new OA\Response(response: 200, description: 'LXC rebuilt successfully')]
+    )]
     public function controllerClient_postLxcRebuildNow(Request $request): JsonResponse
     {
         // -----------------------------------------------------------------------------
@@ -5477,7 +5882,7 @@ class puqProxmox extends Product
         $os_product_option_uuid = $request->get('os_product_option_uuid');
         $os_product_option_group_uuid = $product_data['os_product_option_group_uuid'] ?? null;
 
-        if (!$product->hasProductOption($os_product_option_group_uuid, $os_product_option_uuid)) {
+        if (! $product->hasProductOption($os_product_option_group_uuid, $os_product_option_uuid)) {
             return response()->json([
                 'status' => 'error',
                 'errors' => [__('Product.puqProxmox.The selected Image is not available')],
@@ -5532,6 +5937,18 @@ class puqProxmox extends Product
         return $data;
     }
 
+    #[OA\Get(
+        path: 'client.api.cloud.service.module.get.getLxcRescaleOptions',
+        description: 'Returns available upgrade and downgrade options for the LXC container, including current selection, available options with pricing, and currency info.',
+        summary: 'Get LXC rescale options',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Rescale'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'Service UUID', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [new OA\Response(response: 200, description: 'Rescale options returned successfully')]
+    )]
     public function controllerClient_getLxcRescaleOptions(Request $request): JsonResponse
     {
         // -----------------------------------------------------------------------------
@@ -5615,6 +6032,18 @@ class puqProxmox extends Product
         ], 200);
     }
 
+    #[OA\Get(
+        path: 'client.api.cloud.service.module.get.getLxcRescaleCalculateSummary',
+        description: 'Calculates a pricing summary for the requested LXC rescale operation, including old/new prices, switch fees, and per-option price comparison.',
+        summary: 'Calculate LXC rescale summary',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Rescale'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'Service UUID', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [new OA\Response(response: 200, description: 'Rescale summary calculated successfully')]
+    )]
     public function controllerClient_getLxcRescaleCalculateSummary(Request $request): JsonResponse
     {
         // -----------------------------------------------------------------------------
@@ -5713,6 +6142,18 @@ class puqProxmox extends Product
         ], 200);
     }
 
+    #[OA\Post(
+        path: 'client.api.cloud.service.module.post.postLxcRescale',
+        description: 'Applies the selected rescale options to the LXC container, updating product options and triggering a package change on the Proxmox node.',
+        summary: 'Apply LXC rescale',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Rescale'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'Service UUID', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [new OA\Response(response: 200, description: 'LXC rescaled successfully')]
+    )]
     public function controllerClient_postLxcRescale(Request $request): JsonResponse
     {
         // -----------------------------------------------------------------------------
@@ -5790,8 +6231,20 @@ class puqProxmox extends Product
         ], 200);
     }
 
-    //------------------------------------------------------------------------------------------------------
+    // ------------------------------------------------------------------------------------------------------
     // APP Deploy ------------------------------------------------------------------------------------------
+    #[OA\Get(
+        path: 'client.api.cloud.service.module.get.getAppDeployStatus',
+        description: 'Returns the deployment status and progress percentage for the application instance.',
+        summary: 'Get application deployment status',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Application'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'Service UUID', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [new OA\Response(response: 200, description: 'Deploy status returned successfully')]
+    )]
     public function controllerClient_getAppDeployStatus(Request $request): JsonResponse
     {
         $status = [
@@ -5826,6 +6279,18 @@ class puqProxmox extends Product
     }
 
     // APP General ------------------------------------------------------------------------------
+    #[OA\Get(
+        path: 'client.api.cloud.service.module.get.getAppInfo',
+        description: 'Returns general information about the application instance from the client area perspective.',
+        summary: 'Get application info',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Application'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'Service UUID', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [new OA\Response(response: 200, description: 'Application info returned successfully')]
+    )]
     public function controllerClient_getAppInfo(Request $request): JsonResponse
     {
         // -----------------------------------------------------------------------------
@@ -5850,6 +6315,18 @@ class puqProxmox extends Product
         ]);
     }
 
+    #[OA\Get(
+        path: 'client.api.cloud.service.module.get.getAppControl',
+        description: 'Returns the available control actions (start, stop, restart, etc.) for the application instance.',
+        summary: 'Get application control options',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Application'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'Service UUID', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [new OA\Response(response: 200, description: 'Control options returned successfully')]
+    )]
     public function controllerClient_getAppControl(Request $request): JsonResponse
     {
         // -----------------------------------------------------------------------------
@@ -5874,6 +6351,18 @@ class puqProxmox extends Product
         ]);
     }
 
+    #[OA\Post(
+        path: 'client.api.cloud.service.module.post.postAppControl',
+        description: 'Executes a control action on the application instance. The action is queued as a background job.',
+        summary: 'Execute application control action',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Application'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'Service UUID', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [new OA\Response(response: 200, description: 'Action queued successfully')]
+    )]
     public function controllerClient_postAppControl(Request $request): JsonResponse
     {
         // -----------------------------------------------------------------------------
@@ -5926,6 +6415,18 @@ class puqProxmox extends Product
 
     }
 
+    #[OA\Get(
+        path: 'client.api.cloud.service.module.get.getAppCustomPage',
+        description: 'Returns the custom page content defined in the application preset configuration.',
+        summary: 'Get application custom page',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Application'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'Service UUID', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [new OA\Response(response: 200, description: 'Custom page content returned successfully')]
+    )]
     public function controllerClient_getAppCustomPage(Request $request): JsonResponse
     {
         // -----------------------------------------------------------------------------
@@ -5950,6 +6451,20 @@ class puqProxmox extends Product
     }
 
     // APP Graphs -------------------------------------------------------------------------------
+    #[OA\Get(
+        path: 'client.api.cloud.service.module.get.getAppRrdData',
+        description: 'Returns RRD performance data (CPU, memory, network, disk) for the application underlying LXC container. Supports timeframe parameter.',
+        summary: 'Get application performance graphs data',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Application'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'Service UUID', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+            new OA\Parameter(name: 'timeframe', description: 'Time range for graph data', in: 'query', required: false,
+                schema: new OA\Schema(type: 'string', enum: ['hour', 'day', 'week', 'month', 'year'], default: 'hour')),
+        ],
+        responses: [new OA\Response(response: 200, description: 'RRD data returned successfully')]
+    )]
     public function controllerClient_getAppRrdData(Request $request): JsonResponse
     {
         // -----------------------------------------------------------------------------
@@ -5978,6 +6493,18 @@ class puqProxmox extends Product
     }
 
     // APP Backups -------------------------------------------------------------------------------
+    #[OA\Get(
+        path: 'client.api.cloud.service.module.get.getAppBackupSchedule',
+        description: 'Returns the current automated backup schedule for the application, including enabled days and times.',
+        summary: 'Get application backup schedule',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Backup'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'Service UUID', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [new OA\Response(response: 200, description: 'Backup schedule returned successfully')]
+    )]
     public function controllerClient_getAppBackupSchedule(Request $request): JsonResponse
     {
         // -----------------------------------------------------------------------------
@@ -6002,6 +6529,18 @@ class puqProxmox extends Product
         ], 200);
     }
 
+    #[OA\Post(
+        path: 'client.api.cloud.service.module.post.postAppBackupSchedule',
+        description: 'Updates the automated backup schedule for the application. Accepts per-day enable/disable and time settings.',
+        summary: 'Update application backup schedule',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Backup'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'Service UUID', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [new OA\Response(response: 200, description: 'Backup schedule updated successfully')]
+    )]
     public function controllerClient_postAppBackupSchedule(Request $request): JsonResponse
     {
         // -----------------------------------------------------------------------------
@@ -6023,7 +6562,7 @@ class puqProxmox extends Product
 
         foreach ($days as $day) {
             $time = $request->input("{$day}_time", '00:00');
-            if (!preg_match('/^(2[0-3]|[01]?[0-9]):([0-5][0-9])$/', $time)) {
+            if (! preg_match('/^(2[0-3]|[01]?[0-9]):([0-5][0-9])$/', $time)) {
                 $time = '00:00';
             }
 
@@ -6042,6 +6581,18 @@ class puqProxmox extends Product
         ], 200);
     }
 
+    #[OA\Get(
+        path: 'client.api.cloud.service.module.get.getAppBackups',
+        description: 'Returns a list of all backups for the application, sorted by creation date descending. Includes note, date, size, and action URLs.',
+        summary: 'List application backups',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Backup'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'Service UUID', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [new OA\Response(response: 200, description: 'Backup list returned successfully')]
+    )]
     public function controllerClient_getAppBackups(Request $request): JsonResponse
     {
         // -----------------------------------------------------------------------------
@@ -6089,6 +6640,18 @@ class puqProxmox extends Product
         ], 200);
     }
 
+    #[OA\Post(
+        path: 'client.api.cloud.service.module.post.postAppBackupDelete',
+        description: 'Deletes a specific backup of the application identified by date and size.',
+        summary: 'Delete application backup',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Backup'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'Service UUID', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [new OA\Response(response: 200, description: 'Backup deleted successfully')]
+    )]
     public function controllerClient_postAppBackupDelete(Request $request): JsonResponse
     {
         // -----------------------------------------------------------------------------
@@ -6120,6 +6683,18 @@ class puqProxmox extends Product
         ], 200);
     }
 
+    #[OA\Get(
+        path: 'client.api.cloud.service.module.get.getAppBackupsInfo',
+        description: 'Returns backup usage information for the application: maximum allowed backups, currently used backup count, and container status.',
+        summary: 'Get application backup usage info',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Backup'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'Service UUID', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [new OA\Response(response: 200, description: 'Backup info returned successfully')]
+    )]
     public function controllerClient_getAppBackupsInfo(Request $request): JsonResponse
     {
         // -----------------------------------------------------------------------------
@@ -6151,6 +6726,18 @@ class puqProxmox extends Product
         ], 200);
     }
 
+    #[OA\Post(
+        path: 'client.api.cloud.service.module.post.postAppBackupNow',
+        description: 'Creates an immediate backup of the application. Requires a note (alphanumeric, max 250 chars). Container must be running or stopped, and backup limit must not be reached.',
+        summary: 'Create application backup now',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Backup'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'Service UUID', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [new OA\Response(response: 200, description: 'Backup created successfully')]
+    )]
     public function controllerClient_postAppBackupNow(Request $request): JsonResponse
     {
         // -----------------------------------------------------------------------------
@@ -6213,6 +6800,18 @@ class puqProxmox extends Product
         ], 200);
     }
 
+    #[OA\Post(
+        path: 'client.api.cloud.service.module.post.postAppBackupRestore',
+        description: 'Restores the application from a specific backup identified by date and size. Container must be stopped.',
+        summary: 'Restore application from backup',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Backup'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'Service UUID', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [new OA\Response(response: 200, description: 'Backup restored successfully')]
+    )]
     public function controllerClient_postAppBackupRestore(Request $request): JsonResponse
     {
         // -----------------------------------------------------------------------------
@@ -6254,6 +6853,18 @@ class puqProxmox extends Product
     }
 
     // APP Rescale ------------------------------------------------------------------------------------------
+    #[OA\Get(
+        path: 'client.api.cloud.service.module.get.getAppRescaleOptions',
+        description: 'Returns available upgrade and downgrade options for the application, including current selection, available options with pricing, and currency info.',
+        summary: 'Get application rescale options',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Rescale'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'Service UUID', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [new OA\Response(response: 200, description: 'Rescale options returned successfully')]
+    )]
     public function controllerClient_getAppRescaleOptions(Request $request): JsonResponse
     {
         // -----------------------------------------------------------------------------
@@ -6335,6 +6946,18 @@ class puqProxmox extends Product
         ], 200);
     }
 
+    #[OA\Get(
+        path: 'client.api.cloud.service.module.get.getAppRescaleCalculateSummary',
+        description: 'Calculates a pricing summary for the requested application rescale operation, including old/new prices, switch fees, and per-option price comparison.',
+        summary: 'Calculate application rescale summary',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Rescale'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'Service UUID', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [new OA\Response(response: 200, description: 'Rescale summary calculated successfully')]
+    )]
     public function controllerClient_getAppRescaleCalculateSummary(Request $request): JsonResponse
     {
         // -----------------------------------------------------------------------------
@@ -6429,6 +7052,18 @@ class puqProxmox extends Product
         ], 200);
     }
 
+    #[OA\Post(
+        path: 'client.api.cloud.service.module.post.postAppRescale',
+        description: 'Applies the selected rescale options to the application, updating product options and triggering a package change on the Proxmox node.',
+        summary: 'Apply application rescale',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Rescale'],
+        parameters: [
+            new OA\Parameter(name: 'uuid', description: 'Service UUID', in: 'path', required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [new OA\Response(response: 200, description: 'Application rescaled successfully')]
+    )]
     public function controllerClient_postAppRescale(Request $request): JsonResponse
     {
         // -----------------------------------------------------------------------------
@@ -6504,7 +7139,6 @@ class puqProxmox extends Product
         ], 200);
     }
 
-
     // Helping
     private function getLxcInstances(bool $deploy = false): array
     {
@@ -6523,7 +7157,6 @@ class puqProxmox extends Product
             ->where('service_uuid', $service->uuid)
             ->first();
 
-
         if (empty($lxc_instance)) {
             return [
                 'status' => 'error',
@@ -6531,7 +7164,7 @@ class puqProxmox extends Product
                 'code' => 412,
             ];
         }
-        if (!$deploy) {
+        if (! $deploy) {
             $deploy_status = $lxc_instance->getDeployStatus();
 
             if ($deploy_status['status'] != 'success') {
@@ -6581,7 +7214,7 @@ class puqProxmox extends Product
             ];
         }
 
-        if (!$deploy) {
+        if (! $deploy) {
             $deploy_status = $app_instance->getDeployStatus();
 
             if ($deploy_status['status'] != 'success') {

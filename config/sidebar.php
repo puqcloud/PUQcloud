@@ -177,6 +177,12 @@ return [
                         'permission' => 'admins-view',
                     ],
                     [
+                        'title' => 'Admin API Keys',
+                        'link' => 'admin.web.admin_api_keys',
+                        'active_links' => ['admin.web.admin_api_keys'],
+                        'permission' => 'admin-api-keys-view',
+                    ],
+                    [
                         'title' => 'Groups',
                         'link' => 'admin.web.groups',
                         'active_links' => ['admin.web.groups', 'admin.web.group'],
@@ -250,6 +256,48 @@ return [
                         'active_links' => ['admin.web.dns_zones', 'admin.web.dns_zone'],
                         'permission' => 'dns-manager-dns-zones',
                     ],
+                    [
+                        'title' => 'Zone Templates',
+                        'link' => 'admin.web.dns_zone_templates',
+                        'active_links' => ['admin.web.dns_zone_templates', 'admin.web.dns_zone_template'],
+                        'permission' => 'dns-manager-dns-zones',
+                    ],
+                ],
+            ],
+            [
+                'title' => 'Support',
+                'icon' => 'metismenu-icon fas fa-headset',
+                'subItems' => [
+                    [
+                        'title' => 'Support Tickets',
+                        'link' => 'admin.web.tickets',
+                        'active_links' => ['admin.web.tickets', 'admin.web.ticket'],
+                        'permission' => 'tickets-view',
+                    ],
+                    [
+                        'title' => 'Ticket Departments',
+                        'link' => 'admin.web.ticket_departments',
+                        'active_links' => ['admin.web.ticket_departments', 'admin.web.ticket_department'],
+                        'permission' => 'tickets-departments',
+                    ],
+                    [
+                        'title' => 'Ticket Statuses',
+                        'link' => 'admin.web.ticket_statuses',
+                        'active_links' => ['admin.web.ticket_statuses'],
+                        'permission' => 'tickets-statuses',
+                    ],
+                    [
+                        'title' => 'Canned Responses',
+                        'link' => 'admin.web.ticket_canned_responses',
+                        'active_links' => ['admin.web.ticket_canned_responses'],
+                        'permission' => 'tickets-edit',
+                    ],
+                    [
+                        'title' => 'Email Blacklist',
+                        'link' => 'admin.web.ticket_email_blacklist',
+                        'active_links' => ['admin.web.ticket_email_blacklist'],
+                        'permission' => 'tickets-edit',
+                    ],
                 ],
             ],
             [
@@ -319,6 +367,26 @@ return [
                 ],
             ],
 
+            [
+                'title' => 'API Documentation',
+                'icon' => 'metismenu-icon fa fa-book',
+                'subItems' => [
+                    [
+                        'title' => 'Admin API',
+                        'link' => 'admin.web.api_documentation.admin',
+                        'active_links' => ['admin.web.api_documentation.admin'],
+                        'permission' => 'api-documentation-admin',
+                        'icon' => 'fa fa-user-shield',
+                    ],
+                    [
+                        'title' => 'Client API',
+                        'link' => 'admin.web.api_documentation.client',
+                        'active_links' => ['admin.web.api_documentation.client'],
+                        'permission' => 'api-documentation-client',
+                        'icon' => 'fa fa-users',
+                    ],
+                ],
+            ],
         ],
 
     ],

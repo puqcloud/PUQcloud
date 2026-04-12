@@ -20,8 +20,6 @@ namespace App\Console\Commands;
 use App\Services\TranslationService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\App;
-use Modules\Product\puqProxmox\Models\PuqPmScript;
-
 class DevTest extends Command
 {
     protected $signature = 'Dev:test';

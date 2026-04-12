@@ -11,4 +11,11 @@ return [
     'Successfully' => 'Avec succès',
     'Payment Successful' => 'Paiement réussi',
     'Payment Already Processed' => 'Paiement déjà traité',
+    'Reply added successfully' => 'Réponse ajoutée avec succès',
+    'Ticket closed successfully' => 'Ticket fermé avec succès',
+    'Ticket reopened successfully' => 'Le ticket a été réouvert avec succès',
+    'Invoice generated successfully' => 'Facture générée avec succès',
+    'Service updated successfully' => 'Service mis à jour avec succès',
+    'Proration invoice generated successfully' => 'Facture de prorata générée avec succès',
+    'Billing date aligned successfully' => 'Date de facturation alignée avec succès',
 ];

@@ -20,10 +20,10 @@
 
             </div>
         </div>
-        <div class="grid-menu grid-menu-xl grid-menu-3col">
+        <div class="grid-menu grid-menu-xl grid-menu-2col">
             <div class="g-0 row">
                 @foreach ($navigation->getClientMenu() as $item)
-                    <div class="col-4">
+                    <div class="col-6">
                         <a href="{{ $item['url'] }}" class="btn-icon-vertical btn-square btn-transition btn btn-outline-link">
                             <i class="{{ $item['icon'] }} icon-gradient bg-night-fade btn-icon-wrapper btn-icon-lg d-none d-md-inline"><br></i>
                             <i class="{{ $item['icon'] }} icon-gradient bg-night-fade d-inline d-md-none"><br></i>
@@ -35,3 +35,4 @@
         </div>
     </div>
 </div>
+

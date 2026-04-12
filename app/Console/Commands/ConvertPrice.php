@@ -23,6 +23,7 @@ use App\Models\ProductOptionGroup;
 use App\Services\TranslationService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Cache;
 
 class ConvertPrice extends Command
 {
@@ -39,6 +40,12 @@ class ConvertPrice extends Command
 
     public function handle()
     {
+        $lock = Cache::lock('products:convert-price', 3600);
+        if (! $lock->get()) {
+            return;
+        }
+
+        try {
 
         // Delete all prices if currency was removed
         Price::whereDoesntHave('currency')->delete();
@@ -54,6 +61,10 @@ class ConvertPrice extends Command
             foreach ($product_options as $product_option) {
                 $product_option->convertPrice();
             }
+        }
+
+        } finally {
+            $lock->release();
         }
     }
 }

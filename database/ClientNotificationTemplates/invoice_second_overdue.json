@@ -1,0 +1,7 @@
+{
+    "name": "Client Invoice Second Overdue Notice",
+    "category": "clientOperational",
+    "custom": false,
+    "subject": "Invoice Overdue - Second Notice",
+    "text_mini": "Invoice #{{ $invoice->number }} is overdue (2nd notice). Amount: {{ $invoice->total }}"
+}

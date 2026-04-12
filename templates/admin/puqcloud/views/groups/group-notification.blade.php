@@ -18,7 +18,7 @@
 
                     <div class="col-lg-6 col-xl-6">
                         <div class="mb-3">
-                            <label class="form-label" for="email">{{__('main.Name')}}</label>
+                            <label class="form-label" for="name">{{__('main.Name')}}</label>
                             <div>
                                 <input type="text" class="form-control input-mask-trigger" id="name" name="name"
                                        placeholder="{{__('main.Name')}}">
@@ -55,6 +55,13 @@
                                     id="mass_creation">
                                 <i class="fa fa-plus"></i>
                                 {{__('main.Mass Creation')}}
+                            </button>
+
+                            <button type="button"
+                                    class="mb-2 me-2 btn-icon btn-outline-2x btn btn-outline-primary"
+                                    id="mass_update">
+                                <i class="fa fa-pen"></i>
+                                {{__('main.Mass Update')}}
                             </button>
                         @endif
                     </div>
@@ -144,16 +151,7 @@
 
             $dataTable.on('click', 'button.delete-btn', function (e) {
                 e.preventDefault();
-                var modelUrl = $(this).data('model-url');
-
-                if (confirm(translate('Are you sure you want to delete this record?'))) {
-                    PUQajax(modelUrl, null, 3000, $(this), 'DELETE')
-                        .then(function (response) {
-                            if (response.status === "success") {
-                                $dataTable.ajax.reload(null, false);
-                            }
-                        });
-                }
+                handleDelete($dataTable, this);
             });
 
             $dataTable.on('click', 'button.edit-btn', function (e) {
@@ -534,6 +532,62 @@
 
             });
 
+            $('#mass_update').on('click', function (event) {
+                var $modalTitle = $('#universalModal .modal-title');
+                var $modalBody = $('#universalModal .modal-body');
+                $modalTitle.text(translate('Notification Rules Mass Update'));
+
+                const formattedData = `
+    <form id="massUpdate" class="col-md-10 mx-auto">
+        <input type="hidden" name="group_uuid" value="{{$uuid}}">
+        <div class="mb-3">
+            <label for="category" class="form-label">` + translate('Category') + ` <small class="text-muted">(` + translate('optional, leave empty for all') + `)</small></label>
+            <select class="form-select mb-2 form-control" name="category" id="category"></select>
+        </div>
+        <div class="mb-3">
+            <label for="notification_layout_uuid" class="form-label">` + translate('Layout') + ` <small class="text-muted">(` + translate('optional') + `)</small></label>
+            <select class="form-select mb-2 form-control" name="notification_layout_uuid" id="notification_layout_uuid"></select>
+        </div>
+        <div class="mb-3">
+            <label for="senders" class="form-label">${translate('Senders')} <small class="text-muted">(${translate('optional')})</small></label>
+            <select multiple name="senders" id="senders" class="form-select mb-2 form-control"></select>
+        </div>
+        <div class="mb-3">
+            <label for="senders_mode" class="form-label">${translate('Senders Mode')}</label>
+            <select class="form-select mb-2 form-control" name="senders_mode" id="senders_mode">
+                <option value="replace">${translate('Replace')} — ${translate('replace all existing senders')}</option>
+                <option value="add">${translate('Add')} — ${translate('add to existing senders')}</option>
+            </select>
+        </div>
+    </form>
+    `;
+
+                $modalBody.html(formattedData);
+                var $elementCategory = $modalBody.find('[name="category"]');
+                var $elementLayout = $modalBody.find('[name="notification_layout_uuid"]');
+                var $elementSenders = $modalBody.find('[name="senders"]');
+
+                initializeSelect2($elementCategory, '{{route('admin.api.notification_categories.select.get')}}', '', 'GET', 1000, {
+                    dropdownParent: $('#universalModal'),
+                    allowClear: true,
+                    placeholder: translate('All categories'),
+                });
+
+                initializeSelect2($elementLayout, '{{route('admin.api.notification_layouts.select.get')}}', '', 'GET', 1000, {
+                    dropdownParent: $('#universalModal'),
+                    allowClear: true,
+                    placeholder: translate('Do not change'),
+                });
+
+                initializeSelect2($elementSenders, '{{route('admin.api.notification_senders.select.get')}}', '', 'GET', 1000, {
+                    dropdownParent: $('#universalModal'),
+                    placeholder: translate('Do not change'),
+                });
+
+                $('#universalModal').modal('show');
+
+            });
+
             $('#modalSaveButton').on('click', function (event) {
                 event.preventDefault();
 
@@ -553,6 +607,17 @@
                     var formData = serializeForm($form);
 
                     PUQajax('{{route('admin.api.notification_rule.mass_creation.post')}}', formData, 500, $(this), 'POST', $form)
+                        .then(function (response) {
+                            $('#universalModal').modal('hide');
+                            $dataTable.ajax.reload(null, false);
+                        });
+                }
+
+                if ($('#massUpdate').length) {
+                    var $form = $('#massUpdate');
+                    var formData = serializeForm($form);
+
+                    PUQajax('{{route('admin.api.notification_rule.mass_update.put')}}', formData, 500, $(this), 'PUT', $form)
                         .then(function (response) {
                             $('#universalModal').modal('hide');
                             $dataTable.ajax.reload(null, false);

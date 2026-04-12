@@ -276,7 +276,5 @@ class Product extends Module
         logActivity('info', 'Service:'.$service->uuid.' '."Change Package Successful. JobId: $jobId",
             'Change Package', null, null, $service->user_uuid);
         $service->setProvisionStatus('completed');
-        $service->cancelled_date = now();
-        $service->save();
     }
 }

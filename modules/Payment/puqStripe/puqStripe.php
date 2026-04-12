@@ -69,7 +69,7 @@ class puqStripe extends Payment
     public function getClientAreaHtml(array $data = []): string
     {
         $invoice = $data['invoice'];
-        $amount = $invoice->getDueAmountAttribute();
+        $amountCents = $invoice->due_amount_cents;
         $currency = $invoice->client->currency->code;
 
         $stripe = new StripeClient($this->module_data);
@@ -78,7 +78,7 @@ class puqStripe extends Payment
             referenceId: $invoice->uuid,
             invoiceId: $invoice->number,
             description: 'Invoice Proforma #'.$invoice->number,
-            amount: $amount,
+            amount: $amountCents,
             currency: $currency,
             return_url: route('client.web.panel.module.web', [
                 'type' => $this->module_type,

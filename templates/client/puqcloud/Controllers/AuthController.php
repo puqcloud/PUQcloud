@@ -32,6 +32,7 @@ use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\View\View;
+use OpenApi\Attributes as OA;
 
 class AuthController extends Controller
 {
@@ -354,6 +355,26 @@ class AuthController extends Controller
         ], 200);
     }
 
+    #[OA\Get(
+        path: 'client.api.logout',
+        description: 'Logs out the current client user and clears the session.',
+        summary: 'Client logout',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Auth'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Logged out successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'message', type: 'string'),
+                        new OA\Property(property: 'redirect', type: 'string'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getLogout(): JsonResponse
     {
         if (Auth::guard('client')->check()) {

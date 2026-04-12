@@ -27,9 +27,33 @@ add_hook('AdminBeforeLogin', 1, function($credentials) {
 ```
 ---
 
-## AdminAfterLogout
+## AdminAfterLogin
 
 Triggers after successful authentication of an admin user.
+
+### Parameters
+
+| Variable | Type             | Notes |
+|----------|------------------|-------|
+| $admin   | App\Models\Admin |       |
+
+
+### Response
+
+No response supported.
+
+### Example Code
+
+```php
+add_hook('AdminAfterLogin', 1, function($admin) {
+    // Perform hook code here...
+});
+```
+---
+
+## AdminAfterLogout
+
+Triggers after logout of an admin user.
 
 ### Parameters
 

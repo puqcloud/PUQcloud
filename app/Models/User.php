@@ -192,7 +192,7 @@ class User extends Model implements \Illuminate\Contracts\Auth\Authenticatable, 
 
     }
 
-    public function getHomeCompany(): HomeCompany
+    public function getHomeCompany(): ?HomeCompany
     {
         $client = $this->ownedClients()->first();
         if (! $client) {

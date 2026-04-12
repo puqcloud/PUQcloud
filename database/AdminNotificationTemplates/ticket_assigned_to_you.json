@@ -1,0 +1,7 @@
+{
+    "name": "Ticket Assigned to You",
+    "category": "staffOperational",
+    "custom": false,
+    "subject": "[Ticket #{{ $ticket->number }}] Assigned to You: {{ $ticket->subject }}",
+    "text_mini": "Ticket #{{ $ticket->number }} has been assigned to you."
+}

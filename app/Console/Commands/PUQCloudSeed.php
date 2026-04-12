@@ -29,6 +29,7 @@ use Database\Seeders\ModulesSeeder;
 use Database\Seeders\NotificationLayoutSeeder;
 use Database\Seeders\NotificationSenderSeeder;
 use Database\Seeders\NotificationTemplateSeeder;
+use Database\Seeders\TicketSeeder;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\App;
 
@@ -53,56 +54,67 @@ class PUQCloudSeed extends Command
 
         $this->info('=== Seeder process started ===');
 
-        $this->info('Running ModulesSeeder...');
-        $seeder = new ModulesSeeder;
-        $seeder->run();
-        $this->info('ModulesSeeder completed');
+        $this->runSeeder('ModulesSeeder', function () {
+            (new ModulesSeeder)->run();
+        });
 
         $Modules = Module::all();
         app()->instance('Modules', $Modules);
         $AdminPermission = new AdminPermissionService;
         app()->instance('AdminPermission', $AdminPermission);
 
-        $this->info('Running NotificationSenderSeeder...');
-        $seeder = new NotificationSenderSeeder($email, $name);
-        $seeder->run();
-        $this->info('NotificationSenderSeeder completed');
+        $this->runSeeder('NotificationSenderSeeder', function () use ($email, $name) {
+            (new NotificationSenderSeeder($email ?: 'noreply@example.com', $name ?: 'System'))->run();
+        });
 
-        $this->info('Running NotificationLayoutSeeder...');
-        $seeder = new NotificationLayoutSeeder;
-        $seeder->run();
-        $this->info('NotificationLayoutSeeder completed');
+        $this->runSeeder('NotificationLayoutSeeder', function () {
+            (new NotificationLayoutSeeder)->run();
+        });
 
-        $this->info('Running NotificationTemplateSeeder...');
-        $seeder = new NotificationTemplateSeeder;
-        $seeder->run();
-        $this->info('NotificationTemplateSeeder completed');
+        $this->runSeeder('NotificationTemplateSeeder', function () {
+            (new NotificationTemplateSeeder)->run();
+        });
 
-        $this->info('Running GroupsSeeder...');
-        $seeder = new GroupsSeeder;
-        $seeder->run();
-        $this->info('GroupsSeeder completed');
+        $this->runSeeder('GroupsSeeder', function () {
+            (new GroupsSeeder)->run();
+        });
 
-        $this->info('Running CountrySeeder...');
-        $seeder = new CountrySeeder;
-        $seeder->run();
-        $this->info('CountrySeeder completed');
+        $this->runSeeder('CountrySeeder', function () {
+            (new CountrySeeder)->run();
+        });
 
-        $this->info('Running CurrencySeeder...');
-        $seeder = new CurrencySeeder;
-        $seeder->run();
-        $this->info('CurrencySeeder completed');
+        $this->runSeeder('CurrencySeeder', function () {
+            (new CurrencySeeder)->run();
+        });
 
-        $this->info('Running HomeCompanySeeder...');
-        $seeder = new HomeCompanySeeder;
-        $seeder->run();
-        $this->info('HomeCompanySeeder completed');
+        $this->runSeeder('HomeCompanySeeder', function () {
+            (new HomeCompanySeeder)->run();
+        });
 
-        $this->info('Running AdminSeeder...');
-        $seeder = new AdminSeeder($email, $password, $name);
-        $seeder->run();
-        $this->info('AdminSeeder completed');
+        $this->runSeeder('TicketSeeder', function () {
+            (new TicketSeeder)->run();
+        });
+
+        // Admin creation: only if all 3 params provided
+        if ($email && $password && $name) {
+            $this->runSeeder('AdminSeeder', function () use ($email, $password, $name) {
+                (new AdminSeeder($email, $password, $name))->run();
+            });
+        } else {
+            $this->info('AdminSeeder skipped (use --email --password --name to create admin)');
+        }
 
         $this->info('=== Seeder process finished ===');
+    }
+
+    private function runSeeder(string $name, callable $callback): void
+    {
+        $this->info("Running {$name}...");
+        try {
+            $callback();
+            $this->info("{$name} completed");
+        } catch (\Throwable $e) {
+            $this->error("{$name} failed: " . $e->getMessage());
+        }
     }
 }

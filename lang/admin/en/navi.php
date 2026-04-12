@@ -59,4 +59,16 @@ return [
     'SSL Manager' => 'SSL Manager',
     'Certificate Authorities' => 'Certificate Authorities',
     'SSL Certificates' => 'SSL Certificates',
+    'Zone Templates' => 'Zone Templates',
+    'Support' => 'Support',
+    'Support Tickets' => 'Support Tickets',
+    'Ticket Departments' => 'Ticket Departments',
+    'Ticket Statuses' => 'Ticket Statuses',
+    'Canned Responses' => 'Canned Responses',
+    'Email Blacklist' => 'Email Blacklist',
+
+    'API Documentation' => 'API Documentation',
+    'Admin API' => 'Admin API',
+    'Client API' => 'Client API',
+    'Admin API Keys' => 'Admin API Keys',
 ];

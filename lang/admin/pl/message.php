@@ -5,6 +5,7 @@ return [
     'Logout out successfully' => 'Pomyślnie wylogowano',
     'Updated successfully' => 'Pomyślnie zaktualizowano',
     'Deleted successfully' => 'Pomyślnie usunięto',
+    'Connection successful' => 'Połączenie udane',
     'Created successfully' => 'Pomyślnie utworzono',
     'Successfully' => 'Sukces',
     'Association deleted successfully' => 'Powiązanie zostało pomyślnie usunięte',
@@ -19,4 +20,7 @@ return [
     'Status forcibly changed' => 'Status został wymuszony',
     'Idle forcibly changed' => 'Bezczynność została wymuszona',
     'Reload successfully' => 'Pomyślnie przeładowano',
+    'Notification sent successfully' => 'Powiadomienie wysłane pomyślnie',
+    'Bulk action completed on :count ticket(s)' => 'Akcja masowa wykonana dla :count zgłoszenie(ń)',
+    'Ticket reopened successfully' => 'Zgłoszenie zostało ponownie otwarte',
 ];

@@ -150,6 +150,12 @@
                                             <div id="idle"></div>
                                         </td>
                                     </tr>
+                                    <tr>
+                                        <td>{{__('main.Billing Mode')}}</td>
+                                        <td>
+                                            <div id="billing_mode_display"></div>
+                                        </td>
+                                    </tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -258,6 +264,14 @@
                                     <i class="lnr-cross btn-icon-wrapper"></i>{{ __('main.Cancellation') }}
                                 </button>
 
+                                <div class="mb-2 me-2 btn-group" id="switch_billing_mode_wrapper" style="display:none;">
+                                    <button type="button" id="switch_billing_mode"
+                                            class="btn-icon btn-shadow btn-outline-2x btn btn-outline-info">
+                                        <i class="fa fa-exchange-alt btn-icon-wrapper"></i>
+                                        <span id="switch_billing_mode_label"></span>
+                                    </button>
+                                </div>
+
                                 <div class="mb-2 me-2 btn-group">
                                     <button type="button" data-bs-toggle="dropdown"
                                             class="dropdown-toggle btn btn-warning">
@@ -354,6 +368,13 @@
                         $("#provision_status").html(renderServiceStatus(response.data?.provision_status));
 
                         $("#idle").html(idleStatus(response.data?.idle));
+
+                        // Billing mode display
+                        const bm = response.data?.billing_mode || 'prepaid';
+                        const bmBadge = bm === 'invoice'
+                            ? '<span class="badge bg-info">' + translate('Invoice') + '</span>'
+                            : '<span class="badge bg-success">' + translate('Prepaid') + '</span>';
+                        $("#billing_mode_display").html(bmBadge);
 
                         const groups = response.data?.product_option_groups;
                         const selectedOptions = response.data?.product_options || [];
@@ -466,6 +487,20 @@
                             $('#price_block').addClass('d-none');
                         }
 
+
+                        // Show/hide billing mode switch button
+                        const billingMode = response.data?.billing_mode;
+                        const productBillingMode = response.data?.product?.billing_mode;
+                        const serviceStatus = response.data?.status;
+                        if (productBillingMode === 'both' && serviceStatus === 'active') {
+                            const newMode = billingMode === 'invoice' ? 'prepaid' : 'invoice';
+                            const label = billingMode === 'invoice' ? translate('Switch to Prepaid') : translate('Switch to Invoice');
+                            $('#switch_billing_mode').data('mode', newMode);
+                            $('#switch_billing_mode_label').text(label);
+                            $('#switch_billing_mode_wrapper').show();
+                        } else {
+                            $('#switch_billing_mode_wrapper').hide();
+                        }
 
                         unblockUI('serviceForm');
                     })
@@ -585,6 +620,16 @@
                     .then(function (response) {
                         loadFormData();
                         loadModuleHtml();
+                    });
+            });
+
+            $('#switch_billing_mode').on('click', function () {
+                const newMode = $(this).data('mode');
+                PUQajax("{{ route('admin.api.service.billing_mode.put', request()->get('edit')) }}", {
+                    billing_mode: newMode
+                }, 5000, $(this), 'PUT')
+                    .then(function (response) {
+                        loadFormData();
                     });
             });
 

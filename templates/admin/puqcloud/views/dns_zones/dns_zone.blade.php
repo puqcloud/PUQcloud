@@ -38,6 +38,11 @@
             </div>
             <div class="page-title-actions">
 
+                <button id="bulkDeleteRecords" type="button"
+                        class="mb-2 me-2 btn-icon btn-outline-2x btn btn-outline-danger" style="display: none;">
+                    <i class="fas fa-trash"></i> {{__('main.Delete Selected')}}
+                </button>
+
                 <button id="createDnsRecord" type="button"
                         class="mb-2 me-2 btn-icon btn-outline-2x btn btn-outline-info">
                     <i class="fas fa-plus"></i> {{__('main.Create Record')}}
@@ -51,6 +56,16 @@
                 <button id="moveTo" type="button"
                         class="mb-2 me-2 btn-icon btn-outline-2x btn btn-outline-secondary">
                     <i class="fas fa-arrow-circle-right"></i> {{ __('main.Move To') }}
+                </button>
+
+                <button id="cloneZone" type="button"
+                        class="mb-2 me-2 btn-icon btn-outline-2x btn btn-outline-info">
+                    <i class="fas fa-copy"></i> {{ __('main.Clone Zone') }}
+                </button>
+
+                <button id="saveAsTemplate" type="button"
+                        class="mb-2 me-2 btn-icon btn-outline-2x btn btn-outline-secondary">
+                    <i class="fas fa-clipboard-list"></i> {{ __('main.Save as Template') }}
                 </button>
 
                 <div class="mb-2 me-2 btn-group">
@@ -175,11 +190,32 @@
         </div>
     </form>
 
+    <input type="file" id="importBindFile" accept=".zone,.txt,.bind" style="display: none;">
+    <input type="file" id="importJsonFile" accept=".json" style="display: none;">
+
     <div class="main-card mb-3 card">
         <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-auto">
+                    <select id="typeFilter" class="form-select form-select-sm" style="width: auto;">
+                        <option value="">{{ __('main.All Types') }}</option>
+                        <option value="A">A</option>
+                        <option value="AAAA">AAAA</option>
+                        <option value="CNAME">CNAME</option>
+                        <option value="MX">MX</option>
+                        <option value="TXT">TXT</option>
+                        <option value="SRV">SRV</option>
+                        <option value="ALIAS">ALIAS</option>
+                        <option value="NS">NS</option>
+                        <option value="CAA">CAA</option>
+                        <option value="PTR">PTR</option>
+                    </select>
+                </div>
+            </div>
             <table style="width: 100%;" id="dns_records" class="table table-hover table-striped table-bordered">
                 <thead>
                 <tr>
+                    <th style="width: 1%;"><input type="checkbox" id="selectAll"></th>
                     <th>{{ __('main.Name') }}</th>
                     <th>{{ __('main.Content') }}</th>
                     <th>{{ __('main.Type') }}</th>
@@ -192,6 +228,7 @@
                 </tbody>
                 <tfoot>
                 <tr>
+                    <th></th>
                     <th>{{ __('main.Name') }}</th>
                     <th>{{ __('main.Content') }}</th>
                     <th>{{ __('main.Type') }}</th>
@@ -269,7 +306,18 @@
 
             var $tableId = $('#dns_records');
             var ajaxUrl = '{{ route('admin.api.dns_zone.dns_records.get',$uuid) }}';
+            var selectedRecords = [];
+
             var columnsConfig = [
+                {
+                    data: "uuid",
+                    orderable: false,
+                    className: "center",
+                    width: "1%",
+                    render: function (data, type, row) {
+                        return '<input type="checkbox" class="record-checkbox" value="' + data + '">';
+                    }
+                },
                 {
                     data: "name",
                     name: "name",
@@ -316,12 +364,31 @@
             var $dataTable = initializeDataTable($tableId, ajaxUrl, columnsConfig, DataTableAddData, {
                 lengthMenu: [50, 100, 200, 500, 1000],
                 pageLength: 50,
-                order: [[2, 'asc']]
+                order: [[3, 'asc']]
             });
 
             function DataTableAddData() {
-                return {};
+                return {
+                    type_filter: $('#typeFilter').val() || '',
+                };
             }
+
+            $('#typeFilter').on('change', function () {
+                $dataTable.ajax.reload(null, false);
+            });
+
+            $tableId.on('change', '.record-checkbox', function () {
+                selectedRecords = [];
+                $tableId.find('.record-checkbox:checked').each(function () {
+                    selectedRecords.push($(this).val());
+                });
+                $('#bulkDeleteRecords').toggle(selectedRecords.length > 0);
+            });
+
+            $('#selectAll').on('change', function () {
+                var checked = $(this).is(':checked');
+                $tableId.find('.record-checkbox').prop('checked', checked).trigger('change');
+            });
 
             function updateDynamicFields(recordType, existingData = {}) {
                 let html = '';
@@ -538,18 +605,9 @@
                     });
             });
 
-            $tableId.on('click', 'button.delete-btn', function (e) {
+            $dataTable.on('click', 'button.delete-btn', function (e) {
                 e.preventDefault();
-                var modelUrl = $(this).data('model-url');
-
-                if (confirm(translate('Are you sure you want to delete this record?'))) {
-                    PUQajax(modelUrl, null, 3000, $(this), 'DELETE')
-                        .then(function (response) {
-                            if (response.status === "success") {
-                                $dataTable.ajax.reload(null, false);
-                            }
-                        });
-                }
+                handleDelete($dataTable, this);
             });
 
             $('#createDnsRecord').on('click', function () {
@@ -735,6 +793,86 @@
                     });
             });
 
+            $('#bulkDeleteRecords').on('click', function () {
+                if (selectedRecords.length === 0) return;
+                handleConfirmAction({
+                    message: 'Are you sure you want to delete ' + selectedRecords.length + ' records?',
+                    style: 'danger',
+                    onConfirm: function () {
+                        PUQajax('{{route('admin.api.dns_zone.dns_records.bulk_delete',$uuid)}}', {uuids: selectedRecords}, 5000, null, 'DELETE')
+                            .then(function (response) {
+                                selectedRecords = [];
+                                $('#selectAll').prop('checked', false);
+                                $('#bulkDeleteRecords').hide();
+                                $dataTable.ajax.reload(null, false);
+                            });
+                    }
+                });
+            });
+
+            function handleImportFile(file, url) {
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    var content = btoa(e.target.result);
+
+                    var $modal = $('#universalModal');
+                    var $modalTitle = $modal.find('.modal-title');
+                    var $modalBody = $modal.find('.modal-body');
+                    $modal.find('.modal-dialog').removeClass('modal-lg').addClass('modal-md');
+
+                    $modalTitle.text(translate('Import Mode'));
+                    $modalBody.html(`
+                        <form id="importModeForm">
+                            <input type="hidden" name="file_content" value="${content}">
+                            <div class="mb-3">
+                                <label class="form-label">${translate('Import Mode')}</label>
+                                <select name="import_mode" class="form-select">
+                                    <option value="add">${translate('Add only new records')}</option>
+                                    <option value="replace">${translate('Replace all records')}</option>
+                                </select>
+                            </div>
+                        </form>
+                    `);
+                    $modal.modal('show');
+
+                    $('#modalSaveButton').off('click.import').on('click.import', function (event) {
+                        event.preventDefault();
+                        if ($('#importModeForm').length) {
+                            var formData = serializeForm($('#importModeForm'));
+                            PUQajax(url, formData, 10000, $(this), 'POST', $('#importModeForm'))
+                                .then(function (response) {
+                                    $modal.modal('hide');
+                                    loadFormData();
+                                    $dataTable.ajax.reload(null, false);
+                                });
+                        }
+                    });
+                };
+                reader.readAsText(file);
+            }
+
+            $('#import_bind').on('click', function () {
+                $('#importBindFile').click();
+            });
+
+            $('#importBindFile').on('change', function () {
+                if (this.files && this.files[0]) {
+                    handleImportFile(this.files[0], '{{route('admin.api.dns_zone.import.bind.post',$uuid)}}');
+                    this.value = '';
+                }
+            });
+
+            $('#import_json').on('click', function () {
+                $('#importJsonFile').click();
+            });
+
+            $('#importJsonFile').on('change', function () {
+                if (this.files && this.files[0]) {
+                    handleImportFile(this.files[0], '{{route('admin.api.dns_zone.import.json.post',$uuid)}}');
+                    this.value = '';
+                }
+            });
+
             $('#moveTo').on('click', function () {
                 var $modalTitle = $('#universalModal .modal-title');
                 var $modalBody = $('#universalModal .modal-body');
@@ -761,6 +899,38 @@
                 initializeSelect2($elementDnsServerGroup, '{{route('admin.api.dns_server_groups.select.get')}}', '', 'GET', 1000, {
                     dropdownParent: $('#universalModal')
                 });
+            });
+
+            $('#cloneZone').on('click', function () {
+                var $modalTitle = $('#universalModal .modal-title');
+                var $modalBody = $('#universalModal .modal-body');
+                $('#universalModal .modal-dialog').removeClass('modal-lg').addClass('modal-md');
+
+                $modalTitle.text(translate('Clone Zone'));
+                $modalBody.html(`
+<form id="cloneZoneForm" class="mx-auto">
+    <div class="mb-3">
+        <label class="form-label" for="clone_name">${translate('New Zone Name')}</label>
+        <input type="text" class="form-control" id="clone_name" name="name" placeholder="${translate('example.com')}">
+    </div>
+</form>`);
+                $('#universalModal').modal('show');
+            });
+
+            $('#saveAsTemplate').on('click', function () {
+                var $modalTitle = $('#universalModal .modal-title');
+                var $modalBody = $('#universalModal .modal-body');
+                $('#universalModal .modal-dialog').removeClass('modal-lg').addClass('modal-md');
+
+                $modalTitle.text(translate('Save as Template'));
+                $modalBody.html(`
+<form id="saveAsTemplateForm" class="mx-auto">
+    <div class="mb-3">
+        <label class="form-label" for="template_name">${translate('Template Name')}</label>
+        <input type="text" class="form-control" id="template_name" name="name" placeholder="${translate('My Template')}">
+    </div>
+</form>`);
+                $('#universalModal').modal('show');
             });
 
             $('#modalSaveButton').on('click', function (event) {
@@ -798,6 +968,26 @@
                             $('#universalModal').modal('hide');
                             loadFormData();
                             $dataTable.ajax.reload(null, false);
+                        });
+                }
+
+                if ($('#cloneZoneForm').length) {
+                    var $form = $('#cloneZoneForm');
+                    var formData = serializeForm($form);
+
+                    PUQajax('{{route('admin.api.dns_zone.clone.post',$uuid)}}', formData, 10000, $(this), 'POST', $form)
+                        .then(function (response) {
+                            $('#universalModal').modal('hide');
+                        });
+                }
+
+                if ($('#saveAsTemplateForm').length) {
+                    var $form = $('#saveAsTemplateForm');
+                    var formData = serializeForm($form);
+
+                    PUQajax('{{route('admin.api.dns_zone.save_as_template.post',$uuid)}}', formData, 5000, $(this), 'POST', $form)
+                        .then(function (response) {
+                            $('#universalModal').modal('hide');
                         });
                 }
 

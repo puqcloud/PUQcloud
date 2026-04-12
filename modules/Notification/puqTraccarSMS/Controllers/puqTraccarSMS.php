@@ -22,9 +22,29 @@ use App\Models\NotificationSender;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use OpenApi\Attributes as OA;
 
 class puqTraccarSMS extends Controller
 {
+    #[OA\Post(
+        path: 'admin.api.Notification.puqTraccarSMS.test_connection.post',
+        description: 'Tests the Traccar SMS connection by sending a test SMS.',
+        summary: 'Test Traccar SMS connection',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqTraccarSMS'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Connection test result',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function testConnection(Request $request, $uuid): JsonResponse
     {
         $validator = Validator::make($request->all(), [

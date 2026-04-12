@@ -44,200 +44,77 @@ class HookService
 
     public function callHooks(string $hookName, ...$params): void
     {
-        if (isset($this->hooks[$hookName])) {
+        if (! isset($this->hooks[$hookName])) {
+            return;
+        }
 
-            foreach ($this->hooks[$hookName] as $priority => $callbacks) {
-                foreach ($callbacks as $callback) {
-                    try {
+        foreach ($this->hooks[$hookName] as $priority => $callbacks) {
+            foreach ($callbacks as $callback) {
+                try {
+                    // Special hooks (e.g. Output accumulators) define their own dispatcher.
+                    // Plain pass-through hooks just invoke the callback directly.
+                    if (method_exists($this, $hookName)) {
                         $this->$hookName($callback, $params);
-                    } catch (\Throwable $e) {
-                        logModule(
-                            'system_hooks',
-                            $hookName,
-                            'callHooks',
-                            'error',
-                            '',
-                            $e->getMessage()
-                        );
-                        Log::error('Stack Trace: '.$e->getTraceAsString());
+                    } else {
+                        call_user_func_array($callback, $params);
                     }
+                } catch (\Throwable $e) {
+                    logModule(
+                        'system_hooks',
+                        $hookName,
+                        'callHooks',
+                        'error',
+                        '',
+                        $e->getMessage()
+                    );
+                    Log::error('Stack Trace: '.$e->getTraceAsString());
                 }
             }
         }
     }
 
-    // hooks Admin -----------------------------------------------------------------------------------------------------
-    private function AdminBeforeLogin($callback, $params): void
-    {
-        call_user_func_array($callback, $params);
-    }
-
-    private function AdminAfterLogout($callback, $params): void
-    {
-        call_user_func_array($callback, $params);
-    }
-
-    private function AdminFailedAuthorization($callback, $params): void
-    {
-        call_user_func_array($callback, $params);
-    }
-
-    private function AdminBeforeLogout($callback, $params): void
-    {
-        call_user_func_array($callback, $params);
-    }
-
-    private function AdminChangePermissions($callback, $params): void
-    {
-        call_user_func_array($callback, $params);
-    }
-
-    private function PendingService($callback, $params): void
-    {
-        call_user_func_array($callback, $params);
-    }
-
-    private function CreateService($callback, $params): void
-    {
-        call_user_func_array($callback, $params);
-    }
-
-    private function CreateServiceError($callback, $params): void
-    {
-        call_user_func_array($callback, $params);
-    }
-
-    private function CreateServiceSuccess($callback, $params): void
-    {
-        call_user_func_array($callback, $params);
-    }
-
-    private function SuspendService($callback, $params): void
-    {
-        call_user_func_array($callback, $params);
-    }
-
-    private function SuspendServiceError($callback, $params): void
-    {
-        call_user_func_array($callback, $params);
-    }
-
-    private function SuspendServiceSuccess($callback, $params): void
-    {
-        call_user_func_array($callback, $params);
-    }
-
-    private function UnsuspendService($callback, $params): void
-    {
-        call_user_func_array($callback, $params);
-    }
-
-    private function UnsuspendServiceError($callback, $params): void
-    {
-        call_user_func_array($callback, $params);
-    }
-
-    private function UnsuspendServiceSuccess($callback, $params): void
-    {
-        call_user_func_array($callback, $params);
-    }
-
-    private function TerminationService($callback, $params): void
-    {
-        call_user_func_array($callback, $params);
-    }
-
-    private function TerminationServiceError($callback, $params): void
-    {
-        call_user_func_array($callback, $params);
-    }
-
-    private function TerminationServiceSuccess($callback, $params): void
-    {
-        call_user_func_array($callback, $params);
-    }
-
-    private function CancellationService($callback, $params): void
-    {
-        call_user_func_array($callback, $params);
-    }
-
-    private function CancellationServiceError($callback, $params): void
-    {
-        call_user_func_array($callback, $params);
-    }
-
-    private function CancellationServiceSuccess($callback, $params): void
-    {
-        call_user_func_array($callback, $params);
-    }
-
-    private function UserBeforeRegister($callback, $params): void
-    {
-        call_user_func_array($callback, $params);
-    }
-
-    private function UserAfterRegister($callback, $params): void
-    {
-        call_user_func_array($callback, $params);
-    }
-
-    private function UserBeforeLogin($callback, $params): void
-    {
-        call_user_func_array($callback, $params);
-    }
-
-    private function UserAfterLogin($callback, $params): void
-    {
-        call_user_func_array($callback, $params);
-    }
-
-    private function UserBeforeLogout($callback, $params): void
-    {
-        call_user_func_array($callback, $params);
-    }
-
-    private function UserAfterLogout($callback, $params): void
-    {
-        call_user_func_array($callback, $params);
-    }
-
-    private function UserFailedAuthorization($callback, $params): void
-    {
-        call_user_func_array($callback, $params);
-    }
-
-    private function InvoiceCreated($callback, $params): void
-    {
-        call_user_func_array($callback, $params);
-    }
-
-    private function ProformaInvoiceCreated($callback, $params): void
-    {
-        call_user_func_array($callback, $params);
-    }
-
-    private function UserResetPassword($callback, $params): void
-    {
-        call_user_func_array($callback, $params);
-    }
-
-    private function ServiceOptionsUpdated($callback, $params): void
-    {
-        call_user_func_array($callback, $params);
-    }
-
     // Output ----------------------------------------------------------------------------------------------------------
+    private function AdminAreaHeadOutput($callback, $params): void
+    {
+        $output = app('AdminAreaHeadOutput');
+        app()->instance('AdminAreaHeadOutput', $output.call_user_func_array($callback, $params));
+    }
+
+    private function AdminAreaHeaderOutput($callback, $params): void
+    {
+        $output = app('AdminAreaHeaderOutput');
+        app()->instance('AdminAreaHeaderOutput', $output.call_user_func_array($callback, $params));
+    }
+
     private function AdminAreaFooterOutput($callback, $params): void
     {
         $AdminAreaFooterOutput = app('AdminAreaFooterOutput');
         app()->instance('AdminAreaFooterOutput', $AdminAreaFooterOutput.call_user_func_array($callback, $params));
     }
 
+    private function ClientAreaHeadOutput($callback, $params): void
+    {
+        $output = app('ClientAreaHeadOutput');
+        app()->instance('ClientAreaHeadOutput', $output.call_user_func_array($callback, $params));
+    }
+
+    private function ClientAreaHeaderOutput($callback, $params): void
+    {
+        $output = app('ClientAreaHeaderOutput');
+        app()->instance('ClientAreaHeaderOutput', $output.call_user_func_array($callback, $params));
+    }
+
+    private function ClientAreaFooterOutput($callback, $params): void
+    {
+        $output = app('ClientAreaFooterOutput');
+        app()->instance('ClientAreaFooterOutput', $output.call_user_func_array($callback, $params));
+    }
+
     public static function loadHooks(): void
     {
         self::loadNotificationHooks();
         self::loadAdminTemplateHooks();
+        self::loadClientTemplateHooks();
         self::loadModulesHooks();
     }
 
@@ -270,6 +147,28 @@ class HookService
                     'system_hooks',
                     '',
                     'loadAdminTemplateHooks',
+                    'error',
+                    '',
+                    $e->getMessage()
+                );
+
+                Log::error('Error loading hooks: '.$e->getMessage());
+            }
+        }
+    }
+
+    protected static function loadClientTemplateHooks(): void
+    {
+        $filePath = config('template.client.base_path').'/hooks.php';
+
+        if (file_exists($filePath)) {
+            try {
+                require_once $filePath;
+            } catch (\Exception $e) {
+                logModule(
+                    'system_hooks',
+                    '',
+                    'loadClientTemplateHooks',
                     'error',
                     '',
                     $e->getMessage()

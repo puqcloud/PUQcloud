@@ -15,6 +15,20 @@
  * Do not remove this header.
  */
 
+/*
+ * WEB Routes:
+ *   GET  admins                                   -> admins()                   [admin.web.admins]
+ *   GET  admin/{uuid}                             -> admin()                    [admin.web.admin]
+ *
+ * API Routes:
+ *   GET     admins                                 -> getAdmins()                [admin.api.admins.get]
+ *   GET     admins/select                          -> getAdminsSelect()          [admin.api.admins.select.get]
+ *   GET     admin/{uuid}                           -> getAdmin()                 [admin.api.admin.get]
+ *   POST    admin                                  -> postAdmin()                [admin.api.admin.post]
+ *   PUT     admin/{uuid}                           -> putAdmin()                 [admin.api.admin.put]
+ *   DELETE  admin/{uuid}                           -> deleteAdmin()              [admin.api.admin.delete]
+ */
+
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
@@ -24,6 +38,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use OpenApi\Attributes as OA;
 use Yajra\DataTables\DataTables;
 
 class AdminAdminsController extends Controller
@@ -35,6 +50,25 @@ class AdminAdminsController extends Controller
         return view_admin('admins.admins', compact('title'));
     }
 
+    #[OA\Get(
+        path: 'admin.api.admins.get',
+        description: 'Returns a DataTable list of admins.',
+        summary: 'Get admins list',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Admins'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Admins list returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getAdmins(Request $request): JsonResponse
     {
         $query = Admin::query();
@@ -80,6 +114,66 @@ class AdminAdminsController extends Controller
         ], 200);
     }
 
+    #[OA\Get(
+        path: 'admin.api.admins.select.get',
+        description: 'Returns a list of admins for select2 dropdown.',
+        summary: 'Get admins select list',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Admins'],
+        parameters: [
+            new OA\Parameter(
+                name: 'q',
+                description: 'Search query',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'string')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Admins select list returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
+    public function getAdminsSelect(Request $request): JsonResponse
+    {
+        $search = $request->input('q');
+
+        if (! empty($search)) {
+            $admins = Admin::query()
+                ->where('uuid', 'like', '%'.$search.'%')
+                ->orWhere('email', 'like', '%'.$search.'%')
+                ->orWhere('firstname', 'like', '%'.$search.'%')
+                ->orWhere('lastname', 'like', '%'.$search.'%')
+                ->get();
+        } else {
+            $admins = Admin::all();
+        }
+
+        $formattedGroups = $admins->map(function ($admin) {
+            return [
+                'id' => $admin->uuid,
+                'text' => $admin->email,
+            ];
+        });
+
+        return response()->json([
+            'data' => [
+                'results' => $formattedGroups,
+                'pagination' => [
+                    'more' => false,
+                ],
+            ],
+        ], 200);
+    }
+
     public function admin(Request $request, $uuid): View
     {
         $title = __('main.Edit Administrator');
@@ -87,6 +181,109 @@ class AdminAdminsController extends Controller
         return view_admin('admins.admin', compact('title', 'uuid'));
     }
 
+    #[OA\Get(
+        path: 'admin.api.admin.get',
+        description: 'Returns detailed information about an admin, including language data, groups, and associated IPs.',
+        summary: 'Get admin details by UUID',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Admins'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'UUID of the admin',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Admin data returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'message', type: 'string', example: null, nullable: true),
+                        new OA\Property(property: 'errors', type: 'array', items: new OA\Items(type: 'string'),
+                            example: null, nullable: true),
+                        new OA\Property(property: 'status', type: 'string', example: 'success'),
+                        new OA\Property(
+                            property: 'data',
+                            properties: [
+                                new OA\Property(property: 'uuid', type: 'string', format: 'uuid',
+                                    example: 'a5e49d8f-dd43-457b-8c0e-01acbb000ae6'),
+                                new OA\Property(property: 'email', type: 'string', example: 'it@puq.pl'),
+                                new OA\Property(property: 'phone_number', type: 'string', example: '123'),
+                                new OA\Property(property: 'two_factor', type: 'integer', example: 0),
+                                new OA\Property(property: 'disable', type: 'boolean', example: false),
+                                new OA\Property(property: 'email_verified', type: 'integer', example: 0),
+                                new OA\Property(property: 'phone_verified', type: 'integer', example: 0),
+                                new OA\Property(property: 'firstname', type: 'string', example: 'PUQ'),
+                                new OA\Property(property: 'lastname', type: 'string', example: 'Cloud'),
+                                new OA\Property(property: 'admin_notes', type: 'string', example: null, nullable: true),
+                                new OA\Property(property: 'dashboard', type: 'string',
+                                    example: '[{"key":"PUQCloudInfo","width":4,"height":46,"x":0,"y":0,"autoRefresh":false}]'),
+                                new OA\Property(property: 'client_summary_dashboard', type: 'string',
+                                    example: '[{"key":"ClientFinance","width":3,"height":45,"x":0,"y":0,"autoRefresh":false}]'),
+                                new OA\Property(property: 'old_permissions', type: 'string',
+                                    example: '["Notification-puqPHPmail-test-connection","Payment-puqPayPal-test-connection"]'),
+                                new OA\Property(property: 'language', type: 'string', example: 'en'),
+                                new OA\Property(property: 'created_at', type: 'string', format: 'date-time',
+                                    example: '2025-05-26 10:52:11'),
+                                new OA\Property(property: 'updated_at', type: 'string', format: 'date-time',
+                                    example: '2026-01-10 14:07:51'),
+                                new OA\Property(
+                                    property: 'language_data',
+                                    properties: [
+                                        new OA\Property(property: 'id', type: 'string', example: 'en'),
+                                        new OA\Property(property: 'text', type: 'string', example: 'English (English)'),
+                                    ],
+                                    type: 'object'
+                                ),
+                                new OA\Property(property: 'groups', type: 'string', example: ''),
+                                new OA\Property(
+                                    property: 'groups_data',
+                                    type: 'array',
+                                    items: new OA\Items(
+                                        properties: [
+                                            new OA\Property(property: 'id', type: 'string',
+                                                example: '5cfb8c43-85c0-4fb8-81b3-658f0d397348'),
+                                            new OA\Property(property: 'text', type: 'string', example: 'Super Admin'),
+                                        ],
+                                        type: 'object'
+                                    )
+                                ),
+                                new OA\Property(
+                                    property: 'ips',
+                                    type: 'array',
+                                    items: new OA\Items(
+                                        properties: [
+                                            new OA\Property(property: 'uuid', type: 'string', format: 'uuid',
+                                                example: '1a8a59b4-a208-4ee1-83b6-7824acc7814a'),
+                                            new OA\Property(property: 'admin_uuid', type: 'string', format: 'uuid',
+                                                example: 'a5e49d8f-dd43-457b-8c0e-01acbb000ae6'),
+                                            new OA\Property(property: 'ip_address', type: 'string',
+                                                example: '77.87.125.4'),
+                                            new OA\Property(property: 'start_use', type: 'string', format: 'date-time',
+                                                example: '2025-12-13 14:49:40'),
+                                            new OA\Property(property: 'stop_use', type: 'string', format: 'date-time',
+                                                example: '2026-01-11 02:23:28'),
+                                            new OA\Property(property: 'created_at', type: 'string', format: 'date-time',
+                                                example: '2025-12-13 14:49:40'),
+                                            new OA\Property(property: 'updated_at', type: 'string', format: 'date-time',
+                                                example: '2026-01-11 02:23:28'),
+                                        ],
+                                        type: 'object'
+                                    )
+                                ),
+                            ],
+                            type: 'object'
+                        ),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getAdmin(Request $request, $uuid): JsonResponse
     {
         $admin = Admin::find($uuid);
@@ -108,6 +305,123 @@ class AdminAdminsController extends Controller
         ]);
     }
 
+    #[OA\Post(
+        path: 'admin.api.admin.post',
+        description: 'Creates a new administrator with specified details, groups, and permissions.',
+        summary: 'Create a new admin',
+        security: [['apiKeyAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'application/json',
+                schema: new OA\Schema(
+                    required: [
+                        'email', 'password', 'password_confirmation', 'firstname', 'lastname', 'language', 'groups',
+                    ],
+                    properties: [
+                        new OA\Property(
+                            property: 'email',
+                            description: 'Admin email address (must be unique)',
+                            type: 'string',
+                            format: 'email',
+                            example: 'admin@example.com'
+                        ),
+                        new OA\Property(
+                            property: 'password',
+                            description: 'Admin password (minimum 6 characters)',
+                            type: 'string',
+                            format: 'password',
+                            example: 'password123'
+                        ),
+                        new OA\Property(
+                            property: 'password_confirmation',
+                            description: 'Password confirmation (must match password)',
+                            type: 'string',
+                            format: 'password',
+                            example: 'password123'
+                        ),
+                        new OA\Property(
+                            property: 'firstname',
+                            description: 'Admin first name',
+                            type: 'string',
+                            example: 'John'
+                        ),
+                        new OA\Property(
+                            property: 'lastname',
+                            description: 'Admin last name',
+                            type: 'string',
+                            example: 'Doe'
+                        ),
+                        new OA\Property(
+                            property: 'language',
+                            description: 'Admin interface language (must be one of available locales)',
+                            type: 'string',
+                            example: 'en'
+                        ),
+                        new OA\Property(
+                            property: 'groups',
+                            description: 'Array of group UUIDs to assign to the admin',
+                            type: 'array',
+                            items: new OA\Items(
+                                type: 'string',
+                                format: 'uuid'
+                            ),
+                            example: ['24fe5c7f-0f53-4c1d-bd99-77062af57afa']
+                        ),
+                        new OA\Property(
+                            property: 'phone_number',
+                            description: 'Phone number (optional)',
+                            type: 'string',
+                            example: '1234567890',
+                            nullable: true
+                        ),
+                        new OA\Property(
+                            property: 'country_code',
+                            description: 'Country code for phone number (optional)',
+                            type: 'string',
+                            example: '+1',
+                            nullable: true
+                        ),
+                    ]
+                )
+            )
+        ),
+        tags: ['Admins'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Admin created successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string', example: 'success'),
+                        new OA\Property(property: 'message', type: 'string', example: 'Created successfully'),
+                        new OA\Property(
+                            property: 'data',
+                            properties: [
+                                new OA\Property(property: 'uuid', type: 'string', format: 'uuid',
+                                    example: 'a5e49d8f-dd43-457b-8c0e-01acbb000ae6'),
+                                new OA\Property(property: 'email', type: 'string', example: 'admin@example.com'),
+                                new OA\Property(property: 'firstname', type: 'string', example: 'John'),
+                                new OA\Property(property: 'lastname', type: 'string', example: 'Doe'),
+                                new OA\Property(property: 'language', type: 'string', example: 'en'),
+                                new OA\Property(property: 'phone_number', type: 'string', example: '+11234567890',
+                                    nullable: true),
+                                new OA\Property(property: 'disable', type: 'boolean', example: false),
+                                new OA\Property(property: 'created_at', type: 'string', format: 'date-time',
+                                    example: '2026-01-11 10:00:00'),
+                                new OA\Property(property: 'updated_at', type: 'string', format: 'date-time',
+                                    example: '2026-01-11 10:00:00'),
+                            ],
+                            type: 'object'
+                        ),
+                        new OA\Property(property: 'redirect', type: 'string',
+                            example: 'https://example.com/admin/a5e49d8f-dd43-457b-8c0e-01acbb000ae6'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function postAdmin(Request $request): JsonResponse
     {
 
@@ -176,6 +490,7 @@ class AdminAdminsController extends Controller
 
         $admin->disable = false;
         $admin->save();
+
         if ($request->has('groups')) {
             $groupUuids = $request->input('groups');
             $existingGroups = Group::whereIn('uuid', $groupUuids)->pluck('uuid')->toArray();
@@ -195,6 +510,152 @@ class AdminAdminsController extends Controller
         ]);
     }
 
+    #[OA\Put(
+        path: 'admin.api.admin.put',
+        description: 'Updates an existing administrator information including email, password, personal details, groups, and status.',
+        summary: 'Update admin details by UUID',
+        security: [['apiKeyAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'application/json',
+                schema: new OA\Schema(
+                    required: ['groups'],
+                    properties: [
+                        new OA\Property(
+                            property: 'email',
+                            description: 'Admin email address (must be unique)',
+                            type: 'string',
+                            format: 'email',
+                            example: 'admin@example.com',
+                            nullable: true
+                        ),
+                        new OA\Property(
+                            property: 'password',
+                            description: 'New password (minimum 6 characters, optional)',
+                            type: 'string',
+                            format: 'password',
+                            example: 'newpassword123',
+                            nullable: true
+                        ),
+                        new OA\Property(
+                            property: 'password_confirmation',
+                            description: 'Password confirmation (required if password is set)',
+                            type: 'string',
+                            format: 'password',
+                            example: 'newpassword123',
+                            nullable: true
+                        ),
+                        new OA\Property(
+                            property: 'firstname',
+                            description: 'Admin first name',
+                            type: 'string',
+                            example: 'John',
+                            nullable: true
+                        ),
+                        new OA\Property(
+                            property: 'lastname',
+                            description: 'Admin last name',
+                            type: 'string',
+                            example: 'Doe',
+                            nullable: true
+                        ),
+                        new OA\Property(
+                            property: 'language',
+                            description: 'Admin interface language (must be one of available locales)',
+                            type: 'string',
+                            example: 'en',
+                            nullable: true
+                        ),
+                        new OA\Property(
+                            property: 'groups',
+                            description: 'Array of group UUIDs to assign to the admin (required)',
+                            type: 'array',
+                            items: new OA\Items(
+                                type: 'string',
+                                format: 'uuid'
+                            ),
+                            example: ['5cfb8c43-85c0-4fb8-81b3-658f0d397348']
+                        ),
+                        new OA\Property(
+                            property: 'phone_number',
+                            description: 'Phone number (optional)',
+                            type: 'string',
+                            example: '1234567890',
+                            nullable: true
+                        ),
+                        new OA\Property(
+                            property: 'country_code',
+                            description: 'Country code for phone number (optional)',
+                            type: 'string',
+                            example: '+1',
+                            nullable: true
+                        ),
+                        new OA\Property(
+                            property: 'disable',
+                            description: 'Enable or disable admin account ("yes" to disable, "no" to enable)',
+                            type: 'string',
+                            enum: ['yes', 'no'],
+                            example: 'no',
+                            nullable: true
+                        ),
+                        new OA\Property(
+                            property: 'admin_notes',
+                            description: 'Internal notes about the admin',
+                            type: 'string',
+                            example: 'Important admin notes here',
+                            nullable: true
+                        ),
+                    ]
+                )
+            )
+        ),
+        tags: ['Admins'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'UUID of the admin to update',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Admin updated successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string', example: 'success'),
+                        new OA\Property(property: 'message', type: 'string', example: 'Updated successfully'),
+                        new OA\Property(
+                            property: 'data',
+                            properties: [
+                                new OA\Property(property: 'uuid', type: 'string', format: 'uuid',
+                                    example: 'a5e49d8f-dd43-457b-8c0e-01acbb000ae6'),
+                                new OA\Property(property: 'email', type: 'string', example: 'admin@example.com'),
+                                new OA\Property(property: 'firstname', type: 'string', example: 'John'),
+                                new OA\Property(property: 'lastname', type: 'string', example: 'Doe'),
+                                new OA\Property(property: 'language', type: 'string', example: 'en'),
+                                new OA\Property(property: 'phone_number', type: 'string', example: '+11234567890',
+                                    nullable: true),
+                                new OA\Property(property: 'disable', type: 'boolean', example: false),
+                                new OA\Property(property: 'admin_notes', type: 'string',
+                                    example: 'Important admin notes here',
+                                    nullable: true),
+                                new OA\Property(property: 'created_at', type: 'string', format: 'date-time',
+                                    example: '2025-05-26 10:52:11'),
+                                new OA\Property(property: 'updated_at', type: 'string', format: 'date-time',
+                                    example: '2026-01-11 10:00:00'),
+                            ],
+                            type: 'object'
+                        ),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function putAdmin(Request $request, $uuid): JsonResponse
     {
         $login_admin = app('admin');
@@ -215,7 +676,7 @@ class AdminAdminsController extends Controller
             'firstname' => 'nullable|string',
             'lastname' => 'nullable|string',
             'language' => 'nullable|in:'.implode(',', $locales),
-            'groups' => 'required|array',
+            'groups' => 'array',
             'groups.*' => 'exists:groups,uuid',
         ], [
             'email.email' => __('error.The email must be a valid email address'),
@@ -303,10 +764,38 @@ class AdminAdminsController extends Controller
         return response()->json([
             'status' => 'success',
             'message' => __('message.Updated successfully'),
-            'data' => $admin,
         ]);
     }
 
+    #[OA\Delete(
+        path: 'admin.api.admin.delete',
+        description: 'Deletes an administrator by UUID. Cannot delete yourself.',
+        summary: 'Delete admin by UUID',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Admins'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'UUID of the admin to delete',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Admin deleted successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string', example: 'success'),
+                        new OA\Property(property: 'message', type: 'string', example: 'Deleted successfully'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function deleteAdmin(Request $request, $uuid): JsonResponse
     {
         $login_admin = app('admin');

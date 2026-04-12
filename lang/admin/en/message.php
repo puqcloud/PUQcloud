@@ -5,6 +5,7 @@ return [
     'Logout out successfully' => 'Logout out successfully',
     'Updated successfully' => 'Updated successfully',
     'Deleted successfully' => 'Deleted successfully',
+    'Connection successful' => 'Connection successful',
     'Created successfully' => 'Created successfully',
     'Successfully' => 'Successfully',
     'Association deleted successfully' => 'Association deleted successfully',
@@ -20,4 +21,7 @@ return [
     'Idle forcibly changed' => 'Idle forcibly changed',
     'Reload successfully' => 'Reload successfully',
     'The task has been added to the queue' => 'The task has been added to the queue',
+    'Notification sent successfully' => 'Notification sent successfully',
+    'Bulk action completed on :count ticket(s)' => 'Bulk action completed on :count ticket(s)',
+    'Ticket reopened successfully' => 'Ticket reopened successfully',
 ];

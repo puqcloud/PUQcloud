@@ -29,7 +29,7 @@ class SslManagerProcessPending extends Command
     // =============================
     // Timing settings (minutes/seconds)
     // =============================
-    private $commandLockSeconds = 600;         // Max time the whole command is locked (10 minutes)
+    private $commandLockSeconds = 3600;         // Crash recovery TTL (1 hour); normal release via finally
     private $retryDelayIncrement = 1;          // Increment retry delay after each failure (1 minute)
     private $retryDelayMax = 10;               // Maximum retry delay (1 hour)
     private $retryDelayCacheLifetime = 1440;   // Cache lifetime for retry delay tracking (in minutes, 1 day)

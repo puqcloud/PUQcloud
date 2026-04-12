@@ -26,8 +26,14 @@ return [
         'url' => route('client.web.panel.client.invoices'),
     ],
     [
+        'icon' => 'fas fa-life-ring',
+        'label' => __('main.Support Tickets'),
+        'url' => route('client.web.panel.support.tickets'),
+    ],
+    [
         'icon' => 'fas fa-credit-card',
         'label' => __('main.Transactions'),
         'url' => route('client.web.panel.client.transactions'),
     ],
 ];
+

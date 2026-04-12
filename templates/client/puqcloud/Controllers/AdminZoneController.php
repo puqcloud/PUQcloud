@@ -24,6 +24,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use LayoutOptions;
 use LoginLayoutOptions;
+use OpenApi\Attributes as OA;
 
 class AdminZoneController extends Controller
 {
@@ -42,6 +43,25 @@ class AdminZoneController extends Controller
         return view_client('admin_zone.layout_options', compact('title'));
     }
 
+    #[OA\Get(
+        path: 'admin.api.client_template.layout_options.get',
+        description: 'Returns the client template layout options.',
+        summary: 'Get layout options',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Client Template'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Layout options returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getLayoutOptions(Request $request): JsonResponse
     {
         $layout_options = new LayoutOptions;
@@ -51,6 +71,26 @@ class AdminZoneController extends Controller
         ]);
     }
 
+    #[OA\Put(
+        path: 'admin.api.client_template.layout_options.put',
+        description: 'Updates the client template layout options.',
+        summary: 'Update layout options',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Client Template'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Layout options updated successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string'),
+                        new OA\Property(property: 'message', type: 'string'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function putLayoutOptions(Request $request): JsonResponse
     {
 
@@ -92,6 +132,25 @@ class AdminZoneController extends Controller
         return view_client('admin_zone.login_page', compact('title'));
     }
 
+    #[OA\Get(
+        path: 'admin.api.client_template.login_layout_options.get',
+        description: 'Returns the client template login page layout options.',
+        summary: 'Get login layout options',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Client Template'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Login layout options returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getLoginLayoutOptions(Request $request): JsonResponse
     {
         $login_layout_options = new LoginLayoutOptions;
@@ -101,6 +160,26 @@ class AdminZoneController extends Controller
         ]);
     }
 
+    #[OA\Put(
+        path: 'admin.api.client_template.login_layout_options.put',
+        description: 'Updates the client template login page layout options.',
+        summary: 'Update login layout options',
+        security: [['apiKeyAuth' => []]],
+        tags: ['Client Template'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Login layout options updated successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string'),
+                        new OA\Property(property: 'message', type: 'string'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function putLoginLayoutOptions(Request $request): JsonResponse
     {
         if ($request->has('client_area_login_page_header_color_scheme')) {

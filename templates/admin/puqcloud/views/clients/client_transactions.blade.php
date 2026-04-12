@@ -211,11 +211,7 @@
                     data: 'urls',
                     className: "center",
                     render: function (data, type, row) {
-                        var btn = '';
-                        if (row.urls.edit) {
-                            btn = btn + renderEditButton(row.urls.edit);
-                        }
-                        return btn;
+                        return '';
                     }
                 },
             ];

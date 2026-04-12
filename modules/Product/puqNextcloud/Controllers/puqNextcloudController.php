@@ -27,6 +27,7 @@ use Illuminate\Support\Facades\Validator;
 use Modules\Product\puqNextcloud\Models\PuqNextcloudServer;
 use Modules\Product\puqNextcloud\Models\PuqNextcloudServerGroup;
 use puqNextcloudClient;
+use OpenApi\Attributes as OA;
 use Yajra\DataTables\DataTables;
 
 class puqNextcloudController extends Controller
@@ -38,6 +39,25 @@ class puqNextcloudController extends Controller
         return view_admin_module('Product', 'puqNextcloud', 'admin_area.servers', compact('title'));
     }
 
+    #[OA\Get(
+        path: 'admin.api.Product.puqNextcloud.servers.get',
+        description: 'Returns a list of all Nextcloud servers with filtering and pagination support.',
+        summary: 'Get servers list',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqNextcloud'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Servers list returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getServers(Request $request): JsonResponse
     {
         $query = PuqNextcloudServer::query();
@@ -73,6 +93,27 @@ class puqNextcloudController extends Controller
         ], 200);
     }
 
+    #[OA\Post(
+        path: 'admin.api.Product.puqNextcloud.server.post',
+        description: 'Creates a new Nextcloud server entry.',
+        summary: 'Create server',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqNextcloud'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Server created successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string'),
+                        new OA\Property(property: 'message', type: 'string'),
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function postServer(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
@@ -115,6 +156,35 @@ class puqNextcloudController extends Controller
         ]);
     }
 
+    #[OA\Delete(
+        path: 'admin.api.Product.puqNextcloud.server.delete',
+        description: 'Deletes a Nextcloud server by UUID.',
+        summary: 'Delete server',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqNextcloud'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'Server UUID',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Server deleted successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string'),
+                        new OA\Property(property: 'message', type: 'string'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function deleteServer(Request $request, $uuid): JsonResponse
     {
         $model = PuqNextcloudServer::find($uuid);
@@ -151,6 +221,25 @@ class puqNextcloudController extends Controller
         return view_admin_module('Product', 'puqNextcloud', 'admin_area.server_groups', compact('title'));
     }
 
+    #[OA\Get(
+        path: 'admin.api.Product.puqNextcloud.server_groups.get',
+        description: 'Returns a list of all Nextcloud server groups with filtering and pagination support.',
+        summary: 'Get server groups list',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqNextcloud'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Server groups list returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getServerGroups(Request $request): JsonResponse
     {
         $query = PuqNextcloudServerGroup::query();
@@ -189,6 +278,25 @@ class puqNextcloudController extends Controller
         ], 200);
     }
 
+    #[OA\Get(
+        path: 'admin.api.Product.puqNextcloud.server_groups.select.get',
+        description: 'Returns server groups formatted for select dropdown with optional search.',
+        summary: 'Get server groups for select',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqNextcloud'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Server groups select data returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getServerGroupsSelect(Request $request): JsonResponse
     {
         $search = $request->input('q');
@@ -215,6 +323,27 @@ class puqNextcloudController extends Controller
         ]], 200);
     }
 
+    #[OA\Post(
+        path: 'admin.api.Product.puqNextcloud.server_group.post',
+        description: 'Creates a new Nextcloud server group.',
+        summary: 'Create server group',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqNextcloud'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Server group created successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string'),
+                        new OA\Property(property: 'message', type: 'string'),
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function postServerGroup(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
@@ -250,6 +379,35 @@ class puqNextcloudController extends Controller
         ]);
     }
 
+    #[OA\Get(
+        path: 'admin.api.Product.puqNextcloud.server_group.get',
+        description: 'Returns a single Nextcloud server group by UUID.',
+        summary: 'Get server group',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqNextcloud'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'Server group UUID',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Server group returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string'),
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getServerGroup(Request $request, $uuid): JsonResponse
     {
         $model = PuqNextcloudServerGroup::find($uuid);
@@ -266,6 +424,36 @@ class puqNextcloudController extends Controller
         ]);
     }
 
+    #[OA\Put(
+        path: 'admin.api.Product.puqNextcloud.server_group.put',
+        description: 'Updates an existing Nextcloud server group by UUID.',
+        summary: 'Update server group',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqNextcloud'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'Server group UUID',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Server group updated successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string'),
+                        new OA\Property(property: 'message', type: 'string'),
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function putServerGroup(Request $request, $uuid): JsonResponse
     {
         $validator = Validator::make($request->all(), [
@@ -307,6 +495,35 @@ class puqNextcloudController extends Controller
         ]);
     }
 
+    #[OA\Delete(
+        path: 'admin.api.Product.puqNextcloud.server_group.delete',
+        description: 'Deletes a Nextcloud server group by UUID.',
+        summary: 'Delete server group',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqNextcloud'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'Server group UUID',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Server group deleted successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string'),
+                        new OA\Property(property: 'message', type: 'string'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function deleteServerGroup(Request $request, $uuid): JsonResponse
     {
         $model = PuqNextcloudServerGroup::find($uuid);
@@ -355,6 +572,35 @@ class puqNextcloudController extends Controller
         return view_admin_module('Product', 'puqNextcloud', 'admin_area.server_edit', compact('title', 'uuid'));
     }
 
+    #[OA\Get(
+        path: 'admin.api.Product.puqNextcloud.server.get',
+        description: 'Returns a single Nextcloud server by UUID.',
+        summary: 'Get server',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqNextcloud'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'Server UUID',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Server returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string'),
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getServer(Request $request, $uuid): JsonResponse
     {
         $model = PuqNextcloudServer::find($uuid);
@@ -376,6 +622,36 @@ class puqNextcloudController extends Controller
         ]);
     }
 
+    #[OA\Put(
+        path: 'admin.api.Product.puqNextcloud.server.put',
+        description: 'Updates an existing Nextcloud server by UUID.',
+        summary: 'Update server',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqNextcloud'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'Server UUID',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Server updated successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string'),
+                        new OA\Property(property: 'message', type: 'string'),
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function putServer(Request $request, $uuid): JsonResponse
     {
         $model = PuqNextcloudServer::find($uuid);
@@ -446,6 +722,36 @@ class puqNextcloudController extends Controller
         ]);
     }
 
+    #[OA\Post(
+        path: 'admin.api.Product.puqNextcloud.server.test_connection.post',
+        description: 'Tests the connection to a Nextcloud server by UUID using provided credentials.',
+        summary: 'Test server connection',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqNextcloud'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'Server UUID',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Connection test completed successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string'),
+                        new OA\Property(property: 'message', type: 'string'),
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function postServerTestConnection(Request $request, $uuid): JsonResponse
     {
         $model = PuqNextcloudServer::find($uuid);
@@ -522,6 +828,26 @@ class puqNextcloudController extends Controller
         ]);
     }
 
+    #[OA\Get(
+        path: 'admin.api.Product.puqNextcloud.server.test_connection.get',
+        description: 'Tests the connection to a Nextcloud server using the server UUID from query parameter.',
+        summary: 'Test server connection (GET)',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqNextcloud'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Connection test completed successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string'),
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getServerTestConnection(Request $request): JsonResponse
     {
 
@@ -553,6 +879,35 @@ class puqNextcloudController extends Controller
         ]);
     }
 
+    #[OA\Get(
+        path: 'admin.api.Product.puqNextcloud.service.user_quota.get',
+        description: 'Returns the Nextcloud user quota information for a service by UUID.',
+        summary: 'Get service user quota',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqNextcloud'],
+        parameters: [
+            new OA\Parameter(
+                name: 'uuid',
+                description: 'Service UUID',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'User quota returned successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string'),
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function getServiceUserQuota(Request $request, $uuid): JsonResponse
     {
         $model = Service::find($uuid);

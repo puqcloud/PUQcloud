@@ -1,0 +1,7 @@
+{
+    "name": "Client Invoice Payment Reminder",
+    "category": "clientOperational",
+    "custom": false,
+    "subject": "Invoice Payment Reminder",
+    "text_mini": "Payment reminder for Invoice #{{ $invoice->number }}. Due: {{ $invoice->due_date->format('d.m.Y') }}"
+}

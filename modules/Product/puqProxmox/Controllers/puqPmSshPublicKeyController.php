@@ -23,6 +23,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Modules\Product\puqProxmox\Models\PuqPmSshPublicKey;
+use OpenApi\Attributes as OA;
 use Yajra\DataTables\DataTables;
 
 class puqPmSshPublicKeyController extends Controller
@@ -36,6 +37,7 @@ class puqPmSshPublicKeyController extends Controller
             compact('title'));
     }
 
+    #[OA\Get(path: 'admin.api.Product.puqProxmox.ssh_public_keys.get', description: 'Returns a list of SSH public keys.', summary: 'Get SSH public keys list', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], responses: [new OA\Response(response: 200, description: 'SSH public keys list returned successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function getSshPublicKeys(Request $request): JsonResponse
     {
         $query = PuqPmSshPublicKey::query()
@@ -86,6 +88,7 @@ class puqPmSshPublicKeyController extends Controller
         ], 200);
     }
 
+    #[OA\Post(path: 'admin.api.Product.puqProxmox.ssh_public_key.post', description: 'Creates a new SSH public key.', summary: 'Create SSH public key', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(required: ['name', 'client_uuid', 'public_key'], properties: [new OA\Property(property: 'name', type: 'string'), new OA\Property(property: 'client_uuid', type: 'string', format: 'uuid'), new OA\Property(property: 'public_key', type: 'string')], type: 'object')), responses: [new OA\Response(response: 200, description: 'SSH public key created successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string'), new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function postSshPublicKey(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
@@ -132,6 +135,7 @@ class puqPmSshPublicKeyController extends Controller
         ]);
     }
 
+    #[OA\Delete(path: 'admin.api.Product.puqProxmox.ssh_public_key.delete', description: 'Deletes a specific SSH public key.', summary: 'Delete SSH public key', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the SSH public key', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], responses: [new OA\Response(response: 200, description: 'SSH public key deleted successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string')], type: 'object'))])]
     public function deleteSshPublicKey(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmSshPublicKey::find($uuid);

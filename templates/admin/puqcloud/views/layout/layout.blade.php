@@ -2,11 +2,10 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta http-equiv="Content-Language" content="en">
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, shrink-to-fit=no">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="Content-Language" content="{{ app()->getLocale() }}">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="msapplication-tap-highlight" content="no">
     <title>@yield('title')</title>
     <link rel="icon" href="{{ asset_admin('images/favicon.png') }}" type="image/png">
@@ -22,12 +21,16 @@
         window.translations = {!! json_encode($js_translations) !!};
     </script>
     @yield('head')
+    {{app(App\Services\HookService::class)->callHooks('AdminAreaHeadOutput')}}
+    {!! app('AdminAreaHeadOutput') !!}
 </head>
 <body>
 
 <div class="app-container app-theme-white body-tabs-shadow {{ setting('layoutOptionFixed_header') }} {{ setting('layoutOptionFixed_sidebar') }}">
     <div class="app-header header-shadow {{ setting('layoutOptionHeaderColorScheme') }}">
         @include(config('template.admin.view') .'.layout.header.header')
+        {{app(App\Services\HookService::class)->callHooks('AdminAreaHeaderOutput')}}
+        {!! app('AdminAreaHeaderOutput') !!}
     </div>
     @yield('before-app-main')
     <div class="app-main">
@@ -44,7 +47,7 @@
                         @include(config('template.admin.view') .'.layout.footer.footer')
                     </div>
                     {{app(App\Services\HookService::class)->callHooks('AdminAreaFooterOutput')}}
-                    {{app('AdminAreaFooterOutput')}}
+                    {!! app('AdminAreaFooterOutput') !!}
                 </div>
             </div>
         </div>
@@ -126,6 +129,90 @@
                         data-bs-dismiss="modal"><i class="fa fa-times-circle"></i> {{ __('main.Close') }}</button>
                 <button type="button" class="mb-2 me-2 btn-icon btn-shadow btn-outline-2x btn btn-outline-success"
                         id="modalSaveButton"><i class="fa fa-save"></i> {{ __('main.Save') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirm Modal -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalTitle">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-danger">
+                <h5 class="modal-title text-white" id="deleteConfirmModalTitle">
+                    <i class="fa fa-trash me-2"></i> {{ __('main.Confirm delete') }}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <p id="deleteConfirmMessage" class="mb-3"></p>
+
+                <div class="progress" style="height:6px;">
+                    <div class="progress-bar bg-danger" id="deleteConfirmProgress"></div>
+                </div>
+
+                <small class="text-muted d-block mt-2">
+                    {{ __('main.Auto close') }}
+                </small>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>
+                    {{ __('main.Close') }}
+                </button>
+
+                <button type="button"
+                        class="btn btn-danger"
+                        id="deleteConfirmBtn">
+                    <i class="fas fa-trash-alt me-1"></i>
+                    {{ __('main.Delete') }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirm Action Modal -->
+<div class="modal fade" id="confirmActionModal" tabindex="-1" aria-labelledby="confirmActionTitle">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header" id="confirmActionHeader">
+                <h5 class="modal-title text-white" id="confirmActionTitle">
+                    <i class="fa fa-exclamation-triangle me-2"></i> {{ __('main.Confirm action') }}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <p id="confirmActionMessage" class="mb-3"></p>
+
+                <div class="progress" style="height:6px;">
+                    <div class="progress-bar" id="confirmActionProgress"></div>
+                </div>
+
+                <small class="text-muted d-block mt-2">
+                    {{ __('main.Auto close') }}
+                </small>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>
+                    {{ __('main.Close') }}
+                </button>
+
+                <button type="button"
+                        class="btn"
+                        id="confirmActionBtn">
+                    <i class="fas fa-check me-1"></i>
+                    {{ __('main.Confirm') }}
+                </button>
             </div>
         </div>
     </div>

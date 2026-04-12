@@ -25,6 +25,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Modules\Product\puqProxmox\Models\PuqPmIpPool;
 use Modules\Product\puqProxmox\Models\puqPmLxcInstanceNet;
+use OpenApi\Attributes as OA;
 use Yajra\DataTables\DataTables;
 
 class puqPmIpPoolController extends Controller
@@ -36,6 +37,7 @@ class puqPmIpPoolController extends Controller
         return view_admin_module('Product', 'puqProxmox', 'admin_area.ip_pools.ip_pools', compact('title'));
     }
 
+    #[OA\Get(path: 'admin.api.Product.puqProxmox.ip_pools.get', description: 'Returns a list of IP pools.', summary: 'Get IP pools list', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], responses: [new OA\Response(response: 200, description: 'IP pools list returned successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function getIpPools(Request $request): JsonResponse
     {
         $query = PuqPmIpPool::query();
@@ -71,6 +73,7 @@ class puqPmIpPoolController extends Controller
         ], 200);
     }
 
+    #[OA\Post(path: 'admin.api.Product.puqProxmox.ip_pool.post', description: 'Creates a new IP pool.', summary: 'Create IP pool', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(required: ['name', 'type', 'first_ip', 'last_ip', 'gateway', 'mask'], properties: [new OA\Property(property: 'name', type: 'string'), new OA\Property(property: 'type', type: 'string'), new OA\Property(property: 'first_ip', type: 'string'), new OA\Property(property: 'last_ip', type: 'string'), new OA\Property(property: 'gateway', type: 'string'), new OA\Property(property: 'mask', type: 'integer'), new OA\Property(property: 'dns', type: 'string')], type: 'object')), responses: [new OA\Response(response: 200, description: 'IP pool created successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string'), new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function postIpPool(Request $request): JsonResponse
     {
         $type = $request->input('type');
@@ -154,6 +157,7 @@ class puqPmIpPoolController extends Controller
         ]);
     }
 
+    #[OA\Delete(path: 'admin.api.Product.puqProxmox.ip_pool.delete', description: 'Deletes a specific IP pool.', summary: 'Delete IP pool', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the IP pool', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], responses: [new OA\Response(response: 200, description: 'IP pool deleted successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string')], type: 'object'))])]
     public function deleteIpPool(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmIpPool::find($uuid);
@@ -184,6 +188,7 @@ class puqPmIpPoolController extends Controller
     }
 
 
+    #[OA\Get(path: 'admin.api.Product.puqProxmox.ip_pool.get', description: 'Returns details of a specific IP pool.', summary: 'Get IP pool details', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the IP pool', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], responses: [new OA\Response(response: 200, description: 'IP pool details returned successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function getIpPool(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmIpPool::find($uuid);
@@ -204,6 +209,7 @@ class puqPmIpPoolController extends Controller
         ]);
     }
 
+    #[OA\Put(path: 'admin.api.Product.puqProxmox.ip_pool.put', description: 'Updates a specific IP pool.', summary: 'Update IP pool', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the IP pool', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(type: 'object')), responses: [new OA\Response(response: 200, description: 'IP pool updated successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'string', example: 'success'), new OA\Property(property: 'message', type: 'string'), new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function putIpPool(Request $request, $uuid): JsonResponse
     {
         $model = PuqPmIpPool::find($uuid);
@@ -301,6 +307,7 @@ class puqPmIpPoolController extends Controller
         return view_admin_module('Product', 'puqProxmox', 'admin_area.ip_pools.ip_pool', compact('title', 'uuid'));
     }
 
+    #[OA\Get(path: 'admin.api.Product.puqProxmox.ip_pools.select.get', description: 'Returns IP pools for select dropdown.', summary: 'Get IP pools select', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], responses: [new OA\Response(response: 200, description: 'IP pools select returned successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function getIpPoolsSelect(Request $request): JsonResponse
     {
         $search = $request->input('q');
@@ -334,6 +341,7 @@ class puqPmIpPoolController extends Controller
         ], 200);
     }
 
+    #[OA\Get(path: 'admin.api.Product.puqProxmox.ip_pool.used_ips.get', description: 'Returns used IPs for a specific IP pool.', summary: 'Get used IPs', security: [['apiKeyAuth' => []]], tags: ['puqProxmox'], parameters: [new OA\Parameter(name: 'uuid', description: 'UUID of the IP pool', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))], responses: [new OA\Response(response: 200, description: 'Used IPs list returned successfully', content: new OA\JsonContent(properties: [new OA\Property(property: 'data', type: 'object')], type: 'object'))])]
     public function getUsedIps(Request $request, $uuid): JsonResponse
     {
         $ip_pool = PuqPmIpPool::query()->where('uuid', $uuid)->first();

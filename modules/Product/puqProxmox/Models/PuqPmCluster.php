@@ -1214,7 +1214,9 @@ class PuqPmCluster extends Model
             }, $command);
 
             if ($status['status'] !== 'error' && isset($status['data']['status']) && $status['data']['status'] === 'stopped') {
-                if (isset($status['data']['exitstatus']) && $status['data']['exitstatus'] === 'OK') {
+                $exitstatus = $status['data']['exitstatus'] ?? '';
+
+                if ($exitstatus === 'OK' || str_starts_with($exitstatus, 'WARNINGS')) {
                     return ['status' => 'success', 'data' => $status['data']];
                 }
 

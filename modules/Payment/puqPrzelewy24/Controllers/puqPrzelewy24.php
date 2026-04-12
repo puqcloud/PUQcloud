@@ -21,9 +21,29 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Modules\Payment\puqPrzelewy24\Services\Przelewy24Client;
+use OpenApi\Attributes as OA;
 
 class puqPrzelewy24 extends Controller
 {
+    #[OA\Post(
+        path: 'admin.api.Payment.puqPrzelewy24.test_connection.post',
+        description: 'Tests the connection to Przelewy24 API using provided credentials.',
+        summary: 'Test Przelewy24 connection',
+        security: [['apiKeyAuth' => []]],
+        tags: ['puqPrzelewy24'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Connection test result',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ],
+                    type: 'object'
+                )
+            ),
+        ]
+    )]
     public function testConnection(Request $request, $uuid): JsonResponse
     {
         if ($request->get('sandbox') == 'yes') {

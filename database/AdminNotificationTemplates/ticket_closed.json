@@ -1,0 +1,7 @@
+{
+    "name": "Ticket Closed",
+    "category": "staffOperational",
+    "custom": false,
+    "subject": "[Ticket #{{ $ticket->number }}] Closed: {{ $ticket->subject }}",
+    "text_mini": "Ticket #{{ $ticket->number }} has been closed."
+}

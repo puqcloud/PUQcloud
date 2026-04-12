@@ -27,14 +27,9 @@ use Symfony\Component\HttpFoundation\Response;
 
 class ApiCheckAuthenticated
 {
-    /**
-     * Handle an incoming request.
-     *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
-     */
     public function handle(Request $request, Closure $next): Response
     {
-
+        // ---------- ADMIN IP LIMIT (panel) ----------
         if (! in_array('*', config('app.admin_allowed_ips'))) {
             if (! in_array($request->ip(), config('app.admin_allowed_ips'))) {
                 return redirect('https://puqcloud.com/');
@@ -44,28 +39,79 @@ class ApiCheckAuthenticated
         session(['locale' => config('locale.admin.default')]);
         App::setLocale(config('locale.admin.default'));
 
-        if (! Auth::guard('admin')->check()) {
-            TranslationService::init('admin');
+        // ---------- 1. API KEY HAS PRIORITY ----------
+        $rawKey = $request->header('X-API-Key');
 
-            return response()->json([
-                'status' => 'error',
-                'errors' => [__('error.Unauthorized')],
-                'redirect' => route('admin.web.login'),
-            ], 401);
+        if ($rawKey !== null) {
 
+            $hash = hash('sha256', $rawKey);
+
+            $apiKey = \App\Models\AdminApiKey::where('hash', $hash)->first();
+
+            if (! $apiKey) {
+                TranslationService::init('admin');
+                return response()->json([
+                    'status' => 'error',
+                    'errors' => [__('error.Invalid API key')],
+                ], 401);
+            }
+
+            // ---------- IP CHECK ----------
+            $allowedIps = $apiKey->ips ?? [];
+
+            if (! empty($allowedIps) && ! in_array($request->ip(), $allowedIps)) {
+                TranslationService::init('admin');
+                return response()->json([
+                    'status' => 'error',
+                    'errors' => [__('error.IP not allowed')],
+                ], 403);
+            }
+
+            $admin = $apiKey->admin;
+
+            if (! $admin || $admin->disable) {
+                TranslationService::init('admin');
+                return response()->json([
+                    'status' => 'error',
+                    'errors' => [__('error.Unauthorized')],
+                ], 401);
+            }
+
+            $apiKey->update([
+                'last_used_at' => now(),
+            ]);
+
+            app()->instance('admin', $admin);
+
+        } else {
+
+            // ---------- 2. SESSION ----------
+            if (! Auth::guard('admin')->check()) {
+                TranslationService::init('admin');
+                return response()->json([
+                    'status' => 'error',
+                    'errors' => [__('error.Unauthorized')],
+                    'redirect' => route('admin.web.login'),
+                ], 401);
+            }
+
+            $admin = Auth::guard('admin')->user();
+            app()->instance('admin', $admin);
         }
 
-        $admin = Auth::guard('admin')->user();
-        app()->instance('admin', $admin);
+        // ---------- LOCALE ----------
+        if (empty($admin->language)
+            || ! array_key_exists($admin->language, config('locale.admin.locales'))) {
 
-        if (empty($admin->language) or ! in_array($admin->language, array_keys(config('locale.admin.locales')))) {
             $admin->language = config('locale.admin.default');
             $admin->save();
         }
+
         session(['locale' => $admin->language]);
         App::setLocale($admin->language);
         TranslationService::init('admin');
 
+        // ---------- DISABLED ----------
         if ($admin->disable) {
             Auth::guard('admin')->logout();
 
@@ -76,7 +122,7 @@ class ApiCheckAuthenticated
             ], 401);
         }
 
-        // boot AdminPermission
+        // ---------- PERMISSIONS ----------
         $AdminPermission = new AdminPermissionService;
         app()->instance('AdminPermission', $AdminPermission);
 

@@ -11,12 +11,13 @@
 
 @section('content')
     @php
-        $basePath = config('template.client.view') . '.service_views.list.';
         $template = $product_group->list_template ?: 'default';
-        $viewPath = $basePath . $template . '.' . $template;
+        $serviceViewBase = resolveServiceViewBase('list', $template);
+        $viewPath = $serviceViewBase . '.' . $template;
 
         if (!view()->exists($viewPath)) {
-            $viewPath = $basePath . 'default.default';
+            $serviceViewBase = config('template.client.view') . '.service_views.list.default';
+            $viewPath = $serviceViewBase . '.default';
         }
     @endphp
 

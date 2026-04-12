@@ -14,6 +14,7 @@
         "datatables.net-responsive-dt": "^3.0.4",
         "datatables.net-rowreorder-bs5": "^1.5.0",
         "daterangepicker": "^3.1.0",
+        "easymde": "^2.20.0",
         "filepond": "^4.32.8",
         "filepond-plugin-image-preview": "^4.6.12",
         "flag-icons": "^7.5.0",
@@ -25,6 +26,7 @@
         "jquery-blockui": "^2.7.0",
         "jquery-circle-progress": "^1.2.2",
         "jquery-validation": "^1.21.0",
+        "marked": "^17.0.5",
         "metismenu": "^3.0.7",
         "moment": "^2.30.1",
         "nprogress": "^0.2.0",
@@ -32,6 +34,7 @@
         "pixeden-stroke-7-icon": "^1.2.3",
         "popper.js": "^1.16.1",
         "select2": "^4.1.0-rc.0",
+        "swagger-ui-dist": "^5.31.0",
         "textarea-autosize": "^0.4.2",
         "toastr": "^2.1.4"
     },

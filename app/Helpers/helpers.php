@@ -68,6 +68,120 @@ if (!function_exists('view_client')) {
     }
 }
 
+if (!function_exists('resolveServiceViewBase')) {
+
+    /**
+     * Resolve service view base path (dot-notation).
+     * Checks module directories first, then falls back to client template directory.
+     *
+     * @return string e.g. 'modules.Product.puqVPNCP.service_views.manage.puq_vpncp'
+     */
+    function resolveServiceViewBase(string $type, string $templateName): string
+    {
+        static $cache = [];
+        $cacheKey = $type.'.'.$templateName;
+
+        if (isset($cache[$cacheKey])) {
+            return $cache[$cacheKey];
+        }
+
+        $modulesPath = base_path('modules/Product');
+        if (is_dir($modulesPath)) {
+            foreach (scandir($modulesPath) as $moduleName) {
+                if ($moduleName === '.' || $moduleName === '..') {
+                    continue;
+                }
+                $path = $modulesPath.'/'.$moduleName.'/service_views/'.$type.'/'.$templateName;
+                if (is_dir($path)) {
+                    $cache[$cacheKey] = 'modules.Product.'.$moduleName.'.service_views.'.$type.'.'.$templateName;
+
+                    return $cache[$cacheKey];
+                }
+            }
+        }
+
+        $cache[$cacheKey] = config('template.client.view').'.service_views.'.$type.'.'.$templateName;
+
+        return $cache[$cacheKey];
+    }
+}
+
+if (!function_exists('resolveServiceViewControllerPath')) {
+
+    /**
+     * Resolve service view controller filesystem path.
+     * Checks module directories first, then falls back to client template directory.
+     */
+    function resolveServiceViewControllerPath(string $type, string $templateName, string $controllerFile): ?string
+    {
+        $modulesPath = base_path('modules/Product');
+        if (is_dir($modulesPath)) {
+            foreach (scandir($modulesPath) as $moduleName) {
+                if ($moduleName === '.' || $moduleName === '..') {
+                    continue;
+                }
+                $path = $modulesPath.'/'.$moduleName.'/service_views/'.$type.'/'.$templateName.'/'.$controllerFile;
+                if (file_exists($path)) {
+                    return $path;
+                }
+            }
+        }
+
+        $template = config('template.client.name', 'puqcloud');
+        $path = base_path("templates/client/{$template}/views/service_views/{$type}/{$templateName}/{$controllerFile}");
+
+        return file_exists($path) ? $path : null;
+    }
+}
+
+if (!function_exists('getServiceViewTemplatesList')) {
+
+    /**
+     * Get all available service view template names for a given type.
+     * Scans both module directories and client template directory.
+     */
+    function getServiceViewTemplatesList(string $type): array
+    {
+        $folders = [];
+
+        // Scan module directories
+        $modulesPath = base_path('modules/Product');
+        if (is_dir($modulesPath)) {
+            foreach (scandir($modulesPath) as $moduleName) {
+                if ($moduleName === '.' || $moduleName === '..') {
+                    continue;
+                }
+                $svPath = $modulesPath.'/'.$moduleName.'/service_views/'.$type;
+                if (is_dir($svPath)) {
+                    foreach (scandir($svPath) as $item) {
+                        if ($item === '.' || $item === '..') {
+                            continue;
+                        }
+                        if (is_dir($svPath.'/'.$item) && !isset($folders[$item])) {
+                            $folders[$item] = ['id' => $item, 'text' => $item];
+                        }
+                    }
+                }
+            }
+        }
+
+        // Scan client template directory
+        $servicesPath = base_path('templates/client/'.config('template.client.name').'/views/service_views/'.$type);
+        if (is_dir($servicesPath)) {
+            foreach (scandir($servicesPath) as $item) {
+                if ($item === '.' || $item === '..') {
+                    continue;
+                }
+                if (is_dir($servicesPath.'/'.$item) && !isset($folders[$item])) {
+                    $folders[$item] = ['id' => $item, 'text' => $item];
+                }
+            }
+        }
+
+        return array_values($folders);
+    }
+}
+
 if (!function_exists('get_gravatar')) {
     function get_gravatar($email, $size = 80): string
     {
@@ -126,7 +240,7 @@ if (!function_exists('logModule')) {
             'emergency' => 'error',
         ];
 
-        $currentLevel = env('LOG_LEVEL', 'debug');
+        $currentLevel = config('logging.level', 'debug');
 
         if (!isset($map[$level]) || !isset($levels[$currentLevel])) {
             return;
@@ -455,6 +569,13 @@ if (!function_exists('loadModulesNamespaces')) {
                     require_once $file;
                 }
             }
+
+            $servicesPath = base_path("modules/{$module->type}/{$module->name}/Swagger");
+            if (is_dir($servicesPath)) {
+                foreach (glob($servicesPath.'/*.php') as $file) {
+                    require_once $file;
+                }
+            }
         }
     }
 }
@@ -490,14 +611,14 @@ if (!function_exists('loadModulesCommands')) {
 if (!function_exists('loadAdminTemplateNamespaces')) {
     function loadAdminTemplateNamespaces(): void
     {
-        $modelsPath = base_path('templates/admin/'.env('TEMPLATE_ADMIN', 'puqcloud')).'/Models/';
+        $modelsPath = base_path('templates/admin/'.config('template.admin.name')).'/Models/';
         if (is_dir($modelsPath)) {
             foreach (glob($modelsPath.'/*.php') as $file) {
                 require_once $file;
             }
         }
 
-        $controllersPath = base_path('templates/admin/'.env('TEMPLATE_ADMIN', 'puqcloud')).'/Controllers/';
+        $controllersPath = base_path('templates/admin/'.config('template.admin.name')).'/Controllers/';
         if (is_dir($controllersPath)) {
             foreach (glob($controllersPath.'/*.php') as $file) {
                 require_once $file;
@@ -509,21 +630,21 @@ if (!function_exists('loadAdminTemplateNamespaces')) {
 if (!function_exists('loadClientTemplateNamespaces')) {
     function loadClientTemplateNamespaces(): void
     {
-        $modelsPath = base_path('templates/client/'.env('TEMPLATE_CLIENT', 'puqcloud')).'/Models/';
+        $modelsPath = base_path('templates/client/'.config('template.client.name')).'/Models/';
         if (is_dir($modelsPath)) {
             foreach (glob($modelsPath.'/*.php') as $file) {
                 require_once $file;
             }
         }
 
-        $controllersPath = base_path('templates/client/'.env('TEMPLATE_CLIENT', 'puqcloud')).'/Controllers/';
+        $controllersPath = base_path('templates/client/'.config('template.client.name')).'/Controllers/';
         if (is_dir($controllersPath)) {
             foreach (glob($controllersPath.'/*.php') as $file) {
                 require_once $file;
             }
         }
 
-        $servicesPath = base_path('templates/client/'.env('TEMPLATE_CLIENT', 'puqcloud')).'/Services/';
+        $servicesPath = base_path('templates/client/'.config('template.client.name')).'/Services/';
         if (is_dir($servicesPath)) {
             foreach (glob($servicesPath.'/*.php') as $file) {
                 require_once $file;

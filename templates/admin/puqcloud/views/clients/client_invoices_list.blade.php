@@ -16,6 +16,11 @@
             <i class="fa fa-plus"></i>
             {{__('main.Create Add Funds Proforma Invoice')}}
         </button>
+        <button id="createStandaloneInvoice" type="button"
+                class="mb-2 me-2 btn-icon btn-outline-2x btn btn-outline-primary">
+            <i class="fa fa-file-invoice"></i>
+            {{__('main.Create Custom Invoice')}}
+        </button>
     @endif
 @endsection
 
@@ -114,7 +119,7 @@
                     render: function (data, type, row) {
                         var btn = '';
                         if (row.urls.edit) {
-                            btn = btn + renderEditButton(row.urls.edit);
+                            btn = btn + renderEditLink(row.urls.edit);
                         }
                         return btn;
                     }
@@ -176,9 +181,15 @@
                 }
             });
 
-            $tableId.on('click', 'button.edit-btn', function (e) {
-                e.preventDefault();
-                window.location.href = $(this).data('model-url');
+            $('#createStandaloneInvoice').on('click', function () {
+                PUQajax('{{route('admin.api.client.invoice.standalone.post',$uuid)}}', {}, 500, $(this), 'POST')
+                    .then(function (response) {
+                        if (response.data && response.data.uuid) {
+                            window.location.href = '{{ route('admin.web.client.tab', ['uuid' => $uuid, 'tab' => 'invoices']) }}?edit=' + response.data.uuid;
+                        } else {
+                            $dataTable.ajax.reload(null, false);
+                        }
+                    });
             });
 
         });

@@ -717,7 +717,7 @@ function renderPayNowButton(modelUrl) {
 }
 
 function renderPaymentButton(modelUrl) {
-    return `<button data-model-url="${modelUrl}" class="payment-btn mb-2 me-2 btn btn-outline-2x btn-outline-success text-danger">
+    return `<button data-model-url="${modelUrl}" class="payment-btn mb-2 me-2 btn btn-outline-2x btn-outline-success">
                 <i class="fa fa-credit-card me-1"></i> ${translate('Pay Now')}
             </button>`;
 }
@@ -1490,6 +1490,67 @@ function startCountdown(el, seconds, label = '') {
     const timer = setInterval(updateCountdown, 1000);
 }
 
+
+function validatePassword(password) {
+    const hasLength = password.length >= 6;
+    const hasNumber = /[0-9]/.test(password);
+    const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+    return hasLength && hasNumber && hasSpecial;
+}
+
+function updateStrengthBar(strength) {
+    const $bar = $('#passwordStrengthBar .progress-bar');
+    let color = 'bg-danger';
+    let value = 33;
+
+    if (strength === 2) {
+        color = 'bg-warning';
+        value = 66;
+    } else if (strength === 3) {
+        color = 'bg-success';
+        value = 100;
+    }
+
+    $bar.removeClass('bg-success bg-warning bg-danger').addClass(color);
+    $bar.css('width', value + '%').text(value + '%');
+}
+
+function initPasswordValidation(passwordSelector, confirmSelector) {
+    $(passwordSelector).on('input', function () {
+        const password = $(this).val();
+        const $input = $(this);
+
+        const hasLength = password.length >= 6;
+        const hasNumber = /[0-9]/.test(password);
+        const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+        const strength = [hasLength, hasNumber, hasSpecial].filter(Boolean).length;
+        updateStrengthBar(strength);
+
+        if (validatePassword(password)) {
+            $input.removeClass('is-invalid').addClass('is-valid');
+        } else {
+            $input.removeClass('is-valid').addClass('is-invalid');
+        }
+
+        if (confirmSelector) {
+            $(confirmSelector).trigger('input');
+        }
+    });
+
+    if (confirmSelector) {
+        $(confirmSelector).on('input', function () {
+            const pw1 = $(passwordSelector).val();
+            const pw2 = $(this).val();
+
+            if (pw1 === pw2 && validatePassword(pw1)) {
+                $(this).removeClass('is-invalid').addClass('is-valid');
+            } else {
+                $(this).removeClass('is-valid').addClass('is-invalid');
+            }
+        });
+    }
+}
 
 document.addEventListener('DOMContentLoaded', function () {
     NProgress.configure({

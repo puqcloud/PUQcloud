@@ -772,5 +772,9 @@ return [
     'Apply environment variables from the cluster level' => 'Apply environment variables from the cluster level',
     'LXC Instances' => 'LXC Instances',
     'APP Instances' => 'APP Instances',
+
+    'Product Options' => 'Product Options',
+    'Product options description' => 'List of product option groups and options the puqProxmox module expects under stable keys. Press "Create Missing" to generate anything that does not yet exist. Location and OS Template options are generated dynamically from cluster groups and LXC OS templates, so adding a new one and pressing the button again will create the matching option.',
+
     '' => '',
 ];
