@@ -4,7 +4,7 @@
  * PUQcloud - Free Cloud Billing System
  * Main billing system core logic
  *
- * Copyright (C) 2025 PUQ sp. z o.o.
+ * Copyright (C) 2025-2026 PUQ Software
  * Licensed under GNU GPLv3
  * https://www.gnu.org/licenses/gpl-3.0.html
  *

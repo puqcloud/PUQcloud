@@ -148,6 +148,6 @@ PUQcloud is open-source software licensed under the [GNU General Public License 
 
 ## Authors
 
-**Ruslan Polovyi** — founder and lead developer at **PUQ sp. z o.o.**
+**Ruslan Polovyi** — founder and lead developer at **PUQ Software**
 
 **Dmytro Kravchenko** — Developer / DevOps engineer

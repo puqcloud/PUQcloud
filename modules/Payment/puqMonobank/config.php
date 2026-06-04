@@ -4,7 +4,7 @@
  * PUQcloud - Free Cloud Billing System
  * Main billing system core logic
  *
- * Copyright (C) 2025 PUQ sp. z o.o.
+ * Copyright (C) 2025-2026 PUQ Software
  * Licensed under GNU GPLv3
  * https://www.gnu.org/licenses/gpl-3.0.html
  *
@@ -19,7 +19,7 @@ return [
     'name' => 'PUQ Monobank',
     'description' => 'Monobank Payment Gateway Module for Ukrainian market with support for cards, Apple Pay, Google Pay, and QR codes',
     'version' => '1.0.0',
-    'author' => 'PUQ sp. z o.o.',
+    'author' => 'PUQ Software',
     'email' => 'support@puqcloud.com',
     'website' => 'https://puqcloud.com/',
     'logo' => __DIR__.'/views/assets/img/logo.png',

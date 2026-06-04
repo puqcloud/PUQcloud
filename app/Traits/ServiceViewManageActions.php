@@ -9,7 +9,7 @@
  * CancelTerminationRequest, SwitchBillingMode) for free. Modules just `use` this trait and add
  * their own module-specific endpoints on top.
  *
- * Copyright (C) 2025 PUQ sp. z o.o.
+ * Copyright (C) 2025-2026 PUQ Software
  * Licensed under GNU GPLv3
  *
  * Author: Ruslan Polovyi <ruslan@polovyi.com>

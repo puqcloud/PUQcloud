@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 
 ---
+## [Unreleased]
+
+### Changed
+
+- **Project ownership transfer**: effective **2026-06-01**, ownership of PUQcloud and all associated copyright was transferred from **PUQ sp. z o.o.** (Poland) to **PUQ Software** (Winnipeg, Manitoba, Canada). Every source-file copyright header, `LICENSE`, the `composer.json` author entry and `README.md` were updated from `Copyright (C) 2025 PUQ sp. z o.o.` to `Copyright (C) 2025-2026 PUQ Software`. The software remains licensed under the **GNU GPLv3** with unchanged terms; the contact e-mail (`support@puqcloud.com`) and website (`https://puqcloud.com`) are unchanged. See the [`NOTICE`](NOTICE) file for the full transfer record.
+
+
+---
 ## [1.5.0] – 2026-04-11
 
 ### Added
